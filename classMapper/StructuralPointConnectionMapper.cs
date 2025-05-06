@@ -1,60 +1,152 @@
-﻿//using System;
-//using System.Collections.Generic;
-//using Autodesk.Revit.DB;
-//using XmiCore;
+﻿using Autodesk.Revit.DB;
+using XmiCore;
+using System.Linq;
+using Lists;
+using Utils;
+using Test;
 
-//namespace ClassMapper
-//{
-//    internal class StructuralPointConnectionMapper : StructuralBaseEntityMapper
-//    {
-//        /// <summary>
-//        /// 将 Revit 元素映射为 XmiStructuralPointConnection
-//        /// </summary>
-//        public static XmiStructuralPointConnection Map(Element element)
-//        {
-//            string id = $"node_{element.Id}";
-//            string name = element.Name;
-//            string ifcGuid = element.UniqueId;
-//            string nativeId = element.Id.ToString();
-//            string description = element.LookupParameter("Description")?.AsString() ?? "";
+namespace ClassMapper
+{
+    internal class StructuralPointConnectionMapper : BaseMapper
+    {
+        // ✅ 标准Map：从Element直接生成PointConnection
+        public static XmiStructuralPointConnection Map(Element element)
+        {
+            var (id, name, ifcGuid, nativeId, description) = ExtractBasicProperties(element);
 
-//            // 模拟构建 storey（你可以用 StoreyMapper.Map(...) 替代）
-//            var storey = new XmiStructuralStorey("storey1", "Storey1", "", "", "", 3.5f, 5000, "RX", "RY", "RZ");
+            // 处理Level
 
-//            // 提取几何中某一点作为连接点（这里只是示例）
-//            XYZ position = GetRepresentativePoint(element);
+            XmiStructuralStorey storey = TestStorey.Dummy;
+            //XmiStructuralStorey storey = GetOrCreateStorey(element);
 
-//            var point = new XmiPoint3D(
-//                $"p_{element.Id}", $"Point_{element.Id}", "", "", "",
-//                (float)position.X,
-//                (float)position.Y,
-//                (float)position.Z
-//            );
+            // 获取LocationPoint
+            XYZ pointPosition = null;
+            if (element.Location is LocationPoint locationPoint)
+            {
+                pointPosition = locationPoint.Point;
+            }
 
-//            return new XmiStructuralPointConnection(
-//                id,
-//                name,
-//                ifcGuid,
-//                nativeId,
-//                description,
-//                storey,
-//                point
-//            );
-//        }
+            XmiPoint3D point = null;
 
-//        private static XYZ GetRepresentativePoint(Element element)
-//        {
-//            Location location = element.Location;
-//            if (location is LocationPoint lp)
-//            {
-//                return lp.Point;
-//            }
-//            else if (location is LocationCurve lc)
-//            {
-//                return lc.Curve.Evaluate(0.5, true); // 中点
-//            }
+            if (pointPosition != null)
+            {
+                // 查找现有的近似点
+                var existingPoint = StructuralDataContext.Point3DList
+                    .FirstOrDefault(p => IsSamePoint(p, pointPosition));
 
-//            return XYZ.Zero;
-//        }
-//    }
-//}
+                if (existingPoint != null)
+                {
+                    point = existingPoint;
+                }
+                else
+                {
+                    point = Point3DMapper.Map(element);
+                    StructuralDataContext.Point3DList.Add(point);
+                }
+            }
+            else
+            {
+                point = Point3DMapper.Map(element);
+                StructuralDataContext.Point3DList.Add(point);
+            }
+            //if (storey == null)
+            //{
+            //    Autodesk.Revit.UI.TaskDialog.Show("DEBUG", "Storey is NULL for element: " + element.Id);
+            //}
+
+            return new XmiStructuralPointConnection(
+                id,
+                name,
+                ifcGuid,
+                nativeId,
+                description,
+                storey,
+                point
+            );
+        }
+
+        // ✅ 新增MapFromXYZ：通过指定XYZ点直接生成PointConnection
+        public static XmiStructuralPointConnection MapFromXYZ(XYZ pointPosition, Element element)
+        {
+            var (id, name, ifcGuid, nativeId, description) = ExtractBasicProperties(element);
+
+            // 处理Level
+            XmiStructuralStorey storey = GetOrCreateStorey(element);
+
+            XmiPoint3D point = null;
+
+            if (pointPosition != null)
+            {
+                var existingPoint = StructuralDataContext.Point3DList
+                    .FirstOrDefault(p => IsSamePoint(p, pointPosition));
+
+                if (existingPoint != null)
+                {
+                    point = existingPoint;
+                }
+                else
+                {
+                    // 这里不能用Point3DMapper.Map(element)，需要自己根据XYZ创建新的Point
+                    point = new XmiPoint3D(
+                        id,
+                        name,
+                        ifcGuid,
+                        nativeId,
+                        description,
+                        Converters.ConvertValueToMillimeter(pointPosition.X),
+                        Converters.ConvertValueToMillimeter(pointPosition.Y),
+                        Converters.ConvertValueToMillimeter(pointPosition.Z)
+                    );
+                    StructuralDataContext.Point3DList.Add(point);
+                }
+            }
+
+            return new XmiStructuralPointConnection(
+                id,
+                name,
+                ifcGuid,
+                nativeId,
+                description,
+                storey,
+                point
+            );
+        }
+
+        // ✅ 提取公共：查找或创建Storey
+        private static XmiStructuralStorey GetOrCreateStorey(Element element)
+        {
+            XmiStructuralStorey storey = null;
+            if (element.LevelId != null && element.LevelId != ElementId.InvalidElementId)
+            {
+                string levelNativeId = element.LevelId.Value.ToString();
+
+                storey = StructuralDataContext.StructuralStoreyList
+                    .FirstOrDefault(s => s.NativeId == levelNativeId);
+
+                if (storey == null)
+                {
+                    var levelElement = element.Document.GetElement(element.LevelId) as Level;
+                    if (levelElement != null)
+                    {
+                        storey = StructuralStoreyMapper.Map(levelElement);
+                        StructuralDataContext.StructuralStoreyList.Add(storey);
+                    }
+                }
+            }
+            return storey;
+        }
+
+        // ✅ 辅助方法：比较XmiPoint3D和XYZ位置是否接近
+        private static bool IsSamePoint(XmiPoint3D p, XYZ xyz, double tolerance = 1e-3)
+        {
+            double px = Converters.ConvertValueToMillimeter(xyz.X);
+            double py = Converters.ConvertValueToMillimeter(xyz.Y);
+            double pz = Converters.ConvertValueToMillimeter(xyz.Z);
+
+            return
+                System.Math.Abs(p.X - px) < tolerance &&
+                System.Math.Abs(p.Y - py) < tolerance &&
+                System.Math.Abs(p.Z - pz) < tolerance;
+        }
+    }
+}

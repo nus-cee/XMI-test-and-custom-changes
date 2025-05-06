@@ -77,11 +77,11 @@ namespace RevittoXMI
                 Path.GetDirectoryName(saveDialog.FileName),
                 Path.GetFileNameWithoutExtension(saveDialog.FileName));
 
-            string json1 = JsonBuilder.BuildJson(doc);
+            string json1 = Caller.BuildJson(doc);
             string path1 = basePath + "_xmi_export.json";
             File.WriteAllText(path1, json1, Encoding.UTF8);
 
-            string json2 = TestJsonGenerator.GenerateStructuredModelJson(doc);
+            string json2 = TestCaller.BuildJson(doc);
             string path2 = basePath + "_test.json";
             File.WriteAllText(path2, json2, Encoding.UTF8);
 

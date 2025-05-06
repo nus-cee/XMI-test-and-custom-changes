@@ -1,12 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Autodesk.Revit.DB;
 using XmiCore;
 using Utils;
-
 
 namespace ClassMapper
 {
@@ -14,6 +9,7 @@ namespace ClassMapper
     {
         public static XmiPoint3D Map(Element element)
         {
+            // ✅ 使用 BaseMapper 中缓存的 sessionUuid（即作为 point ID）
             var (id, name, ifcGuid, nativeId, description) = ExtractBasicProperties(element);
 
             double x = 0, y = 0, z = 0;
@@ -27,7 +23,7 @@ namespace ClassMapper
             }
 
             return new XmiPoint3D(
-                id,
+                id,           
                 name,
                 ifcGuid,
                 nativeId,

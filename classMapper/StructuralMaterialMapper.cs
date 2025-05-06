@@ -18,7 +18,7 @@ namespace ClassMapper
                     material = element.Document.GetElement(matIds.First()) as Material;
             }
 
-            string materialTypeString = "Steel"; // 示例，可从 material.MaterialClass 获取
+            string materialTypeString = "Unknown"; // 示例，可从 material.MaterialClass 获取
             if (material != null && !string.IsNullOrEmpty(material.MaterialClass))
             {
                 materialTypeString = material.MaterialClass;

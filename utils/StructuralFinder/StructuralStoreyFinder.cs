@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Revit_to_XMI.classMapper
+namespace Revit_to_XMI.utils.StructuralFinder
 {
-    internal class StructuralPointSupportMapper
+    internal class StructuralStoreyFinder
     {
     }
 }

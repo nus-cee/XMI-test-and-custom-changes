@@ -1,88 +1,138 @@
-﻿//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Text;
-//using System.Threading.Tasks;
-//using Autodesk.Revit.DB;
-//using ClassMapper;
-//using XmiCore;
+﻿using Autodesk.Revit.DB;
+using XmiCore;
+using System.Linq;
+using Lists;
+using Utils;
 
-//namespace Revit_to_XMI.classMapper
-//{
+namespace ClassMapper
+{
+    internal class StructuralCrossSectionMapper : BaseMapper
+    {
+        public static XmiStructuralCrossSection Map(Element element)
+        {
+            var (id, name, ifcGuid, nativeId, description) = ExtractBasicProperties(element);
 
-// internal class StructuralCrossSectionMapper : StructuralBaseEntityMapper
-//    {
-//        /// <summary>
-//        /// 将 Revit 元素映射为 XmiStructuralPointConnection
-//        /// </summary>
-//        public static XmiStructuralCrossSection Map(Element element)
-//        {
-//            string id = $"node_{element.Id}";
-//            string name = element.Name;
-//            string ifcGuid = element.UniqueId;
-//            string nativeId = element.Id.ToString();
-//            string description = element.LookupParameter("Description")?.AsString() ?? "";
+            // ✅ 提取 Material（从元素提取材质）
+            XmiStructuralMaterial material = null;
 
-//            var material = new XmiStructuralMaterial("storey1", "Storey1", "", "", "", 3.5f, 5000, "RX", "RY", "RZ");
+            if (element is FamilyInstance fi)
+            {
+                var matIds = fi.GetMaterialIds(false);
+                if (matIds.Count > 0)
+                {
+                    var matElement = element.Document.GetElement(matIds.First()) as Material;
+                    if (matElement != null)
+                    {
+                        string materialNativeId = matElement.Id.Value.ToString();
+
+                        // 尝试从已有列表中查找
+                        material = StructuralDataContext.StructuralMaterialList
+                            .FirstOrDefault(m => m.NativeId == materialNativeId);
+
+                        // 如果没有找到，就映射并添加进去
+                        if (material == null)
+                        {
+                            material = StructuralMaterialMapper.Map(matElement);
+                            StructuralDataContext.StructuralMaterialList.Add(material);
+                        }
+                    }
+                }
+            }
 
 
+            // ✅ 处理 Shape
+            string shapeString = "Unknown"; // 默认
+            if (element.Category != null)
+            {
+                shapeString = element.Name;
+            }
+            var shapeEnum = ExtensionEnumHelper.FromEnumValue<XmiShapeEnum>(shapeString)
+                          ?? XmiShapeEnum.Unknown;
 
-//            string[] parameters = new string[1];
+            // ✅ 提取 Parameters（比如宽高等）
+            string[] parameters = [];
 
-//            float SecondMomentOfAreaXAxis = 1;
-//            float SecondMomentOfAreaYAxis = 1;
-//            float RadiusOfGyrationXAxis = 1;
-//            float RadiusOfGyrationYAxis = 1;
-//            float ElasticModulusXAxis = 1;
-//            float ElasticModulusYAxis = 1;
-//            float PlasticModulusXAxis = 1;
-//            float PlasticModulusYAxis = 1;
-//            float TorsionalConstant = 1;
+            double width = 0, height = 0;
+            if (element.LookupParameter("b") != null)
+                width = Converters.ConvertValueToMillimeter(element.LookupParameter("b").AsDouble());
+            if (element.LookupParameter("h") != null)
+                height = Converters.ConvertValueToMillimeter(element.LookupParameter("h").AsDouble());
 
-//            return new XmiStructuralCrossSection(
-//                id,
-//                name,
-//                ifcGuid,
-//                nativeId,
-//                description,
-//                parameters,
-//                SecondMomentOfAreaXAxis, 
-//                SecondMomentOfAreaYAxis,
-//                RadiusOfGyrationXAxis,
-//                RadiusOfGyrationYAxis,
-//                ElasticModulusXAxis,
-//                ElasticModulusYAxis,
-//                TorsionalConstant
-//            );
-//        }
+            if (width > 0 || height > 0)
+            {
+                parameters = new string[]
+                {
+                    width.ToString("F2"),
+                    height.ToString("F2")
+                };
+            }
 
-//        /// <summary>
-//        /// 可选：批量收集所有连接点（用在 ExportCommand 等集中处理场景）
-//        /// </summary>
-//        public static List<XmiStructuralPointConnection> Collect(Document doc)
-//        {
-//            return new FilteredElementCollector(doc)
-//                .OfCategory(BuiltInCategory.OST_StructuralFraming)
-//                .WhereElementIsNotElementType()
-//                .Select(Map)
-//                .ToList();
-//        }
+            // ✅ 面积
+            double area = 0;
+            if (element.LookupParameter("Area") != null)
+            {
+                area = Converters.ConvertValueToMillimeter(element.LookupParameter("Area").AsDouble());
+            }
 
-//        /// <summary>
-//        /// 提取几何中心点或任意代表点（你也可以换成自己的逻辑）
-//        /// </summary>
-//        private static XYZ GetRepresentativePoint(Element element)
-//        {
-//            Location location = element.Location;
-//            if (location is LocationPoint lp)
-//            {
-//                return lp.Point;
-//            }
-//            else if (location is LocationCurve lc)
-//            {
-//                return lc.Curve.Evaluate(0.5, true); // 中点
-//            }
+            // ✅ 惯性矩、半径、模量、塑性模量、扭转常数
+            double secondMomentOfAreaXAxis = 0;
+            double secondMomentOfAreaYAxis = 0;
+            double radiusOfGyrationXAxis = 0;
+            double radiusOfGyrationYAxis = 0;
+            double elasticModulusXAxis = 0;
+            double elasticModulusYAxis = 0;
+            double plasticModulusXAxis = 0;
+            double plasticModulusYAxis = 0;
+            double torsionalConstant = 0;
 
-//            return XYZ.Zero;
-//        }
-//    }
+            if (element.LookupParameter("Ix") != null)
+                secondMomentOfAreaXAxis = Converters.ConvertValueToMillimeter(element.LookupParameter("Ix").AsDouble());
+
+            if (element.LookupParameter("Iy") != null)
+                secondMomentOfAreaYAxis = Converters.ConvertValueToMillimeter(element.LookupParameter("Iy").AsDouble());
+
+            if (element.LookupParameter("rx") != null)
+                radiusOfGyrationXAxis = Converters.ConvertValueToMillimeter(element.LookupParameter("rx").AsDouble());
+
+            if (element.LookupParameter("ry") != null)
+                radiusOfGyrationYAxis = Converters.ConvertValueToMillimeter(element.LookupParameter("ry").AsDouble());
+
+            if (element.LookupParameter("Sx") != null)
+                elasticModulusXAxis = Converters.ConvertValueToMillimeter(element.LookupParameter("Sx").AsDouble());
+
+            if (element.LookupParameter("Sy") != null)
+                elasticModulusYAxis = Converters.ConvertValueToMillimeter(element.LookupParameter("Sy").AsDouble());
+
+            if (element.LookupParameter("Zx") != null)
+                plasticModulusXAxis = Converters.ConvertValueToMillimeter(element.LookupParameter("Zx").AsDouble());
+
+            if (element.LookupParameter("Zy") != null)
+                plasticModulusYAxis = Converters.ConvertValueToMillimeter(element.LookupParameter("Zy").AsDouble());
+
+            if (element.LookupParameter("J") != null)
+                torsionalConstant = Converters.ConvertValueToMillimeter(element.LookupParameter("J").AsDouble());
+
+            // ✅ 返回 CrossSection
+            return new XmiStructuralCrossSection(
+                id,
+                name,
+                ifcGuid,
+                nativeId,
+                description,
+                material,
+                shapeEnum,
+                parameters,
+                area,
+                secondMomentOfAreaXAxis,
+                secondMomentOfAreaYAxis,
+                radiusOfGyrationXAxis,
+                radiusOfGyrationYAxis,
+                elasticModulusXAxis,
+                elasticModulusYAxis,
+                plasticModulusXAxis,
+                plasticModulusYAxis,
+                torsionalConstant
+            );
+        }
+    }
+}
