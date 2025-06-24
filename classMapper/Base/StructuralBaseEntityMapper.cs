@@ -1,5 +1,4 @@
-﻿using XmiCore;
-using Autodesk.Revit.DB;
+﻿using Autodesk.Revit.DB;
 using SessionUuid;
 
 namespace ClassMapper
@@ -11,10 +10,13 @@ namespace ClassMapper
 
         protected static (string sessionUuid, string name, string ifcGuid, string nativeId, string description) ExtractBasicProperties(Element element)
         {
-
             string sessionUuid = Guid.NewGuid().ToString();
 
             string name = element.Name;
+            if (string.IsNullOrEmpty(name))
+            {
+                name = sessionUuid;
+            }
             string ifcGuid = element.UniqueId;
             string nativeId = element.Id.ToString();
             string description = element.LookupParameter("Description")?.AsString() ?? "";

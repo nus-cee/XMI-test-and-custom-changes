@@ -2,11 +2,19 @@
 using System.Collections.Generic;
 using Autodesk.Revit.DB;
 using Newtonsoft.Json;
+using System.IO;
 
 namespace Revit_to_XMI.utils
 {
     public static class ModelInfoBuilder
     {
+        private static string _logDirectory = Directory.GetCurrentDirectory();
+
+        public static void SetLogDirectory(string directory)
+        {
+            _logDirectory = directory;
+        }
+
         public static string BuildModelInfoJson(Document doc)
         {
             Dictionary<string, object> modelInfo = new Dictionary<string, object>();
@@ -33,5 +41,11 @@ namespace Revit_to_XMI.utils
             return UnitUtils.ConvertFromInternalUnits(value, UnitTypeId.Millimeters);
         }
 
+        public static void WriteErrorLogToFile(string errorMessage)
+        {
+            string logPath = Path.Combine(_logDirectory, "error_log.txt");
+            string logEntry = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {errorMessage}\n";
+            File.WriteAllText(logPath, logEntry);
+        }
     }
 }

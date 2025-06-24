@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using XmiCore;
+using XmiSchema.Core.Enums;
 
 namespace Revit_to_XMI.utils
 {
