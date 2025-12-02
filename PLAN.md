@@ -18,7 +18,7 @@
 4. Configure Git attributes/hooks: enforce `.editorconfig`, block Autodesk binaries via `.gitignore`, and optionally add pre-push validation (`dotnet format`, `dotnet build`). **Done** through `.gitattributes`, `.gitignore`, and `scripts/git-hooks/pre-push.ps1`.
 
 ## Phase 2 - Dependency & Library Cleanup (🔄)
-1. Review `XmiSchema.Core` 0.6.0 release notes for API breaking changes; document adjustments needed in `builder/` and `classMapper/`. **Pending** – need to capture remaining TODOs plus verify materials/messaging updates.
+1. Review `XmiSchema.Core` 0.6.0 release notes for API breaking changes; document adjustments needed in `builder/` and `classMapper/`. **Done** – see `docs/XmiSchemaCore-0.6.0-review.md` for findings plus follow-up tasks (material/cross-section loops, segment population, storey dedupe). Verify mapper calls against Autodesk Revit 2026 API docs (`https://www.revitapidocs.com/2026/`) before locking changes so function names and parameter signatures stay accurate.
 2. Update `RevitXmiExporter.csproj` to reference the new package version and run `dotnet restore`. **Done**; restore succeeds on Windows MSBuild after COM reference limitation workaround.
 3. Refactor code to meet naming conventions: ensure properties use PascalCase, remove redundant Hungarian prefixes, and add analyzers (e.g., `Microsoft.CodeAnalysis.NetAnalyzers`) if gaps remain. **In progress** – namespace/name cleanup finished, analyzers still to be added.
 4. Update or add unit tests under `test/` to cover library contract changes (e.g., serialization expectations, schema validation) and run `dotnet test`. **Pending** – blocked by linking Revit stubs/headless harness.
