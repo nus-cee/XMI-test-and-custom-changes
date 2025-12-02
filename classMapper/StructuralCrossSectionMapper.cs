@@ -1,12 +1,15 @@
-﻿using Autodesk.Revit.DB;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Autodesk.Revit.DB;
+using Betekk.RevitXmiExporter.classMapper.Base;
+using Betekk.RevitXmiExporter.Utils;
 using XmiSchema.Core.Entities;
 using XmiSchema.Core.Enums;
 using XmiSchema.Core.Manager;
 using XmiSchema.Core.Utils;
-using System.Linq;
-using Utils;
 
-namespace ClassMapper
+namespace Betekk.RevitXmiExporter.ClassMapper
 {
     internal class StructuralCrossSectionMapper : BaseMapper
     {
@@ -14,21 +17,17 @@ namespace ClassMapper
         {
             try
             {
-                // 1️⃣ 基础属性
                 var (id, name, ifcGuid, nativeId, description) = ExtractBasicProperties(element);
 
-                // 2️⃣ 材料处理（委托 MaterialMapper）
                 XmiStructuralMaterial material = null;
                 if (element is ElementType typeElement)
                 {
-                    var matIds = typeElement.GetMaterialIds(false);
+                    ICollection<ElementId> matIds = typeElement.GetMaterialIds(false);
                     if (matIds.Count > 0)
                     {
-                        var matElement = element.Document.GetElement(matIds.First()) as Material;
-
-                        // 🛡️ 新增前置检查：ID 和 Name 是否合法
-                        var matName = matElement?.Name;
-                        var matId = matElement?.Id?.ToString();
+                        Material matElement = element.Document.GetElement(matIds.First()) as Material;
+                        string matName = matElement?.Name;
+                        string matId = matElement?.Id?.ToString();
 
                         if (!string.IsNullOrWhiteSpace(matName) && !string.IsNullOrWhiteSpace(matId))
                         {
@@ -36,40 +35,17 @@ namespace ClassMapper
                         }
                         else
                         {
-                            Revit_to_XMI.utils.ModelInfoBuilder.WriteErrorLogToFile(
+                            ModelInfoBuilder.WriteErrorLogToFile(
                                 $"[StructuralCrossSectionMapper] Skipped invalid material: ID={matId}, Name={matName}");
                         }
                     }
                 }
 
+                string shapeName = element.Category?.Name ?? element.Name;
+                XmiShapeEnum shapeEnum = ExtensionEnumHelper.FromEnumValue<XmiShapeEnum>(shapeName) ?? XmiShapeEnum.Unknown;
 
-                //if (material == null)
-                //{
-                //    Revit_to_XMI.utils.ModelInfoBuilder.WriteErrorLogToFile(
-                //        $"[StructuralCrossSectionMapper] Warning: Material is null. Creating default for element ID={element.Id}, Name={element.Name}");
-
-                //    material = manager.CreateStructuralMaterial(
-                //        modelIndex,
-                //        "MATERIAL-PLACEHOLDER",
-                //        "Default_Material",
-                //        "",
-                //        "MATERIAL-PLACEHOLDER",
-                //        "",
-                //        XmiStructuralMaterialTypeEnum.Unknown,
-                //        0, 0,
-                //        string.Empty,
-                //        string.Empty,
-                //        string.Empty,
-                //        0
-                //    );
-                //}
-
-                // 3️⃣ 形状
-                var shapeName = element.Category?.Name ?? element.Name;
-                var shapeEnum = ExtensionEnumHelper.FromEnumValue<XmiShapeEnum>(shapeName) ?? XmiShapeEnum.Unknown;
-
-                // 4️⃣ 参数：宽高
-                double width = 0, height = 0;
+                double width = 0;
+                double height = 0;
                 if (element.LookupParameter("b") is Parameter bParam && bParam.HasValue)
                     width = Converters.ConvertValueToMillimeter(bParam.AsDouble());
                 if (element.LookupParameter("h") is Parameter hParam && hParam.HasValue)
@@ -77,18 +53,17 @@ namespace ClassMapper
 
                 string[] parameters = (width > 0 || height > 0)
                     ? new[] { width.ToString("F2"), height.ToString("F2") }
-                    : [];
+                    : Array.Empty<string>();
 
-                // 5️⃣ 面积
                 double area = 0;
                 if (element is ElementType areaType)
                 {
-                    var matIds = areaType.GetMaterialIds(false);
-                    if (matIds.Count > 0)
+                    ICollection<ElementId> areaMatIds = areaType.GetMaterialIds(false);
+                    if (areaMatIds.Count > 0)
                     {
                         try
                         {
-                            double areaFt2 = areaType.GetMaterialArea(matIds.First(), false);
+                            double areaFt2 = areaType.GetMaterialArea(areaMatIds.First(), false);
                             area = Converters.SquareFeetToSquareMillimeter(areaFt2);
                         }
                         catch
@@ -99,7 +74,6 @@ namespace ClassMapper
                     }
                 }
 
-                // 6️⃣ 截面参数（惯性矩等）
                 double GetParam(string param) =>
                     element.LookupParameter(param)?.HasValue == true
                         ? Converters.ConvertValueToMillimeter(element.LookupParameter(param).AsDouble())
@@ -115,21 +89,13 @@ namespace ClassMapper
                 double Zy = GetParam("Zy");
                 double J = GetParam("J");
 
-                // 7️⃣ 日志
-                Revit_to_XMI.utils.ModelInfoBuilder.WriteErrorLogToFile(
-                    $"[StructuralCrossSectionMapper] Creating: {name}, Shape={shapeEnum}, Area={area}, Mat={material?.Name}");
-
-
-                // ✅ 在这里强力检查 material 是否可用
-                if (material == null || string.IsNullOrWhiteSpace(material.ID))
+                if (material == null || string.IsNullOrWhiteSpace(material.Id))
                 {
-                    Revit_to_XMI.utils.ModelInfoBuilder.WriteErrorLogToFile(
-                        $"[StructuralCrossSectionMapper] Invalid material — forcing to null before CreateStructuralCrossSection. Element ID={element.Id}, Name={element.Name}, MatID={material?.ID}");
+                    ModelInfoBuilder.WriteErrorLogToFile(
+                        $"[StructuralCrossSectionMapper] Invalid material. Element ID={element.Id}, Name={element.Name}, MatID={material?.Id}");
                     material = null;
                 }
 
-
-                // 8️⃣ 创建实体
                 return manager.CreateStructuralCrossSection(
                     modelIndex,
                     id,
@@ -152,10 +118,10 @@ namespace ClassMapper
                     J
                 );
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 string info = $"Element ID={element?.Id}, Name={element?.Name}";
-                Revit_to_XMI.utils.ModelInfoBuilder.WriteErrorLogToFile(
+                ModelInfoBuilder.WriteErrorLogToFile(
                     $"[StructuralCrossSectionMapper] Error: {ex.Message}\n{info}\n{ex}");
                 throw;
             }

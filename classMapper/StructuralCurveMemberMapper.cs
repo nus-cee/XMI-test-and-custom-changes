@@ -1,16 +1,18 @@
-﻿using Autodesk.Revit.DB;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
+using Betekk.RevitXmiExporter.classMapper.Base;
+using Betekk.RevitXmiExporter.Utils;
 using XmiSchema.Core.Entities;
 using XmiSchema.Core.Enums;
 using XmiSchema.Core.Geometries;
 using XmiSchema.Core.Manager;
-using System.Collections.Generic;
-using Utils;
 using XmiSchema.Core.Utils;
-using Revit_to_XMI.utils;
-using System.Collections.Concurrent;
 
-namespace ClassMapper
+namespace Betekk.RevitXmiExporter.ClassMapper
 {
     internal class StructuralCurveMemberMapper : BaseMapper
     {
@@ -24,31 +26,25 @@ namespace ClassMapper
                     return null;
                 }
 
-                // 1️⃣ 提取基础属性
                 var (id, name, ifcGuid, nativeId, description) = ExtractBasicProperties(member);
 
-                // 4️⃣ 获取几何曲线与起止点
-                var curve = member.GetCurve();
+                Curve curve = member.GetCurve();
                 if (curve == null)
                 {
-                    ModelInfoBuilder.WriteErrorLogToFile($"[StructuralCurveMemberMapper] Warning: GetCurve returned null for member id={id}, name={name}");
+                    ModelInfoBuilder.WriteErrorLogToFile($"[StructuralCurveMemberMapper] Curve not found. Member Id={id}, Name={name}");
                     ErrorStatistics.Increment("Curve_Null");
                     return null;
                 }
 
-                var start = curve.GetEndPoint(0);
-                var end = curve.GetEndPoint(1);
-
-
-
+                XYZ start = curve.GetEndPoint(0);
+                XYZ end = curve.GetEndPoint(1);
                 if (start == null || end == null)
                 {
-                    ModelInfoBuilder.WriteErrorLogToFile($"[StructuralCurveMemberMapper] Warning: GetEndPoint null: start={start}, end={end}, nativeId={nativeId},member id={id}, name={name}");
+                    ModelInfoBuilder.WriteErrorLogToFile($"[StructuralCurveMemberMapper] Missing endpoints. NativeId={nativeId}, Member Id={id}, Name={name}");
                     ErrorStatistics.Increment("EndPoint_Null");
                     return null;
                 }
 
-                // 2️⃣ 截面 CrossSection
                 XmiStructuralCrossSection crossSection = null;
                 ElementType sectionType = null;
                 if (member.SectionTypeId != ElementId.InvalidElementId)
@@ -58,7 +54,7 @@ namespace ClassMapper
                     {
                         crossSection = StructuralCrossSectionMapper.Map(manager, modelIndex, sectionType);
 
-                        var matIds = sectionType.GetMaterialIds(false);
+                        ICollection<ElementId> matIds = sectionType.GetMaterialIds(false);
                         if (matIds.Count == 0)
                         {
                             ModelInfoBuilder.WriteErrorLogToFile($"[StructuralCurveMemberMapper] SectionType has no material: member id={id}, name={name}, sectionType={sectionType.Name}");
@@ -76,30 +72,28 @@ namespace ClassMapper
                     }
                     else
                     {
-                        ModelInfoBuilder.WriteErrorLogToFile($"[StructuralCurveMemberMapper] SectionTypeId={member.SectionTypeId} 找不到对应的 ElementType，crossSection 为空，将传入null。member id={id}, name={name}");
+                        ModelInfoBuilder.WriteErrorLogToFile($"[StructuralCurveMemberMapper] SectionTypeId={member.SectionTypeId} could not be resolved. Member id={id}, name={name}");
                         ErrorStatistics.Increment("SectionType_NotFound");
                     }
                 }
                 else
                 {
-                    ModelInfoBuilder.WriteErrorLogToFile($"[StructuralCurveMemberMapper] member.SectionTypeId is InvalidElementId，crossSection 为空，将传入null。member id={id}, name={name}");
+                    ModelInfoBuilder.WriteErrorLogToFile($"[StructuralCurveMemberMapper] Invalid SectionTypeId for member id={id}, name={name}");
                     ErrorStatistics.Increment("SectionType_Invalid");
                 }
 
-                // 3️⃣ 楼层 Storey
                 XmiStructuralStorey storey = null;
                 if (member.LevelId != ElementId.InvalidElementId)
                 {
-                    var level = member.Document.GetElement(member.LevelId) as Level;
+                    Level level = member.Document.GetElement(member.LevelId) as Level;
                     if (level != null)
                     {
                         storey = StructuralStoreyMapper.Map(manager, modelIndex, level);
                     }
                 }
 
-                // 5️⃣ 节点
-                var beginNode = StructuralPointConnectionMapper.Map(manager, modelIndex, $"{id}_start", $"{name}_start", $"{nativeId}_start", storey, start);
-                var endNode = StructuralPointConnectionMapper.Map(manager, modelIndex, $"{id}_end", $"{name}_end", $"{nativeId}_end", storey, end);
+                XmiStructuralPointConnection beginNode = StructuralPointConnectionMapper.Map(manager, modelIndex, $"{id}_start", $"{name}_start", $"{nativeId}_start", storey, start);
+                XmiStructuralPointConnection endNode = StructuralPointConnectionMapper.Map(manager, modelIndex, $"{id}_end", $"{name}_end", $"{nativeId}_end", storey, end);
 
                 if (beginNode == null || endNode == null)
                 {
@@ -107,26 +101,23 @@ namespace ClassMapper
                     return null;
                 }
 
-                // 6️⃣ 节点列表与空段
-                var nodes = new List<XmiStructuralPointConnection> { beginNode, endNode };
-                var segments = new List<XmiSegment>();
+                List<XmiStructuralPointConnection> nodes = new List<XmiStructuralPointConnection> { beginNode, endNode };
+                List<XmiSegment> segments = StructuralSegmentMapper.MapCurveSegments(id, name, nativeId, curve);
+                if (segments.Count == 0)
+                {
+                    ModelInfoBuilder.WriteErrorLogToFile($"[StructuralCurveMemberMapper] Missing segment geometry for member id={id}, name={name}");
+                    ErrorStatistics.Increment("Segment_Missing");
+                }
 
-                // 7️⃣ 构件类型
-                var roleName = member.StructuralRole.ToString();
-                var memberType = ExtensionEnumHelper.FromEnumValue<XmiStructuralCurveMemberTypeEnum>(roleName) ?? XmiStructuralCurveMemberTypeEnum.Unknown;
+                string roleName = member.StructuralRole.ToString();
+                XmiStructuralCurveMemberTypeEnum memberType =
+                    ExtensionEnumHelper.FromEnumValue<XmiStructuralCurveMemberTypeEnum>(roleName)
+                    ?? XmiStructuralCurveMemberTypeEnum.Unknown;
 
-                // 8️⃣ 坐标系
-                var transform = member.GetTransform();
+                Transform transform = member.GetTransform();
                 string localAxisX = transform != null ? $"{transform.BasisX.X},{transform.BasisX.Y},{transform.BasisX.Z}" : "0,0,0";
                 string localAxisY = transform != null ? $"{transform.BasisY.X},{transform.BasisY.Y},{transform.BasisY.Z}" : "0,0,0";
                 string localAxisZ = transform != null ? $"{transform.BasisZ.X},{transform.BasisZ.Y},{transform.BasisZ.Z}" : "0,0,0";
-
-                // 9️⃣ 点坐标
-                var startPt = beginNode;
-                var endPt = endNode;
-
-
-                double length = 0;
 
                 return manager.CreateStructuralCurveMember(
                     modelIndex,
@@ -143,7 +134,7 @@ namespace ClassMapper
                     XmiStructuralCurveMemberSystemLineEnum.Unknown,
                     beginNode,
                     endNode,
-                    length,
+                    curve.Length,
                     localAxisX,
                     localAxisY,
                     localAxisZ,
@@ -159,27 +150,29 @@ namespace ClassMapper
                 throw;
             }
         }
-        // 🧠 错误统计工具类
+
         internal static class ErrorStatistics
         {
-            private static readonly ConcurrentDictionary<string, int> _errorCounts = new();
+            private static readonly ConcurrentDictionary<string, int> ErrorCounts = new();
 
             public static void Increment(string key)
             {
-                _errorCounts.AddOrUpdate(key, 1, (_, old) => old + 1);
+                ErrorCounts.AddOrUpdate(key, 1, (_, old) => old + 1);
             }
 
             public static void LogAllToFile(string filePath)
             {
                 try
                 {
-                    using var writer = new StreamWriter(filePath, false); // 覆盖写入
-                    foreach (var kv in _errorCounts)
+                    using StreamWriter writer = new StreamWriter(filePath, false);
+                    foreach (KeyValuePair<string, int> kv in ErrorCounts)
                     {
                         writer.WriteLine($"{kv.Key}: {kv.Value}");
                     }
                 }
-                catch { /* 日志写失败忽略 */ }
+                catch
+                {
+                }
             }
         }
     }

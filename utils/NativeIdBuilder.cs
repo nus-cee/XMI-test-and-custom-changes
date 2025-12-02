@@ -1,18 +1,22 @@
-﻿namespace SessionUuid;
+﻿using System;
 
-public static class SessionUuidBuilder
+namespace Betekk.RevitXmiExporter.utils
 {
-    private static string _sessionUuid;
-
-    public static string SessionUuid
+    public static class SessionUuidBuilder
     {
-        get
+        private static string _sessionUuid;
+
+        public static string SessionUuid
         {
-            if (_sessionUuid == null)
+            get
             {
-                _sessionUuid = Guid.NewGuid().ToString();
+                if (_sessionUuid == null)
+                {
+                    _sessionUuid = Guid.NewGuid().ToString();
+                }
+
+                return _sessionUuid;
             }
-            return _sessionUuid;
         }
     }
 }

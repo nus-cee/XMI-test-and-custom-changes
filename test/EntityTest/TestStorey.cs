@@ -1,19 +1,18 @@
 ﻿using XmiSchema.Core.Entities;
 
+namespace Betekk.RevitXmiExporter.test.EntityTest;
 
-namespace Test;
 public static class TestStorey
 {
     public static XmiStructuralStorey Dummy => new XmiStructuralStorey(
-        "Optionial",
-        "Optionial",
-        "Optionial",
-        "Optionial",
-        "Optionial",
+        "Optional",
+        "Optional",
+        "Optional",
+        "Optional",
+        "Optional",
         0,
         0,
         "0",
         "0",
-        "0"
-    );
+        "0");
 }

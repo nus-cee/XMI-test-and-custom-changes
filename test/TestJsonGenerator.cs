@@ -1,13 +1,26 @@
-﻿using Autodesk.Revit.DB;
+﻿using System;
+using System.Collections.Generic;
+using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
 
-namespace Test
+namespace Betekk.RevitXmiExporter.test
 {
     public static class TestJsonGenerator
     {
+        private static class SchemaKeys
+        {
+            public const string ElementId = "ElementId";
+            public const string Category = "Category";
+            public const string Name = "Name";
+            public const string Class = "Class";
+            public const string IsAnalytical = "IsAnalytical";
+            public const string AnalyzeAs = "AnalyzeAs";
+            public const string StructuralRole = "StructuralRole";
+            public const string FromInstance = "FromInstance";
+            public const string Elevation = "Elevation";
+        }
+
         public static string GenerateStructuredModelJson(Document doc)
         {
             var structured = new Dictionary<string, object>
@@ -32,7 +45,7 @@ namespace Test
             foreach (Element elem in analyticalElements)
             {
                 var data = CollectElementData(elem, doc);
-                string role = data.ContainsKey("_StructuralRole") ? data["_StructuralRole"].ToLower() : "unknown";
+                string role = data.ContainsKey(SchemaKeys.StructuralRole) ? data[SchemaKeys.StructuralRole].ToLower() : "unknown";
 
                 ((List<Dictionary<string, string>>)structured["StructuralModel"]).Add(data);
 
@@ -51,9 +64,9 @@ namespace Test
             {
                 var data = new Dictionary<string, string>
                 {
-                    ["_ElementId"] = mat.Id.ToString(),
-                    ["_Name"] = mat.Name,
-                    ["_Class"] = mat.MaterialClass ?? "N/A"
+                    [SchemaKeys.ElementId] = mat.Id.ToString(),
+                    [SchemaKeys.Name] = mat.Name,
+                    [SchemaKeys.Class] = mat.MaterialClass ?? "N/A"
                 };
                 ((List<Dictionary<string, string>>)structured["StructuralMaterial"]).Add(data);
             }
@@ -63,9 +76,9 @@ namespace Test
             {
                 var data = new Dictionary<string, string>
                 {
-                    ["_ElementId"] = lvl.Id.ToString(),
-                    ["_Name"] = lvl.Name,
-                    ["_Elevation"] = lvl.Elevation.ToString()
+                    [SchemaKeys.ElementId] = lvl.Id.ToString(),
+                    [SchemaKeys.Name] = lvl.Name,
+                    [SchemaKeys.Elevation] = lvl.Elevation.ToString()
                 };
                 ((List<Dictionary<string, string>>)structured["StructuralStorey"]).Add(data);
             }
@@ -84,7 +97,7 @@ namespace Test
                 if (type != null)
                 {
                     var data = CollectElementData(type, doc);
-                    data["_FromInstance"] = inst.Id.ToString();
+                    data[SchemaKeys.FromInstance] = inst.Id.ToString();
                     ((List<Dictionary<string, string>>)structured["StructuralCrossSection"]).Add(data);
                 }
             }
@@ -96,23 +109,23 @@ namespace Test
         {
             var elementData = new Dictionary<string, string>
             {
-                ["_ElementId"] = element.Id.ToString(),
-                ["_Category"] = element.Category?.Name ?? "N/A",
-                ["_Name"] = element.Name,
-                ["_Class"] = element.GetType().Name
+                [SchemaKeys.ElementId] = element.Id.ToString(),
+                [SchemaKeys.Category] = element.Category?.Name ?? "N/A",
+                [SchemaKeys.Name] = element.Name,
+                [SchemaKeys.Class] = element.GetType().Name
             };
 
             if (element is AnalyticalElement analytical)
             {
-                elementData["_IsAnalytical"] = "true";
-                elementData["_AnalyzeAs"] = analytical.AnalyzeAs.ToString();
-                elementData["_StructuralRole"] = analytical.StructuralRole.ToString();
+                elementData[SchemaKeys.IsAnalytical] = "true";
+                elementData[SchemaKeys.AnalyzeAs] = analytical.AnalyzeAs.ToString();
+                elementData[SchemaKeys.StructuralRole] = analytical.StructuralRole.ToString();
             }
             else
             {
-                elementData["_IsAnalytical"] = "false";
-                elementData["_AnalyzeAs"] = "N/A";
-                elementData["_StructuralRole"] = "N/A";
+                elementData[SchemaKeys.IsAnalytical] = "false";
+                elementData[SchemaKeys.AnalyzeAs] = "N/A";
+                elementData[SchemaKeys.StructuralRole] = "N/A";
             }
 
             foreach (Parameter param in element.Parameters)

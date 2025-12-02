@@ -1,27 +1,20 @@
-﻿using Autodesk.Revit.DB;
-using SessionUuid;
+﻿using System;
+using Autodesk.Revit.DB;
 
-namespace ClassMapper
+namespace Betekk.RevitXmiExporter.classMapper.Base
 {
     internal abstract class BaseMapper
     {
-        // 静态缓存，每个 element 只生成一次 UUID
-        private static readonly Dictionary<ElementId, string> ElementUuidMap = new();
-
-        protected static (string sessionUuid, string name, string ifcGuid, string nativeId, string description) ExtractBasicProperties(Element element)
+        protected static (string Id, string Name, string IfcGuid, string NativeId, string Description) ExtractBasicProperties(Element element)
         {
-            string sessionUuid = Guid.NewGuid().ToString();
+            string id = Guid.NewGuid().ToString();
 
-            string name = element.Name;
-            if (string.IsNullOrEmpty(name))
-            {
-                name = sessionUuid;
-            }
+            string name = string.IsNullOrWhiteSpace(element.Name) ? id : element.Name;
             string ifcGuid = element.UniqueId;
             string nativeId = element.Id.ToString();
-            string description = element.LookupParameter("Description")?.AsString() ?? "";
+            string description = element.LookupParameter("Description")?.AsString() ?? string.Empty;
 
-            return (sessionUuid, name, ifcGuid, nativeId, description);
+            return (id, name, ifcGuid, nativeId, description);
         }
     }
 }
