@@ -1,0 +1,12 @@
+<Project>
+	<PropertyGroup>
+		<RevitApiVersion Condition="'$(RevitApiVersion)'==''">2026</RevitApiVersion>
+		<WindowsRevitBase Condition="'$(WindowsRevitBase)'==''">C:\Program Files\Autodesk\Revit</WindowsRevitBase>
+		<UnixRevitBase Condition="'$(UnixRevitBase)'==''">/mnt/c/Program Files/Autodesk/Revit</UnixRevitBase>
+
+		<RevitInstallDir Condition="'$(OS)'=='Windows_NT'">C:\Program Files\Autodesk\Revit 2026</RevitInstallDir>
+		<RevitInstallDir Condition="'$(OS)'!='Windows_NT'">/mnt/c/Program Files\Autodesk\Revit 2026</RevitInstallDir>
+
+		<EnableWindowsTargeting Condition="'$(OS)'!='Windows_NT' and '$(EnableWindowsTargeting)'==''">true</EnableWindowsTargeting>
+	</PropertyGroup>
+</Project>

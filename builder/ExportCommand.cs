@@ -4,9 +4,10 @@ using System.Text;
 using System.Windows.Forms;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
-using Autodesk.Revit.UI;
 using Betekk.RevitXmiExporter.Builder;
 using Betekk.RevitXmiExporter.Utils;
+using Autodesk.Revit.UI;
+using RevitTaskDialog = Autodesk.Revit.UI.TaskDialog;
 
 namespace Betekk.RevitXmiExporter
 {
@@ -34,7 +35,7 @@ namespace Betekk.RevitXmiExporter
 
                 if (saveDialog.ShowDialog() != DialogResult.OK)
                 {
-                    TaskDialog.Show("Export canceled", "No path selected. The export has been canceled.");
+                    RevitTaskDialog.Show("Export canceled", "No path selected. The export has been canceled.");
                     return Result.Cancelled;
                 }
 
@@ -50,7 +51,7 @@ namespace Betekk.RevitXmiExporter
                 string exportPath = basePath + "_xmi_export.json";
                 File.WriteAllText(exportPath, exportJson, Encoding.UTF8);
 
-                TaskDialog dialog = new TaskDialog("Export complete")
+                RevitTaskDialog dialog = new RevitTaskDialog("Export complete")
                 {
                     MainInstruction = "The structural model was exported successfully.",
                     MainContent = exportPath
@@ -62,7 +63,7 @@ namespace Betekk.RevitXmiExporter
             catch (Exception ex)
             {
                 ModelInfoBuilder.WriteErrorLogToFile($"[ExportCommand] {ex}");
-                TaskDialog.Show("Export error", "An exception occurred during export. See error_log.txt for details.");
+                RevitTaskDialog.Show("Export error", "An exception occurred during export. See error_log.txt for details.");
                 return Result.Failed;
             }
         }

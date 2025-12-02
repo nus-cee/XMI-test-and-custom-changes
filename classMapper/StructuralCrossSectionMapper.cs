@@ -21,7 +21,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                 XmiStructuralMaterial material = null;
                 if (element is ElementType typeElement)
                 {
-                    IList<ElementId> matIds = typeElement.GetMaterialIds(false);
+                    ICollection<ElementId> matIds = typeElement.GetMaterialIds(false);
                     if (matIds.Count > 0)
                     {
                         Material matElement = element.Document.GetElement(matIds.First()) as Material;
@@ -57,7 +57,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                 double area = 0;
                 if (element is ElementType areaType)
                 {
-                    IList<ElementId> areaMatIds = areaType.GetMaterialIds(false);
+                    ICollection<ElementId> areaMatIds = areaType.GetMaterialIds(false);
                     if (areaMatIds.Count > 0)
                     {
                         try
@@ -88,10 +88,10 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                 double Zy = GetParam("Zy");
                 double J = GetParam("J");
 
-                if (material == null || string.IsNullOrWhiteSpace(material.ID))
+                if (material == null || string.IsNullOrWhiteSpace(material.Id))
                 {
                     ModelInfoBuilder.WriteErrorLogToFile(
-                        $"[StructuralCrossSectionMapper] Invalid material. Element ID={element.Id}, Name={element.Name}, MatID={material?.ID}");
+                        $"[StructuralCrossSectionMapper] Invalid material. Element ID={element.Id}, Name={element.Name}, MatID={material?.Id}");
                     material = null;
                 }
 

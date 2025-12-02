@@ -27,10 +27,10 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                     {
                         storey = manager.CreateStructuralStorey(
                             modelIndex,
-                            levelElement.Id.IntegerValue.ToString(),
+                            levelElement.Id.Value.ToString(),
                             levelElement.Name,
                             "",
-                            levelElement.Id.IntegerValue.ToString(),
+                            levelElement.Id.Value.ToString(),
                             "",
                             Converters.ConvertValueToMillimeter(levelElement.Elevation),
                             1f,

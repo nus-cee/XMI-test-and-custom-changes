@@ -34,6 +34,7 @@ dotnet build RevitXmiExporter.sln
 dotnet publish RevitXmiExporter.csproj -c Release -o dist/Plugin
 ```
 The publish output contains `RevitXmiExporter.dll`, dependencies, and configuration files required by Revit.
+The root `Directory.Build.props` supplies defaults for Revit 2026 on both Windows (`C:\Program Files\Autodesk\Revit 2026`) and WSL (`/mnt/c/...`). Override with `dotnet build -p:RevitInstallDir="D:\Autodesk\Revit 2026"` if your installation lives elsewhere; the same property flows into restore/publish steps.
 
 ## Manual Installation
 1. Ensure Revit is closed.

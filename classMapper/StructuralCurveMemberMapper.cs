@@ -53,7 +53,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                     {
                         crossSection = StructuralCrossSectionMapper.Map(manager, modelIndex, sectionType);
 
-                        IList<ElementId> matIds = sectionType.GetMaterialIds(false);
+                        ICollection<ElementId> matIds = sectionType.GetMaterialIds(false);
                         if (matIds.Count == 0)
                         {
                             ModelInfoBuilder.WriteErrorLogToFile($"[StructuralCurveMemberMapper] SectionType has no material: member id={id}, name={name}, sectionType={sectionType.Name}");

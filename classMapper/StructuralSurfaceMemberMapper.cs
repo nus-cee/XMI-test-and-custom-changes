@@ -66,7 +66,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
 
         private static XmiStructuralMaterial ResolveMaterial(IXmiManager manager, int modelIndex, Element element)
         {
-            IList<ElementId> materialIds = null;
+            ICollection<ElementId> materialIds = null;
             if (element is FamilyInstance familyInstance && familyInstance.Symbol != null)
             {
                 materialIds = familyInstance.Symbol.GetMaterialIds(false);
