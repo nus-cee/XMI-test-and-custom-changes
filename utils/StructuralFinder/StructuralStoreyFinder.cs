@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Revit_to_XMI.utils.StructuralFinder
+﻿namespace Betekk.RevitXmiExporter.Utils.StructuralFinder
 {
     internal class StructuralStoreyFinder
     {

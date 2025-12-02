@@ -1,30 +1,28 @@
-﻿using Autodesk.Revit.DB;
-using Utils;
+﻿using System;
+using System.Collections.Generic;
+using Autodesk.Revit.DB;
+using Betekk.RevitXmiExporter.Utils;
 using XmiSchema.Core.Entities;
 using XmiSchema.Core.Geometries;
 using XmiSchema.Core.Manager;
-using System;
-using System.Collections.Generic;
 
-namespace ClassMapper
+namespace Betekk.RevitXmiExporter.ClassMapper
 {
     internal class StructuralPointConnectionMapper : BaseMapper
     {
-        // 坐标去重缓存：key = "x_y_z"
-        private static readonly Dictionary<string, XmiStructuralPointConnection> _connectionCache = new();
+        // Cache connections by coordinate tuple to avoid duplicates.
+        private static readonly Dictionary<string, XmiStructuralPointConnection> ConnectionCache = new();
 
-        // ✅ 从 Element 创建连接点（用于 AnalyticalNode、ReferencePoint 等）
         public static XmiStructuralPointConnection Map(IXmiManager manager, int modelIndex, Element element)
         {
             try
             {
                 var (id, name, ifcGuid, nativeId, description) = ExtractBasicProperties(element);
 
-                // 1️⃣ 创建楼层（可选）
                 XmiStructuralStorey storey = null;
                 if (element.LevelId != null && element.LevelId != ElementId.InvalidElementId)
                 {
-                    var levelElement = element.Document.GetElement(element.LevelId) as Level;
+                    Level levelElement = element.Document.GetElement(element.LevelId) as Level;
                     if (levelElement != null)
                     {
                         storey = manager.CreateStructuralStorey(
@@ -43,18 +41,16 @@ namespace ClassMapper
                     }
                 }
 
-                // 2️⃣ 创建点
-                var point = Point3DMapper.Map(manager, modelIndex, element);
+                XmiPoint3D point = Point3DMapper.Map(manager, modelIndex, element);
                 return Map(manager, modelIndex, id, name, nativeId, storey, point);
             }
             catch (Exception ex)
             {
-                Revit_to_XMI.utils.ModelInfoBuilder.WriteErrorLogToFile($"[StructuralPointConnectionMapper - From Element] Error: {ex}");
+                ModelInfoBuilder.WriteErrorLogToFile($"[StructuralPointConnectionMapper.Element] {ex}");
                 throw;
             }
         }
 
-        // ✅ 从 XYZ 创建连接点（用于 AnalyticalMember 起止点）
         public static XmiStructuralPointConnection Map(IXmiManager manager, int modelIndex, string id, string name, string nativeId, XmiStructuralStorey storey, XYZ position)
         {
             try
@@ -64,10 +60,10 @@ namespace ClassMapper
                 double z = Math.Round(Converters.ConvertValueToMillimeter(position.Z), 3);
                 string key = $"{x}_{y}_{z}";
 
-                if (_connectionCache.TryGetValue(key, out var cached))
+                if (ConnectionCache.TryGetValue(key, out XmiStructuralPointConnection cached))
                     return cached;
 
-                var point = manager.CreatePoint3D(
+                XmiPoint3D point = manager.CreatePoint3D(
                     modelIndex,
                     $"{id}_point",
                     $"{name}_point",
@@ -77,7 +73,7 @@ namespace ClassMapper
                     x, y, z
                 );
 
-                var connection = manager.CreateStructuralPointConnection(
+                XmiStructuralPointConnection connection = manager.CreateStructuralPointConnection(
                     modelIndex,
                     id,
                     name,
@@ -88,17 +84,16 @@ namespace ClassMapper
                     point
                 );
 
-                _connectionCache[key] = connection;
+                ConnectionCache[key] = connection;
                 return connection;
             }
             catch (Exception ex)
             {
-                Revit_to_XMI.utils.ModelInfoBuilder.WriteErrorLogToFile($"[StructuralPointConnectionMapper - XYZ] Error: {ex}");
+                ModelInfoBuilder.WriteErrorLogToFile($"[StructuralPointConnectionMapper.XYZ] {ex}");
                 throw;
             }
         }
 
-        // ✅ 从已有 Point3D 创建连接点（统一走缓存）
         public static XmiStructuralPointConnection Map(IXmiManager manager, int modelIndex, string id, string name, string nativeId, XmiStructuralStorey storey, XmiPoint3D point)
         {
             try
@@ -108,10 +103,10 @@ namespace ClassMapper
                 double z = Math.Round(point.Z, 3);
                 string key = $"{x}_{y}_{z}";
 
-                if (_connectionCache.TryGetValue(key, out var cached))
+                if (ConnectionCache.TryGetValue(key, out XmiStructuralPointConnection cached))
                     return cached;
 
-                var connection = manager.CreateStructuralPointConnection(
+                XmiStructuralPointConnection connection = manager.CreateStructuralPointConnection(
                     modelIndex,
                     id,
                     name,
@@ -122,12 +117,12 @@ namespace ClassMapper
                     point
                 );
 
-                _connectionCache[key] = connection;
+                ConnectionCache[key] = connection;
                 return connection;
             }
             catch (Exception ex)
             {
-                Revit_to_XMI.utils.ModelInfoBuilder.WriteErrorLogToFile($"[StructuralPointConnectionMapper - from Point3D] Error: {ex}");
+                ModelInfoBuilder.WriteErrorLogToFile($"[StructuralPointConnectionMapper.Point3D] {ex}");
                 throw;
             }
         }

@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using Autodesk.Revit.DB;
 using Newtonsoft.Json;
-using System.IO;
 
-namespace Revit_to_XMI.utils
+namespace Betekk.RevitXmiExporter.Utils
 {
     public static class ModelInfoBuilder
     {
@@ -12,27 +12,32 @@ namespace Revit_to_XMI.utils
 
         public static void SetLogDirectory(string directory)
         {
-            _logDirectory = directory;
+            if (!string.IsNullOrWhiteSpace(directory))
+            {
+                _logDirectory = directory;
+            }
         }
 
         public static string BuildModelInfoJson(Document doc)
         {
-            Dictionary<string, object> modelInfo = new Dictionary<string, object>();
-            modelInfo["Name"] = doc.Title;
-            modelInfo["Path"] = doc.PathName;
-            modelInfo["ISSVersion"] = "1.0.0";
+            Dictionary<string, object> modelInfo = new Dictionary<string, object>
+            {
+                ["Name"] = doc.Title,
+                ["Path"] = doc.PathName,
+                ["ISSVersion"] = "1.0.0"
+            };
 
             XYZ basePoint = BasePoint.GetProjectBasePoint(doc).Position;
             XYZ metric = doc.Application.Create.NewXYZ(
                 ConvertValueToMillimeter(basePoint.X),
                 ConvertValueToMillimeter(basePoint.Y),
-                ConvertValueToMillimeter(basePoint.Z)
-            );
+                ConvertValueToMillimeter(basePoint.Z));
+
             modelInfo["GlobalReferenceCoordinate"] = $"{metric.X},{metric.Y},{metric.Z}";
             modelInfo["ModelAuthoringTool"] = doc.Application.Product.ToString();
             modelInfo["ModelAuthoringToolVersion"] = $"{doc.Application.VersionName} - {doc.Application.VersionNumber}";
 
-            List<Dictionary<string, object>> modelList = new List<Dictionary<string, object>>() { modelInfo };
+            List<Dictionary<string, object>> modelList = new List<Dictionary<string, object>> { modelInfo };
             return "\"StructuralModel\": " + JsonConvert.SerializeObject(modelList, Formatting.Indented);
         }
 
@@ -43,9 +48,10 @@ namespace Revit_to_XMI.utils
 
         public static void WriteErrorLogToFile(string errorMessage)
         {
+            Directory.CreateDirectory(_logDirectory);
             string logPath = Path.Combine(_logDirectory, "error_log.txt");
-            string logEntry = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {errorMessage}\n";
-            File.WriteAllText(logPath, logEntry);
+            string logEntry = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {errorMessage}{Environment.NewLine}";
+            File.AppendAllText(logPath, logEntry);
         }
     }
 }

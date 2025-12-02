@@ -1,25 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Utils
+namespace Betekk.RevitXmiExporter.Utils
 {
-    public class Converters
+    public static class Converters
     {
-        public static double ConvertValueToMillimeter(double ImperialUnitValue) //Imperial to Metric converter
+        public static double ConvertValueToMillimeter(double imperialUnitValue)
         {
-            return System.Math.Round(ImperialUnitValue * 304.8, 1);  //to 1 decimal places
+            return System.Math.Round(imperialUnitValue * 304.8, 1);
         }
+
         public static double SquareFeetToSquareMillimeter(double squareFeet)
         {
-            return squareFeet * 92903.04; // 1 ft² = 92903.04 mm²
+            return squareFeet * 92903.04; // 1 ft^2 = 92,903.04 mm^2
         }
+
         public static double KilogramsPerCubicFootToKilogramsPerCubicMeter(double kgPerFt3)
         {
-            return kgPerFt3 / 0.0283168; // 1 kg/ft³ -> 0.0283168 kg/m³
+            return kgPerFt3 / 0.0283168; // 1 ft^3 = 0.0283168 m^3
         }
     }
 }
-    

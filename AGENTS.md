@@ -1,13 +1,13 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-The solution file `Revit_to_XMI.sln` loads the single project `Revit_to_XMI.csproj`, which targets `net8.0` and references Revit 2025 assemblies plus `XmiSchema.Core`. Entry points in `App.cs` call into the `builder/` pipeline: `XmiBuilder` orchestrates Revit collectors, `JsonExporter` serializes, and `ExportCommand` wires everything into the Revit external command. Domain mapping logic is separated in `classMapper/`, while reusable helpers (naming, geometry, Revit lookups) live in `utils/`. The `test/` folder hosts scaffolding (e.g., `EntityTest/TestStorey.cs`) for constructing dummy entities and JSON snapshots—reuse these when extending automation.
+The solution file `RevitXmiExporter.sln` loads the single project `RevitXmiExporter.csproj`, which targets `net8.0` and references Revit 2025 assemblies plus `XmiSchema.Core`. Entry points in `App.cs` call into the `builder/` pipeline: `XmiBuilder` orchestrates Revit collectors, `JsonExporter` serializes, and `ExportCommand` wires everything into the Revit external command. Domain mapping logic is separated in `classMapper/`, while reusable helpers (naming, geometry, Revit lookups) live in `utils/`. The `test/` folder hosts scaffolding (e.g., `EntityTest/TestStorey.cs`) for constructing dummy entities and JSON snapshots-reuse these when extending automation.
 
 ## Build, Test, and Development Commands
-- `dotnet restore Revit_to_XMI.csproj` — pull all NuGet and COM interop dependencies before building.
-- `dotnet build Revit_to_XMI.sln -c Release` — compile the plugin for x64; Release matches the Revit deployment expectation.
-- `dotnet publish Revit_to_XMI.csproj -c Release -o bin/Plugin` — produce a self-contained drop that can be copied into `%APPDATA%/Autodesk/Revit/Addins/2025`.
-- `dotnet test Revit_to_XMI.sln` — runs any future test projects wired into the solution; see below for current expectations.
+- `dotnet restore RevitXmiExporter.csproj` - pull all NuGet and COM interop dependencies before building.
+- `dotnet build RevitXmiExporter.sln -c Release` - compile the plugin for x64; Release matches the Revit deployment expectation.
+- `dotnet publish RevitXmiExporter.csproj -c Release -o bin/Plugin` - produce a self-contained drop that can be copied into `%APPDATA%/Autodesk/Revit/Addins/2025`.
+- `dotnet test RevitXmiExporter.sln` - runs any future test projects wired into the solution; see below for current expectations.
 
 ## Coding Style & Naming Conventions
 Formatting is enforced via the repository `.editorconfig`: 4-space indentation, CRLF endings, grouped `using` statements, and no `var` unless type names are redundant. Follow .NET naming defaults (PascalCase for types/members, interfaces prefixed with `I`). Prefer object/collection initializers, explicit types, and wrap braces on new lines. Run `dotnet format` before opening a PR to align with analyzer preferences (qualification rules, null checks, readonly fields).
@@ -19,4 +19,4 @@ Automated tests are still being bootstrapped; until a dedicated test project is 
 Git history mixes imperative statements and Conventional Commits (e.g., `fix: point3D and pointConnection`). Prefer the latter: `<type>: <scope> <summary>` with a short, action-focused summary. Each PR should describe: (1) motivation or linked issue, (2) user-visible Revit changes, (3) test evidence (`dotnet build`, manual Revit screenshots, JSON diffs). Request a reviewer familiar with Revit API changes when touching `builder/` or `classMapper/`.
 
 ## Security & Configuration Tips
-Revit COM references point to `..\Revit\Revit 2025\`; keep that folder outside the repo and never commit Autodesk binaries. Store environment-specific paths (e.g., schema export destinations) in Revit add-in manifest files, not in code. When logging, drop identifiers that could expose model IP—prefer hashes or GUID truncation. Always verify the JSON payload with `XmiManager` before sharing outside the org.
+Revit COM references point to `..\Revit\Revit 2025\`; keep that folder outside the repo and never commit Autodesk binaries. Store environment-specific paths (e.g., schema export destinations) in Revit add-in manifest files, not in code. When logging, drop identifiers that could expose model IP-prefer hashes or GUID truncation. Always verify the JSON payload with `XmiManager` before sharing outside the org.

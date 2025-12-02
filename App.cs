@@ -1,34 +1,32 @@
 ﻿using Autodesk.Revit.UI;
 
-namespace RevittoXMI
+namespace Betekk.RevitXmiExporter
 {
     public class App : IExternalApplication
     {
-        private const string RIBBON_TAB = "XMI-Schema";
-        private const string RIBBON_PANEL = "ExportJson";
+        private const string RibbonTab = "XMI-Schema";
+        private const string RibbonPanel = "ExportJson";
 
         public Result OnStartup(UIControlledApplication application)
         {
             try
             {
-                // 创建选项卡
-                try { application.CreateRibbonTab(RIBBON_TAB); }
-                catch { } // 如果已存在就忽略
+                try { application.CreateRibbonTab(RibbonTab); }
+                catch { }
 
-                // 创建面板
-                RibbonPanel panel = application.CreateRibbonPanel(RIBBON_TAB, RIBBON_PANEL);
+                RibbonPanel panel = application.CreateRibbonPanel(RibbonTab, RibbonPanel);
 
-                // 创建按钮
                 PushButtonData buttonData = new PushButtonData(
-                    "ExportStructureBtn",               // 按钮 ID
-                    "ExportJson",                          // 按钮名称
-                    typeof(App).Assembly.Location,     // DLL 路径
-                    "RevittoXMI.ExportCommand"         // 点击按钮调用的命令类
-                );
+                    "ExportStructureBtn",
+                    "ExportJson",
+                    typeof(App).Assembly.Location,
+                    "Betekk.RevitXmiExporter.ExportCommand"
+                )
+                {
+                    ToolTip = "Export the structural data set to JSON"
+                };
 
-                buttonData.ToolTip = "导出结构数据到 JSON";
-                panel.AddItem(buttonData); // 加到面板中
-
+                panel.AddItem(buttonData);
                 return Result.Succeeded;
             }
             catch

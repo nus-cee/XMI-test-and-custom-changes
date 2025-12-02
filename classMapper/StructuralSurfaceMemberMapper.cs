@@ -1,15 +1,16 @@
-﻿using Autodesk.Revit.DB;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Autodesk.Revit.DB;
+using Betekk.RevitXmiExporter.Utils;
 using XmiSchema.Core.Entities;
-using XmiSchema.Core.Utils;
 using XmiSchema.Core.Enums;
 using XmiSchema.Core.Geometries;
-using System.Linq;
-using Utils;
-using System.Collections.Generic;
 using XmiSchema.Core.Manager;
 using XmiSchema.Core.Relationships;
+using XmiSchema.Core.Utils;
 
-namespace ClassMapper
+namespace Betekk.RevitXmiExporter.ClassMapper
 {
     internal class StructuralSurfaceMemberMapper : BaseMapper
     {
@@ -17,66 +18,16 @@ namespace ClassMapper
         {
             try
             {
-                // 1️⃣ 基础属性
                 var (id, name, ifcGuid, nativeId, description) = ExtractBasicProperties(element);
 
-                // 2️⃣ 材料 Material
-                XmiStructuralMaterial material = null;
-                if (element is FamilyInstance fi && fi.Symbol != null)
-                {
-                    // 提取材料
-                    var matIds = fi.Symbol.GetMaterialIds(false);
-                    if (matIds.Count > 0)
-                    {
-                        var matElement = fi.Symbol.Document.GetElement(matIds.First()) as Material;
-                        if (matElement != null)
-                        {
-                            material = StructuralMaterialMapper.Map(manager, modelIndex, matElement);
-                        }
-                    }
-                }
-                else if (element is ElementType typeElement)
-                {
-                    // 提取材料
-                    var matIds = typeElement.GetMaterialIds(false);
-                    if (matIds.Count > 0)
-                    {
-                        var matElement = typeElement.Document.GetElement(matIds.First()) as Material;
-                        if (matElement != null)
-                        {
-                            material = StructuralMaterialMapper.Map(manager, modelIndex, matElement);
-                        }
-                    }
-                }
+                XmiStructuralMaterial material = ResolveMaterial(manager, modelIndex, element);
+                XmiStructuralStorey storey = ResolveStorey(manager, modelIndex, element);
 
-                // 3️⃣ 楼层 Storey
-                XmiStructuralStorey storey = null;
-                if (element.LevelId != null && element.LevelId != ElementId.InvalidElementId)
-                {
-                    var levelElement = element.Document.GetElement(element.LevelId) as Level;
-                    if (levelElement != null)
-                    {
-                        storey = StructuralStoreyMapper.Map(manager, modelIndex, levelElement);
-                        // 查找已有 storey
-                        if (storey != null)
-                        {
-                            var existingStorey = manager.GetEntitiesOfType<XmiStructuralStorey>(modelIndex)
-                                .FirstOrDefault(s => s.NativeId == storey.NativeId);
-                            storey = existingStorey ?? storey;
-                        }
-                    }
-                }
+                List<XmiStructuralPointConnection> nodes = new List<XmiStructuralPointConnection>();
+                List<XmiSegment> segments = new List<XmiSegment>();
 
-                // 4️⃣ 节点 Nodes
-                var nodes = new List<XmiStructuralPointConnection>();
-                
-
-                // 5️⃣ 段 Segments
-                var segments = new List<XmiSegment>();
-
-                // 6️⃣ 类型、系统面、面积、厚度、高度、坐标系、zOffset
-                var surfaceMemberType = DetermineSurfaceType(element);
-                var systemPlane = XmiStructuralSurfaceMemberSystemPlaneEnum.Unknown;
+                XmiStructuralSurfaceMemberTypeEnum surfaceMemberType = DetermineSurfaceType(element);
+                XmiStructuralSurfaceMemberSystemPlaneEnum systemPlane = XmiStructuralSurfaceMemberSystemPlaneEnum.Unknown;
                 double area = ExtractArea(element);
                 double height = CalculateHeight(nodes);
                 double thickness = ExtractThickness(element);
@@ -85,8 +36,7 @@ namespace ClassMapper
                 const string localAxisZ = "0,0,1";
                 const double zOffset = 0;
 
-                // 7️⃣ 创建 SurfaceMember（新版接口参数顺序）
-                var surfaceMember = manager.CreateStructuralSurfaceMember(
+                return manager.CreateStructuralSurfaceMember(
                     modelIndex,
                     id,
                     name,
@@ -105,41 +55,95 @@ namespace ClassMapper
                     localAxisX,
                     localAxisY,
                     localAxisZ,
-                    height
-                );
-
-                return surfaceMember;
+                    height);
             }
             catch (Exception ex)
             {
-                Revit_to_XMI.utils.ModelInfoBuilder.WriteErrorLogToFile($"[StructuralSurfaceMemberMapper] Error: {ex}");
+                ModelInfoBuilder.WriteErrorLogToFile($"[StructuralSurfaceMemberMapper] {ex}");
                 throw;
             }
+        }
+
+        private static XmiStructuralMaterial ResolveMaterial(IXmiManager manager, int modelIndex, Element element)
+        {
+            IList<ElementId> materialIds = null;
+            if (element is FamilyInstance familyInstance && familyInstance.Symbol != null)
+            {
+                materialIds = familyInstance.Symbol.GetMaterialIds(false);
+            }
+            else if (element is ElementType typeElement)
+            {
+                materialIds = typeElement.GetMaterialIds(false);
+            }
+
+            if (materialIds == null || materialIds.Count == 0)
+            {
+                return null;
+            }
+
+            Material materialElement = element.Document.GetElement(materialIds.First()) as Material;
+            return materialElement != null ? StructuralMaterialMapper.Map(manager, modelIndex, materialElement) : null;
+        }
+
+        private static XmiStructuralStorey ResolveStorey(IXmiManager manager, int modelIndex, Element element)
+        {
+            if (element.LevelId == null || element.LevelId == ElementId.InvalidElementId)
+            {
+                return null;
+            }
+
+            Level levelElement = element.Document.GetElement(element.LevelId) as Level;
+            if (levelElement == null)
+            {
+                return null;
+            }
+
+            XmiStructuralStorey storey = StructuralStoreyMapper.Map(manager, modelIndex, levelElement);
+            if (storey == null)
+            {
+                return null;
+            }
+
+            XmiStructuralStorey existingStorey = manager.GetEntitiesOfType<XmiStructuralStorey>(modelIndex)
+                .FirstOrDefault(s => s.NativeId == storey.NativeId);
+            return existingStorey ?? storey;
         }
 
         private static XmiStructuralSurfaceMemberTypeEnum DetermineSurfaceType(Element element)
         {
             string surfaceTypeStr = "Unknown";
-            if (element.Category?.Name.ToLower().Contains("wall") == true)
+            if (element.Category?.Name.Contains("wall", StringComparison.OrdinalIgnoreCase) == true)
+            {
                 surfaceTypeStr = "Wall";
-            else if (element.Category?.Name.ToLower().Contains("floor") == true)
+            }
+            else if (element.Category?.Name.Contains("floor", StringComparison.OrdinalIgnoreCase) == true)
+            {
                 surfaceTypeStr = "Slab";
+            }
+
             return ExtensionEnumHelper.FromEnumValue<XmiStructuralSurfaceMemberTypeEnum>(surfaceTypeStr)
                 ?? XmiStructuralSurfaceMemberTypeEnum.Unknown;
         }
 
         private static double ExtractThickness(Element element)
         {
-            var thicknessParam = element.LookupParameter("Thickness");
+            Parameter thicknessParam = element.LookupParameter("Thickness");
             if (thicknessParam?.StorageType == StorageType.Double)
+            {
                 return Converters.ConvertValueToMillimeter(thicknessParam.AsDouble());
+            }
+
             return 0;
         }
 
         private static double ExtractArea(Element element)
         {
-            if (element.LookupParameter("Area") != null)
-                return Converters.ConvertValueToMillimeter(element.LookupParameter("Area").AsDouble());
+            Parameter areaParameter = element.LookupParameter("Area");
+            if (areaParameter?.StorageType == StorageType.Double)
+            {
+                return Converters.ConvertValueToMillimeter(areaParameter.AsDouble());
+            }
+
             return 0;
         }
 
@@ -147,9 +151,10 @@ namespace ClassMapper
         {
             if (nodes.Count >= 2)
             {
-                var zs = nodes.Select(n => n.Point.Z).ToList();
-                return zs.Max() - zs.Min();
+                List<double> zValues = nodes.Select(n => n.Point.Z).ToList();
+                return zValues.Max() - zValues.Min();
             }
+
             return 0;
         }
     }
@@ -157,14 +162,15 @@ namespace ClassMapper
     public class XYZEqualityComparer : IEqualityComparer<XYZ>
     {
         private const double Tolerance = 1e-6;
+
         public bool Equals(XYZ a, XYZ b)
         {
             return a != null && b != null && a.IsAlmostEqualTo(b, Tolerance);
         }
+
         public int GetHashCode(XYZ obj)
         {
-            return obj == null ? 0 :
-                obj.X.GetHashCode() ^ obj.Y.GetHashCode() ^ obj.Z.GetHashCode();
+            return obj == null ? 0 : obj.X.GetHashCode() ^ obj.Y.GetHashCode() ^ obj.Z.GetHashCode();
         }
     }
 }

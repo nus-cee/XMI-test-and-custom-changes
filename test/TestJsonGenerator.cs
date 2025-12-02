@@ -1,10 +1,10 @@
-﻿using Autodesk.Revit.DB;
+﻿using System;
+using System.Collections.Generic;
+using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
 
-namespace Test
+namespace Betekk.RevitXmiExporter.Tests
 {
     public static class TestJsonGenerator
     {

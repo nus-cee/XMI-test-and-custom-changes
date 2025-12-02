@@ -1,16 +1,13 @@
 ﻿using System;
 using Autodesk.Revit.DB;
+using Betekk.RevitXmiExporter.Utils;
 using XmiSchema.Core.Geometries;
-using Utils;
 using XmiSchema.Core.Manager;
-using XmiSchema.Core.Models;
 
-namespace ClassMapper
+namespace Betekk.RevitXmiExporter.ClassMapper
 {
     internal class Point3DMapper : BaseMapper
     {
-
-        
         public static XmiPoint3D Map(IXmiManager manager, int modelIndex, Element element)
         {
             try
@@ -27,8 +24,7 @@ namespace ClassMapper
                     z = Converters.ConvertValueToMillimeter(pos.Z);
                 }
 
-                // ✅ 使用 manager 的 CreatePoint3D 方法创建点
-                var newPoint = manager.CreatePoint3D(
+                XmiPoint3D newPoint = manager.CreatePoint3D(
                     modelIndex,
                     id,
                     name,
@@ -43,7 +39,7 @@ namespace ClassMapper
             }
             catch (Exception ex)
             {
-                Revit_to_XMI.utils.ModelInfoBuilder.WriteErrorLogToFile($"[Point3DMapper] Error: {ex}");
+                ModelInfoBuilder.WriteErrorLogToFile($"[Point3DMapper] {ex}");
                 throw;
             }
         }

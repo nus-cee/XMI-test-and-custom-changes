@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.12.35527.113 d17.12
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Revit_to_XMI", "Revit_to_XMI.csproj", "{B6F3F114-E682-410D-AF95-F9E5EFF4FBFF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RevitXmiExporter", "RevitXmiExporter.csproj", "{B6F3F114-E682-410D-AF95-F9E5EFF4FBFF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
