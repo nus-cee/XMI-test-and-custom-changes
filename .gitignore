@@ -39,7 +39,7 @@ Thumbs.db
 ## Autodesk/Revit binaries and payloads
 RevitAPI*.dll
 RevitAPIUI*.dll
-*.addin
+# *.addin
 *.rvt
 *.rfa
 
