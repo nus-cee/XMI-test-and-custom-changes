@@ -1,40 +1,47 @@
-## 忽略构建输出
+## Ignore build output
 bin/
 obj/
 [Ll]og/
 *.log
 
-## 忽略用户相关的 VS 设置
+## Ignore user-specific Visual Studio settings
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
 
-## 忽略 VS 编译数据库
+## Visual Studio cache
 .vs/
 
-## 忽略 Rider / JetBrains
+## Rider / JetBrains artifacts
 .idea/
 *.sln.iml
 
-## 忽略 NuGet 包
+## NuGet packages
 *.nupkg
 packages/
 *.snupkg
 
-## 忽略发布输出
+## Publish output and binaries
 publish/
 *.dll
 *.exe
 *.pdb
 
-## 忽略 ReSharper
+## ReSharper
 _ReSharper*/
 *.DotSettings.user
 
-## 忽略系统文件
+## System files
 *.DS_Store
 Thumbs.db
 
-## 忽略你提到的 exp 文件夹
+## Autodesk/Revit binaries and payloads
+RevitAPI*.dll
+RevitAPIUI*.dll
+*.addin
+*.rvt
+*.rfa
+
+## Local experimental artifacts
 /exp/

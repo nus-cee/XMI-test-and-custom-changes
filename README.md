@@ -71,4 +71,4 @@ Testing is currently manual plus lightweight serialization checks:
 - Document manual export scenarios (sample models, parameters toggled) under `test/README.md` as you expand coverage.
 
 ## Contributing & Roadmap
-Follow `AGENTS.md` for coding style, commit conventions, and PR expectations. Upcoming work-installer automation, semantic versioning, and the upgrade to `XmiSchema.Core` 0.6.0-is tracked in `PLAN.md`. Feel free to open issues or PRs referencing the relevant plan phase.
+Follow `AGENTS.md` for coding style, commit conventions, and PR expectations. Enable the shared pre-push hook to keep builds reproducible before pushing: `git config core.hooksPath .githooks`. Upcoming work-installer automation, semantic versioning, and the upgrade to `XmiSchema.Core` 0.6.0-is tracked in `PLAN.md`. Feel free to open issues or PRs referencing the relevant plan phase.

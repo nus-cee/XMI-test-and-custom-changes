@@ -24,6 +24,16 @@ Keep branches short-lived. If a branch drifts more than a few days, rebase on `d
 - Prefer imperative subject lines (`Add installer manifest schema validation`).
 - Run `dotnet format` (when available) and `msbuild RevitXmiExporter.sln /p:Configuration=Release` before pushing.
 
+## Repo Hygiene & Hooks
+- `.editorconfig` and `.gitattributes` keep indentation, newline, and diff behavior consistent. Do not override these locally; add scoped overrides in feature branches if needed.
+- Autodesk/Revit binaries (`RevitAPI*.dll`, `.addin`, `.rvt`, `.rfa`) are excluded in `.gitignore`. Leave them outside the repo to avoid legal/size issues.
+- A reusable pre-push hook lives under `.githooks/pre-push` and proxies to `scripts/git-hooks/pre-push.ps1`. Enable it once per clone:
+  ```bash
+  git config core.hooksPath .githooks
+  ```
+  The PowerShell script runs `dotnet format --verify-no-changes` and `msbuild RevitXmiExporter.sln /p:Configuration=Release`. Run pushes from a Visual Studio Developer PowerShell (or set `MSBUILD_EXE_PATH`) so the hook can find `MSBuild.exe`.
+- If you truly need to skip the hook (e.g., hotfix while offline), provide rationale in your PR and run the same commands manually before requesting review.
+
 ## Review Checklist
 - ✅ Namespaces start with `Betekk.` and follow the existing folder layout.
 - ✅ Revit API references honor `Directory.Build.props` overrides (no hard-coded paths).

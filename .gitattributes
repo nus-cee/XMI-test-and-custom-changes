@@ -1,0 +1,17 @@
+* text=auto eol=crlf
+
+*.sh text eol=lf
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Improve diffs/merges for SDK-style projects
+*.cs diff=csharp
+*.csproj merge=union
+*.props merge=union
+*.targets merge=union
+*.sln merge=union eol=crlf
+
+# Treat documentation as UTF-8 text
+*.md text
+*.txt text
