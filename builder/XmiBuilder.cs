@@ -24,6 +24,8 @@ namespace Betekk.RevitXmiExporter.Builder
 
         public void BuildModel(Document doc)
         {
+            StructuralMaterialLooper(doc);
+            StructuralCrossSectionLooper(doc);
             StructuralPointConnectionLooper(doc);
             StructuralStoreyLooper(doc);
             StructuralCurveMemberLooper(doc);

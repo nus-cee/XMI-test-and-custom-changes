@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Autodesk.Revit.DB;
 using Betekk.RevitXmiExporter.Utils;
 using XmiSchema.Core.Entities;
@@ -18,6 +19,14 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                 if (element is Level level)
                 {
                     storeyElevation = Converters.ConvertValueToMillimeter(level.Elevation);
+                }
+
+                XmiStructuralStorey existingStorey = manager
+                    .GetEntitiesOfType<XmiStructuralStorey>(modelIndex)
+                    .FirstOrDefault(s => string.Equals(s.NativeId, nativeId, StringComparison.OrdinalIgnoreCase));
+                if (existingStorey != null)
+                {
+                    return existingStorey;
                 }
 
                 return manager.CreateStructuralStorey(

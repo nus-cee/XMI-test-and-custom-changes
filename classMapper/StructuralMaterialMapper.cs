@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
 using Betekk.RevitXmiExporter.Utils;
@@ -51,6 +52,14 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                         poissonRatio = FormatXYZ(structAsset.PoissonRatio);
                         thermalCoefficient = structAsset.ThermalExpansionCoefficient.X;
                     }
+                }
+
+                XmiStructuralMaterial existingMaterial = manager
+                    .GetEntitiesOfType<XmiStructuralMaterial>(modelIndex)
+                    .FirstOrDefault(m => string.Equals(m.NativeId, nativeId, StringComparison.OrdinalIgnoreCase));
+                if (existingMaterial != null)
+                {
+                    return existingMaterial;
                 }
 
                 return manager.CreateStructuralMaterial(

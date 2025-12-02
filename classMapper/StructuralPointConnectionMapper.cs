@@ -25,19 +25,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                     Level levelElement = element.Document.GetElement(element.LevelId) as Level;
                     if (levelElement != null)
                     {
-                        storey = manager.CreateStructuralStorey(
-                            modelIndex,
-                            levelElement.Id.Value.ToString(),
-                            levelElement.Name,
-                            "",
-                            levelElement.Id.Value.ToString(),
-                            "",
-                            Converters.ConvertValueToMillimeter(levelElement.Elevation),
-                            1f,
-                            null,
-                            null,
-                            null
-                        );
+                        storey = StructuralStoreyMapper.Map(manager, modelIndex, levelElement);
                     }
                 }
 
