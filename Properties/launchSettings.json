@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "RevitXmiExporter": {
+      "commandName": "Project"
+    },
+    "RevitXmiExporterExecutable": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Program Files\\Autodesk\\Revit 2026\\Revit.exe"
+    }
+  }
+}

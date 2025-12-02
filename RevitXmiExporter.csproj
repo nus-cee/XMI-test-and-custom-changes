@@ -24,6 +24,7 @@
 		<OutputType>Library</OutputType>
 		<AssemblyVersion>$(VersionPrefix)</AssemblyVersion>
 		<FileVersion>$(VersionPrefix)</FileVersion>
+		<SignAssembly>False</SignAssembly>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -69,7 +70,20 @@
 		<FrameworkReference Include="Microsoft.WindowsDesktop.App.WindowsForms" />
 		<FrameworkReference Include="Microsoft.WindowsDesktop.App.WPF" />
 	</ItemGroup>
-	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-	  <Exec Command="C:\Program Files\Autodesk\Revit 2026\Revit.exe" />
+
+	<PropertyGroup>
+		<PostPublishDestination>C:\Program Files\Autodesk\Revit Xmi Exporter\</PostPublishDestination>
+	</PropertyGroup>
+
+	<Target Name="CopyAfterPublish" AfterTargets="Publish">
+		<ItemGroup>
+			<PublishedFiles Include="$(PublishDir)**\*.*" />
+		</ItemGroup>
+		<Copy SourceFiles="@(PublishedFiles)" DestinationFiles="@(PublishedFiles->'$(PostPublishDestination)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
 	</Target>
+
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+	  <Exec Command="xcopy &quot;$(ProjectDir)dist\Plugin\*.*&quot; &quot;C:\Program Files\Autodesk\Revit Xmi Exporter 2026\&quot; /E /Y /I" />
+	</Target>
+
 </Project>
