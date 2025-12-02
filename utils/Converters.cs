@@ -12,6 +12,14 @@ namespace Utils
         {
             return System.Math.Round(ImperialUnitValue * 304.8, 1);  //to 1 decimal places
         }
+        public static double SquareFeetToSquareMillimeter(double squareFeet)
+        {
+            return squareFeet * 92903.04; // 1 ft² = 92903.04 mm²
+        }
+        public static double KilogramsPerCubicFootToKilogramsPerCubicMeter(double kgPerFt3)
+        {
+            return kgPerFt3 / 0.0283168; // 1 kg/ft³ -> 0.0283168 kg/m³
+        }
     }
 }
     

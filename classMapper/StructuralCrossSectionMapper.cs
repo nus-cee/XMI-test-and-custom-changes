@@ -1,138 +1,164 @@
 ﻿using Autodesk.Revit.DB;
-using XmiCore;
+using XmiSchema.Core.Entities;
+using XmiSchema.Core.Enums;
+using XmiSchema.Core.Manager;
+using XmiSchema.Core.Utils;
 using System.Linq;
-using Lists;
 using Utils;
 
 namespace ClassMapper
 {
     internal class StructuralCrossSectionMapper : BaseMapper
     {
-        public static XmiStructuralCrossSection Map(Element element)
+        public static XmiStructuralCrossSection Map(IXmiManager manager, int modelIndex, Element element)
         {
-            var (id, name, ifcGuid, nativeId, description) = ExtractBasicProperties(element);
-
-            // ✅ 提取 Material（从元素提取材质）
-            XmiStructuralMaterial material = null;
-
-            if (element is FamilyInstance fi)
+            try
             {
-                var matIds = fi.GetMaterialIds(false);
-                if (matIds.Count > 0)
+                // 1️⃣ 基础属性
+                var (id, name, ifcGuid, nativeId, description) = ExtractBasicProperties(element);
+
+                // 2️⃣ 材料处理（委托 MaterialMapper）
+                XmiStructuralMaterial material = null;
+                if (element is ElementType typeElement)
                 {
-                    var matElement = element.Document.GetElement(matIds.First()) as Material;
-                    if (matElement != null)
+                    var matIds = typeElement.GetMaterialIds(false);
+                    if (matIds.Count > 0)
                     {
-                        string materialNativeId = matElement.Id.Value.ToString();
+                        var matElement = element.Document.GetElement(matIds.First()) as Material;
 
-                        // 尝试从已有列表中查找
-                        material = StructuralDataContext.StructuralMaterialList
-                            .FirstOrDefault(m => m.NativeId == materialNativeId);
+                        // 🛡️ 新增前置检查：ID 和 Name 是否合法
+                        var matName = matElement?.Name;
+                        var matId = matElement?.Id?.ToString();
 
-                        // 如果没有找到，就映射并添加进去
-                        if (material == null)
+                        if (!string.IsNullOrWhiteSpace(matName) && !string.IsNullOrWhiteSpace(matId))
                         {
-                            material = StructuralMaterialMapper.Map(matElement);
-                            StructuralDataContext.StructuralMaterialList.Add(material);
+                            material = StructuralMaterialMapper.Map(manager, modelIndex, matElement);
+                        }
+                        else
+                        {
+                            Revit_to_XMI.utils.ModelInfoBuilder.WriteErrorLogToFile(
+                                $"[StructuralCrossSectionMapper] Skipped invalid material: ID={matId}, Name={matName}");
                         }
                     }
                 }
-            }
 
 
-            // ✅ 处理 Shape
-            string shapeString = "Unknown"; // 默认
-            if (element.Category != null)
-            {
-                shapeString = element.Name;
-            }
-            var shapeEnum = ExtensionEnumHelper.FromEnumValue<XmiShapeEnum>(shapeString)
-                          ?? XmiShapeEnum.Unknown;
+                //if (material == null)
+                //{
+                //    Revit_to_XMI.utils.ModelInfoBuilder.WriteErrorLogToFile(
+                //        $"[StructuralCrossSectionMapper] Warning: Material is null. Creating default for element ID={element.Id}, Name={element.Name}");
 
-            // ✅ 提取 Parameters（比如宽高等）
-            string[] parameters = [];
+                //    material = manager.CreateStructuralMaterial(
+                //        modelIndex,
+                //        "MATERIAL-PLACEHOLDER",
+                //        "Default_Material",
+                //        "",
+                //        "MATERIAL-PLACEHOLDER",
+                //        "",
+                //        XmiStructuralMaterialTypeEnum.Unknown,
+                //        0, 0,
+                //        string.Empty,
+                //        string.Empty,
+                //        string.Empty,
+                //        0
+                //    );
+                //}
 
-            double width = 0, height = 0;
-            if (element.LookupParameter("b") != null)
-                width = Converters.ConvertValueToMillimeter(element.LookupParameter("b").AsDouble());
-            if (element.LookupParameter("h") != null)
-                height = Converters.ConvertValueToMillimeter(element.LookupParameter("h").AsDouble());
+                // 3️⃣ 形状
+                var shapeName = element.Category?.Name ?? element.Name;
+                var shapeEnum = ExtensionEnumHelper.FromEnumValue<XmiShapeEnum>(shapeName) ?? XmiShapeEnum.Unknown;
 
-            if (width > 0 || height > 0)
-            {
-                parameters = new string[]
+                // 4️⃣ 参数：宽高
+                double width = 0, height = 0;
+                if (element.LookupParameter("b") is Parameter bParam && bParam.HasValue)
+                    width = Converters.ConvertValueToMillimeter(bParam.AsDouble());
+                if (element.LookupParameter("h") is Parameter hParam && hParam.HasValue)
+                    height = Converters.ConvertValueToMillimeter(hParam.AsDouble());
+
+                string[] parameters = (width > 0 || height > 0)
+                    ? new[] { width.ToString("F2"), height.ToString("F2") }
+                    : [];
+
+                // 5️⃣ 面积
+                double area = 0;
+                if (element is ElementType areaType)
                 {
-                    width.ToString("F2"),
-                    height.ToString("F2")
-                };
-            }
+                    var matIds = areaType.GetMaterialIds(false);
+                    if (matIds.Count > 0)
+                    {
+                        try
+                        {
+                            double areaFt2 = areaType.GetMaterialArea(matIds.First(), false);
+                            area = Converters.SquareFeetToSquareMillimeter(areaFt2);
+                        }
+                        catch
+                        {
+                            if (element.LookupParameter("Area") is Parameter areaParam && areaParam.HasValue)
+                                area = Converters.ConvertValueToMillimeter(areaParam.AsDouble());
+                        }
+                    }
+                }
 
-            // ✅ 面积
-            double area = 0;
-            if (element.LookupParameter("Area") != null)
+                // 6️⃣ 截面参数（惯性矩等）
+                double GetParam(string param) =>
+                    element.LookupParameter(param)?.HasValue == true
+                        ? Converters.ConvertValueToMillimeter(element.LookupParameter(param).AsDouble())
+                        : 0;
+
+                double Ix = GetParam("Ix");
+                double Iy = GetParam("Iy");
+                double rx = GetParam("rx");
+                double ry = GetParam("ry");
+                double Sx = GetParam("Sx");
+                double Sy = GetParam("Sy");
+                double Zx = GetParam("Zx");
+                double Zy = GetParam("Zy");
+                double J = GetParam("J");
+
+                // 7️⃣ 日志
+                Revit_to_XMI.utils.ModelInfoBuilder.WriteErrorLogToFile(
+                    $"[StructuralCrossSectionMapper] Creating: {name}, Shape={shapeEnum}, Area={area}, Mat={material?.Name}");
+
+
+                // ✅ 在这里强力检查 material 是否可用
+                if (material == null || string.IsNullOrWhiteSpace(material.ID))
+                {
+                    Revit_to_XMI.utils.ModelInfoBuilder.WriteErrorLogToFile(
+                        $"[StructuralCrossSectionMapper] Invalid material — forcing to null before CreateStructuralCrossSection. Element ID={element.Id}, Name={element.Name}, MatID={material?.ID}");
+                    material = null;
+                }
+
+
+                // 8️⃣ 创建实体
+                return manager.CreateStructuralCrossSection(
+                    modelIndex,
+                    id,
+                    name,
+                    ifcGuid,
+                    nativeId,
+                    description,
+                    material,
+                    shapeEnum,
+                    parameters,
+                    area,
+                    Ix,
+                    Iy,
+                    rx,
+                    ry,
+                    Sx,
+                    Sy,
+                    Zx,
+                    Zy,
+                    J
+                );
+            }
+            catch (System.Exception ex)
             {
-                area = Converters.ConvertValueToMillimeter(element.LookupParameter("Area").AsDouble());
+                string info = $"Element ID={element?.Id}, Name={element?.Name}";
+                Revit_to_XMI.utils.ModelInfoBuilder.WriteErrorLogToFile(
+                    $"[StructuralCrossSectionMapper] Error: {ex.Message}\n{info}\n{ex}");
+                throw;
             }
-
-            // ✅ 惯性矩、半径、模量、塑性模量、扭转常数
-            double secondMomentOfAreaXAxis = 0;
-            double secondMomentOfAreaYAxis = 0;
-            double radiusOfGyrationXAxis = 0;
-            double radiusOfGyrationYAxis = 0;
-            double elasticModulusXAxis = 0;
-            double elasticModulusYAxis = 0;
-            double plasticModulusXAxis = 0;
-            double plasticModulusYAxis = 0;
-            double torsionalConstant = 0;
-
-            if (element.LookupParameter("Ix") != null)
-                secondMomentOfAreaXAxis = Converters.ConvertValueToMillimeter(element.LookupParameter("Ix").AsDouble());
-
-            if (element.LookupParameter("Iy") != null)
-                secondMomentOfAreaYAxis = Converters.ConvertValueToMillimeter(element.LookupParameter("Iy").AsDouble());
-
-            if (element.LookupParameter("rx") != null)
-                radiusOfGyrationXAxis = Converters.ConvertValueToMillimeter(element.LookupParameter("rx").AsDouble());
-
-            if (element.LookupParameter("ry") != null)
-                radiusOfGyrationYAxis = Converters.ConvertValueToMillimeter(element.LookupParameter("ry").AsDouble());
-
-            if (element.LookupParameter("Sx") != null)
-                elasticModulusXAxis = Converters.ConvertValueToMillimeter(element.LookupParameter("Sx").AsDouble());
-
-            if (element.LookupParameter("Sy") != null)
-                elasticModulusYAxis = Converters.ConvertValueToMillimeter(element.LookupParameter("Sy").AsDouble());
-
-            if (element.LookupParameter("Zx") != null)
-                plasticModulusXAxis = Converters.ConvertValueToMillimeter(element.LookupParameter("Zx").AsDouble());
-
-            if (element.LookupParameter("Zy") != null)
-                plasticModulusYAxis = Converters.ConvertValueToMillimeter(element.LookupParameter("Zy").AsDouble());
-
-            if (element.LookupParameter("J") != null)
-                torsionalConstant = Converters.ConvertValueToMillimeter(element.LookupParameter("J").AsDouble());
-
-            // ✅ 返回 CrossSection
-            return new XmiStructuralCrossSection(
-                id,
-                name,
-                ifcGuid,
-                nativeId,
-                description,
-                material,
-                shapeEnum,
-                parameters,
-                area,
-                secondMomentOfAreaXAxis,
-                secondMomentOfAreaYAxis,
-                radiusOfGyrationXAxis,
-                radiusOfGyrationYAxis,
-                elasticModulusXAxis,
-                elasticModulusYAxis,
-                plasticModulusXAxis,
-                plasticModulusYAxis,
-                torsionalConstant
-            );
         }
     }
 }

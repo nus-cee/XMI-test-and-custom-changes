@@ -1,45 +1,42 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Autodesk.Revit.DB;
+﻿using Autodesk.Revit.DB;
 using Utils;
-using XmiCore;
+using XmiSchema.Core.Entities;
+using XmiSchema.Core.Manager;
 
 namespace ClassMapper
 {
     internal class StructuralStoreyMapper : BaseMapper
     {
-        public static XmiStructuralStorey Map(Element element)
-        {
+        public static XmiStructuralStorey Map(IXmiManager manager, int modelIndex, Element element)
+        {            try
+            {
             var (id, name, ifcGuid, nativeId, description) = ExtractBasicProperties(element);
 
-            double? storeyElevation = null;
-
+            double storeyElevation = 0;
             if (element is Level level)
             {
-                storeyElevation = (float)level.Elevation;
+                storeyElevation = Converters.ConvertValueToMillimeter(level.Elevation);
             }
 
-            double? storeyMass = 1f; // 固定质量，实际可根据需要修改
-            string? storeyHorizontalReactionX = null;
-            string? storeyHorizontalReactionY = null;
-            string? storeyVerticalReaction = null;
-        
-
-        return new XmiStructuralStorey(
+            return manager.CreateStructuralStorey(
+                modelIndex,
                 id,
                 name,
                 ifcGuid,
                 nativeId,
                 description,
-                storeyElevation ?? 0f,
-                storeyMass ?? 0f,
-                storeyHorizontalReactionX,
-                storeyHorizontalReactionY,
-                storeyVerticalReaction
+                storeyElevation,
+                1f,                        // 固定质量
+                null,                      // 默认水平反应 X
+                null,                      // 默认水平反应 Y
+                null                       // 默认垂直反应
             );
+        }
+        catch (Exception ex)
+        {
+            Revit_to_XMI.utils.ModelInfoBuilder.WriteErrorLogToFile($"[StructuralStoreyMapper] Error: {ex}");
+            throw;
+        }
         }
     }
 }

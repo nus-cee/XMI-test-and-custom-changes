@@ -1,4 +1,6 @@
-﻿using XmiCore;
+﻿using XmiSchema.Core.Entities;
+
+
 namespace Test;
 public static class TestStorey
 {

@@ -4,8 +4,8 @@ namespace RevittoXMI
 {
     public class App : IExternalApplication
     {
-        private const string RIBBON_TAB = "tang_plugin";
-        private const string RIBBON_PANEL = "结构工具";
+        private const string RIBBON_TAB = "XMI-Schema";
+        private const string RIBBON_PANEL = "ExportJson";
 
         public Result OnStartup(UIControlledApplication application)
         {
@@ -21,7 +21,7 @@ namespace RevittoXMI
                 // 创建按钮
                 PushButtonData buttonData = new PushButtonData(
                     "ExportStructureBtn",               // 按钮 ID
-                    "结构导出",                          // 按钮名称
+                    "ExportJson",                          // 按钮名称
                     typeof(App).Assembly.Location,     // DLL 路径
                     "RevittoXMI.ExportCommand"         // 点击按钮调用的命令类
                 );
