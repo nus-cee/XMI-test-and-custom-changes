@@ -1,11 +1,20 @@
 <Project>
-	<PropertyGroup>
+	<PropertyGroup Label="Versioning">
+		<VersionPrefix Condition="'$(VersionPrefix)'==''">0.2.0</VersionPrefix>
+		<Version Condition="'$(Version)'==''">$(VersionPrefix)</Version>
+		<AssemblyVersion Condition="'$(AssemblyVersion)'==''">$(VersionPrefix).0</AssemblyVersion>
+		<FileVersion Condition="'$(FileVersion)'==''">$(VersionPrefix).0</FileVersion>
+		<InformationalVersion Condition="'$(InformationalVersion)'==''">$(Version)</InformationalVersion>
+		<PackageVersion Condition="'$(PackageVersion)'==''">$(Version)</PackageVersion>
+	</PropertyGroup>
+
+	<PropertyGroup Label="RevitInstall">
 		<RevitApiVersion Condition="'$(RevitApiVersion)'==''">2026</RevitApiVersion>
 		<WindowsRevitBase Condition="'$(WindowsRevitBase)'==''">C:\Program Files\Autodesk\Revit</WindowsRevitBase>
 		<UnixRevitBase Condition="'$(UnixRevitBase)'==''">/mnt/c/Program Files/Autodesk/Revit</UnixRevitBase>
 
-		<RevitInstallDir Condition="'$(OS)'=='Windows_NT'">C:\Program Files\Autodesk\Revit 2026</RevitInstallDir>
-		<RevitInstallDir Condition="'$(OS)'!='Windows_NT'">/mnt/c/Program Files\Autodesk\Revit 2026</RevitInstallDir>
+		<RevitInstallDir Condition="'$(RevitInstallDir)'=='' and '$(OS)'=='Windows_NT'">$(WindowsRevitBase) $(RevitApiVersion)</RevitInstallDir>
+		<RevitInstallDir Condition="'$(RevitInstallDir)'=='' and '$(OS)'!='Windows_NT'">$(UnixRevitBase) $(RevitApiVersion)</RevitInstallDir>
 
 		<EnableWindowsTargeting Condition="'$(OS)'!='Windows_NT' and '$(EnableWindowsTargeting)'==''">true</EnableWindowsTargeting>
 	</PropertyGroup>

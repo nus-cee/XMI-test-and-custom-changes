@@ -9,6 +9,15 @@
 		<RootNamespace>Betekk.RevitXmiExporter</RootNamespace>
 	</PropertyGroup>
 
+	<PropertyGroup>
+		<Authors>Betekk</Authors>
+		<Company>Betekk</Company>
+		<Product>Betekk RevitXmiExporter</Product>
+		<Description>Autodesk Revit add-in that exports structural data to XMI schema JSON.</Description>
+		<PackageId>Betekk.RevitXmiExporter</PackageId>
+		<PackageVersion>$(PackageVersion)</PackageVersion>
+	</PropertyGroup>
+
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<NoWarn>1701;1702;MSB3277</NoWarn>
 	</PropertyGroup>
