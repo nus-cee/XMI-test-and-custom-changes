@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Structure;
 using Betekk.RevitXmiExporter.Utils;
 using XmiSchema.Core.Entities;
 using XmiSchema.Core.Enums;
@@ -23,8 +24,14 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                 XmiStructuralMaterial material = ResolveMaterial(manager, modelIndex, element);
                 XmiStructuralStorey storey = ResolveStorey(manager, modelIndex, element);
 
-                List<XmiStructuralPointConnection> nodes = new List<XmiStructuralPointConnection>();
-                List<XmiSegment> segments = new List<XmiSegment>();
+                (List<XmiStructuralPointConnection> nodes, List<XmiSegment> segments) = BuildSurfaceTopology(
+                    manager,
+                    modelIndex,
+                    element,
+                    storey,
+                    id,
+                    name,
+                    nativeId);
 
                 XmiStructuralSurfaceMemberTypeEnum surfaceMemberType = DetermineSurfaceType(element);
                 XmiStructuralSurfaceMemberSystemPlaneEnum systemPlane = XmiStructuralSurfaceMemberSystemPlaneEnum.Unknown;
@@ -36,7 +43,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                 const string localAxisZ = "0,0,1";
                 const double zOffset = 0;
 
-                return manager.CreateStructuralSurfaceMember(
+                XmiStructuralSurfaceMember surfaceMember = manager.CreateStructuralSurfaceMember(
                     modelIndex,
                     id,
                     name,
@@ -56,12 +63,122 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                     localAxisY,
                     localAxisZ,
                     height);
+
+                if (surfaceMember == null)
+                {
+                    ModelInfoBuilder.WriteErrorLogToFile($"[StructuralSurfaceMemberMapper] Failed to create surface member {id}");
+                }
+
+                return surfaceMember;
             }
             catch (Exception ex)
             {
                 ModelInfoBuilder.WriteErrorLogToFile($"[StructuralSurfaceMemberMapper] {ex}");
                 throw;
             }
+        }
+
+        private static (List<XmiStructuralPointConnection> Nodes, List<XmiSegment> Segments) BuildSurfaceTopology(
+            IXmiManager manager,
+            int modelIndex,
+            Element element,
+            XmiStructuralStorey storey,
+            string ownerId,
+            string ownerName,
+            string ownerNativeId)
+        {
+            List<XmiStructuralPointConnection> nodes = new();
+            List<XmiSegment> segments = new();
+
+            if (element is not AnalyticalPanel panel)
+            {
+                return (nodes, segments);
+            }
+
+            IList<CurveLoop> loops = panel.GetLoops(AnalyticalLoopType.External);
+            if (loops == null || loops.Count == 0)
+            {
+                ModelInfoBuilder.WriteErrorLogToFile(
+                    $"[StructuralSurfaceMemberMapper] No analytical loops found for element {element.Id}");
+                return (nodes, segments);
+            }
+
+            Dictionary<string, XmiStructuralPointConnection> nodeLookup =
+                new(StringComparer.OrdinalIgnoreCase);
+            int nodeIndex = 1;
+
+            foreach (CurveLoop loop in loops)
+            {
+                List<Curve> edges = loop.ToList();
+                foreach (Curve edge in edges)
+                {
+                    if (edge == null)
+                    {
+                        continue;
+                    }
+
+                    AddNode(manager, modelIndex, storey, ownerId, ownerName, ownerNativeId, nodes, nodeLookup, ref nodeIndex, edge.GetEndPoint(0));
+                }
+
+                if (edges.Count > 0)
+                {
+                    Curve lastEdge = edges[^1];
+                    AddNode(manager, modelIndex, storey, ownerId, ownerName, ownerNativeId, nodes, nodeLookup, ref nodeIndex, lastEdge.GetEndPoint(1));
+                }
+
+                segments.AddRange(StructuralSegmentMapper.MapLoopSegments(ownerId, ownerName, ownerNativeId, edges));
+            }
+
+            return (nodes, segments);
+        }
+
+        private static void AddNode(
+            IXmiManager manager,
+            int modelIndex,
+            XmiStructuralStorey storey,
+            string ownerId,
+            string ownerName,
+            string ownerNativeId,
+            List<XmiStructuralPointConnection> nodes,
+            Dictionary<string, XmiStructuralPointConnection> nodeLookup,
+            ref int nodeIndex,
+            XYZ point)
+        {
+            if (point == null)
+            {
+                return;
+            }
+
+            string nodeId = $"{ownerId}_node_{nodeIndex}";
+            string nodeName = $"{ownerName} Node {nodeIndex}";
+            string nodeNativeId = $"{ownerNativeId}_NODE_{nodeIndex}";
+            XmiStructuralPointConnection connection = StructuralPointConnectionMapper.Map(
+                manager,
+                modelIndex,
+                nodeId,
+                nodeName,
+                nodeNativeId,
+                storey,
+                point);
+
+            if (connection == null)
+            {
+                return;
+            }
+
+            string key = string.IsNullOrWhiteSpace(connection.NativeId) ? connection.Id : connection.NativeId;
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                return;
+            }
+
+            if (!nodeLookup.ContainsKey(key))
+            {
+                nodeLookup[key] = connection;
+                nodes.Add(connection);
+            }
+
+            nodeIndex++;
         }
 
         private static XmiStructuralMaterial ResolveMaterial(IXmiManager manager, int modelIndex, Element element)
@@ -141,7 +258,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
             Parameter areaParameter = element.LookupParameter("Area");
             if (areaParameter?.StorageType == StorageType.Double)
             {
-                return Converters.ConvertValueToMillimeter(areaParameter.AsDouble());
+                return Converters.SquareFeetToSquareMillimeter(areaParameter.AsDouble());
             }
 
             return 0;
