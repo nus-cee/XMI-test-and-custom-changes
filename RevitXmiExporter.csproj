@@ -18,6 +18,11 @@
 		<PackageVersion>$(PackageVersion)</PackageVersion>
 	</PropertyGroup>
 
+	<PropertyGroup>
+		<EnableNETAnalyzers>true</EnableNETAnalyzers>
+		<AnalysisLevel>latest</AnalysisLevel>
+	</PropertyGroup>
+
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<NoWarn>1701;1702;MSB3277</NoWarn>
 	</PropertyGroup>

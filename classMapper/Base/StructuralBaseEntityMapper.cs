@@ -5,16 +5,16 @@ namespace Betekk.RevitXmiExporter.ClassMapper
 {
     internal abstract class BaseMapper
     {
-        protected static (string sessionUuid, string name, string ifcGuid, string nativeId, string description) ExtractBasicProperties(Element element)
+        protected static (string Id, string Name, string IfcGuid, string NativeId, string Description) ExtractBasicProperties(Element element)
         {
-            string sessionUuid = Guid.NewGuid().ToString();
+            string id = Guid.NewGuid().ToString();
 
-            string name = string.IsNullOrWhiteSpace(element.Name) ? sessionUuid : element.Name;
+            string name = string.IsNullOrWhiteSpace(element.Name) ? id : element.Name;
             string ifcGuid = element.UniqueId;
             string nativeId = element.Id.ToString();
             string description = element.LookupParameter("Description")?.AsString() ?? string.Empty;
 
-            return (sessionUuid, name, ifcGuid, nativeId, description);
+            return (id, name, ifcGuid, nativeId, description);
         }
     }
 }

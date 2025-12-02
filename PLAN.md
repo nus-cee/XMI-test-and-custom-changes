@@ -20,7 +20,7 @@
 ## Phase 2 - Dependency & Library Cleanup (🔄)
 1. Review `XmiSchema.Core` 0.6.0 release notes for API breaking changes; document adjustments needed in `builder/` and `classMapper/`. **Done** – notes live in `docs/XmiSchemaCore-0.6.0-review.md`, the Revit 2026 docs confirmed the AnalyticalMember/AnalyticalPanel APIs we rely on (`GetCurve`, `GetLoops`), and the follow-up actions (material/cross-section loops, segment population, storey de-duplication) are now implemented in code.
 2. Update `RevitXmiExporter.csproj` to reference the new package version and run `dotnet restore`. **Done**; restore succeeds on Windows MSBuild after COM reference limitation workaround.
-3. Refactor code to meet naming conventions: ensure properties use PascalCase, remove redundant Hungarian prefixes, and add analyzers (e.g., `Microsoft.CodeAnalysis.NetAnalyzers`) if gaps remain. **In progress** – namespace/name cleanup finished, analyzers still to be added.
+3. Refactor code to meet naming conventions: ensure properties use PascalCase, remove redundant Hungarian prefixes, and add analyzers (e.g., `Microsoft.CodeAnalysis.NetAnalyzers`) if gaps remain. **Done** – schema helpers now emit PascalCase identifiers, `_`-prefixed keys were removed from tests, and the analyzer package (with `AnalysisLevel=latest`) runs as part of the build.
 4. Update or add unit tests under `test/` to cover library contract changes (e.g., serialization expectations, schema validation) and run `dotnet test`. **Pending** – blocked by linking Revit stubs/headless harness.
 
 ## Phase 3 - Installer & Distribution Pipeline (⏳)
