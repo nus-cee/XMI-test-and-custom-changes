@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Autodesk.Revit.DB;
+using Betekk.RevitXmiExporter.classMapper.Base;
 using Betekk.RevitXmiExporter.Utils;
 using XmiSchema.Core.Entities;
 using XmiSchema.Core.Enums;

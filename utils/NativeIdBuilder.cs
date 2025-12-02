@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Betekk.RevitXmiExporter.Session
+namespace Betekk.RevitXmiExporter.utils
 {
     public static class SessionUuidBuilder
     {

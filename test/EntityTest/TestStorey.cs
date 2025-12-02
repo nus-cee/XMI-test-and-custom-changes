@@ -1,6 +1,6 @@
 ﻿using XmiSchema.Core.Entities;
 
-namespace Betekk.RevitXmiExporter.Tests;
+namespace Betekk.RevitXmiExporter.test.EntityTest;
 
 public static class TestStorey
 {

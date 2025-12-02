@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
+using Betekk.RevitXmiExporter.classMapper.Base;
 using Betekk.RevitXmiExporter.Utils;
 using XmiSchema.Core.Entities;
 using XmiSchema.Core.Enums;

@@ -1,7 +1,7 @@
 ﻿using System;
 using Autodesk.Revit.DB;
 
-namespace Betekk.RevitXmiExporter.ClassMapper
+namespace Betekk.RevitXmiExporter.classMapper.Base
 {
     internal abstract class BaseMapper
     {

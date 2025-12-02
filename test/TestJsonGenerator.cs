@@ -4,7 +4,7 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
 using Newtonsoft.Json;
 
-namespace Betekk.RevitXmiExporter.Tests
+namespace Betekk.RevitXmiExporter.test
 {
     public static class TestJsonGenerator
     {
