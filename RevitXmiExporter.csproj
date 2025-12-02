@@ -21,6 +21,9 @@
 	<PropertyGroup>
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
 		<AnalysisLevel>latest</AnalysisLevel>
+		<OutputType>Library</OutputType>
+		<AssemblyVersion>$(VersionPrefix)</AssemblyVersion>
+		<FileVersion>$(VersionPrefix)</FileVersion>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -43,11 +46,11 @@
 	<ItemGroup>
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 		<PackageReference Include="WindowsAPICodePack-Shell" Version="1.1.1" />
-		<PackageReference Include="XmiSchema.Core" Version="0.6.0" />
 		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.0.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
+		<PackageReference Include="XmiSchema.Core" Version="0.6.0" />
 	</ItemGroup>
 
 
@@ -66,4 +69,7 @@
 		<FrameworkReference Include="Microsoft.WindowsDesktop.App.WindowsForms" />
 		<FrameworkReference Include="Microsoft.WindowsDesktop.App.WPF" />
 	</ItemGroup>
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+	  <Exec Command="C:\Program Files\Autodesk\Revit 2026\Revit.exe" />
+	</Target>
 </Project>
