@@ -31,7 +31,7 @@
 		<NoWarn>1701;1702;MSB3277</NoWarn>
 	</PropertyGroup>
 
-	<ItemGroup>
+	<ItemGroup Condition="'$(MSBuildRuntimeType)'=='Full'">
 		<COMReference Include="{215d64d2-031c-33c7-96e3-61794cd1ee61}">
 			<WrapperTool>tlbimp</WrapperTool>
 			<VersionMinor>4</VersionMinor>

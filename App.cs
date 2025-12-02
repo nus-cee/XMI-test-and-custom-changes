@@ -26,7 +26,17 @@ namespace Betekk.RevitXmiExporter
                     ToolTip = "Export the structural data set to JSON"
                 };
 
+                PushButtonData harnessButtonData = new PushButtonData(
+                    "SegmentHarnessBtn",
+                    "SegmentTests",
+                    typeof(App).Assembly.Location,
+                    "Betekk.RevitXmiExporter.StructuralSegmentHarnessCommand")
+                {
+                    ToolTip = "Run StructuralSegmentMapper smoke tests and report the results"
+                };
+
                 panel.AddItem(buttonData);
+                panel.AddItem(harnessButtonData);
                 return Result.Succeeded;
             }
             catch

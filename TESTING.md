@@ -35,3 +35,11 @@
      /al "%APPDATA%\Autodesk\Revit\Addins\2026\Betekk.RevitXmiExporter\Betekk.RevitXmiExporter.dll"
    ```
 5. Inspect the generated JSON (and log files) to verify expected output.
+
+# Inline Harness Checks
+
+- Load the add-in inside Revit (UI or CoreConsole).  
+- Open the **XMI-Schema → ExportJson** panel and click **SegmentTests**.  
+- Success: dialog displays “All segment smoke tests passed.”  
+- Failure: dialog lists each mismatch and `error_log.txt` in the export/log directory is updated with the same details for later review.  
+- Rerun after schema changes to confirm the mapper still emits Line/Arc/Spline segments that match `XmiSchema.Core` expectations.
