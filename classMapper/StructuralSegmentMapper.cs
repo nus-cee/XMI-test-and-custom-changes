@@ -71,10 +71,11 @@ namespace Betekk.RevitXmiExporter.ClassMapper
             return curve switch
             {
                 Line => XmiSegmentTypeEnum.Line,
-                Arc => XmiSegmentTypeEnum.Arc,
+                Arc => XmiSegmentTypeEnum.CircularArc,
+                Ellipse => XmiSegmentTypeEnum.CircularArc,
                 NurbSpline => XmiSegmentTypeEnum.Spline,
                 HermiteSpline => XmiSegmentTypeEnum.Spline,
-                _ => XmiSegmentTypeEnum.Unknown
+                _ => XmiSegmentTypeEnum.Others
             };
         }
     }

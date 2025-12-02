@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
 using Betekk.RevitXmiExporter.Utils;
@@ -95,7 +96,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                 return (nodes, segments);
             }
 
-            IList<CurveLoop> loops = panel.GetLoops(AnalyticalLoopType.External);
+            IList<CurveLoop> loops = GetPanelLoops(panel);
             if (loops == null || loops.Count == 0)
             {
                 ModelInfoBuilder.WriteErrorLogToFile(
@@ -130,6 +131,98 @@ namespace Betekk.RevitXmiExporter.ClassMapper
             }
 
             return (nodes, segments);
+        }
+
+        private static IList<CurveLoop> GetPanelLoops(AnalyticalPanel panel)
+        {
+            IList<CurveLoop> reflectiveLoops = TryInvokePanelLoops(panel);
+            if (reflectiveLoops != null && reflectiveLoops.Count > 0)
+            {
+                return reflectiveLoops;
+            }
+
+            return ExtractLoopsFromGeometry(panel);
+        }
+
+        private static IList<CurveLoop> TryInvokePanelLoops(AnalyticalPanel panel)
+        {
+            MethodInfo getLoopsMethod = typeof(AnalyticalPanel).GetMethod("GetLoops", BindingFlags.Public | BindingFlags.Instance);
+            if (getLoopsMethod == null)
+            {
+                return null;
+            }
+
+            try
+            {
+                object result = getLoopsMethod.Invoke(panel, new object[] { AnalyticalLoopType.External });
+                return result as IList<CurveLoop>;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static IList<CurveLoop> ExtractLoopsFromGeometry(AnalyticalPanel panel)
+        {
+            List<CurveLoop> loops = new();
+            Options options = new Options
+            {
+                ComputeReferences = false,
+                DetailLevel = ViewDetailLevel.Fine,
+                IncludeNonVisibleObjects = false
+            };
+
+            GeometryElement geometry = panel.get_Geometry(options);
+            if (geometry == null)
+            {
+                return loops;
+            }
+
+            CollectLoopsFromGeometry(geometry, loops);
+            return loops;
+        }
+
+        private static void CollectLoopsFromGeometry(GeometryElement geometry, List<CurveLoop> loops)
+        {
+            foreach (GeometryObject obj in geometry)
+            {
+                if (obj is Solid solid && solid.Faces.Size > 0)
+                {
+                    foreach (Face face in solid.Faces)
+                    {
+                        AddLoopsFromFace(face, loops);
+                    }
+                }
+                else if (obj is GeometryInstance instance)
+                {
+                    GeometryElement instanceGeometry = instance.GetInstanceGeometry();
+                    if (instanceGeometry != null)
+                    {
+                        CollectLoopsFromGeometry(instanceGeometry, loops);
+                    }
+                }
+                else if (obj is Face face)
+                {
+                    AddLoopsFromFace(face, loops);
+                }
+            }
+        }
+
+        private static void AddLoopsFromFace(Face face, List<CurveLoop> loops)
+        {
+            if (face is not PlanarFace planarFace)
+            {
+                return;
+            }
+
+            foreach (CurveLoop loop in planarFace.GetEdgesAsCurveLoops())
+            {
+                if (loop != null && loop.Any())
+                {
+                    loops.Add(loop);
+                }
+            }
         }
 
         private static void AddNode(
