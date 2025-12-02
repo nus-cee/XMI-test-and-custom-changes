@@ -36,8 +36,10 @@ namespace Betekk.RevitXmiExporter.Builder
         /// <param name="doc">Document to traverse.</param>
         public void BuildModel(Document doc)
         {
-            StructuralMaterialLooper(doc);
-            StructuralCrossSectionLooper(doc);
+            (HashSet<ElementId> usedMaterialIds, HashSet<ElementId> usedTypeIds) usage = CollectUsedElementData(doc);
+
+            StructuralMaterialLooper(doc, usage.usedMaterialIds);
+            StructuralCrossSectionLooper(doc, usage.usedTypeIds);
             StructuralPointConnectionLooper(doc);
             StructuralStoreyLooper(doc);
             StructuralCurveMemberLooper(doc);
@@ -93,7 +95,8 @@ namespace Betekk.RevitXmiExporter.Builder
         /// Registers all Revit materials with the XMI manager.
         /// </summary>
         /// <param name="doc">Document providing materials.</param>
-        public void StructuralMaterialLooper(Document doc)
+        /// <param name="allowedMaterialIds">Optional filter restricting exports to materials referenced by placed elements.</param>
+        public void StructuralMaterialLooper(Document doc, ISet<ElementId> allowedMaterialIds = null)
         {
             IEnumerable<Element> materials = new FilteredElementCollector(doc)
                 .OfClass(typeof(Material))
@@ -103,6 +106,11 @@ namespace Betekk.RevitXmiExporter.Builder
 
             foreach (Material material in materials)
             {
+                if (allowedMaterialIds != null && !allowedMaterialIds.Contains(material.Id))
+                {
+                    continue;
+                }
+
                 StructuralMaterialMapper.Map(_manager, ModelIndex, material);
             }
         }
@@ -127,7 +135,8 @@ namespace Betekk.RevitXmiExporter.Builder
         /// Iterates element types capable of having structural cross sections and maps them.
         /// </summary>
         /// <param name="doc">Document providing type definitions.</param>
-        public void StructuralCrossSectionLooper(Document doc)
+        /// <param name="allowedTypeIds">Optional filter restricting exports to types actually placed in the model.</param>
+        public void StructuralCrossSectionLooper(Document doc, ISet<ElementId> allowedTypeIds = null)
         {
             ElementMulticlassFilter filter = new ElementMulticlassFilter(new[]
             {
@@ -145,8 +154,48 @@ namespace Betekk.RevitXmiExporter.Builder
 
             foreach (Element element in elementTypes)
             {
+                if (allowedTypeIds != null && !allowedTypeIds.Contains(element.Id))
+                {
+                    continue;
+                }
+
                 StructuralCrossSectionMapper.Map(_manager, ModelIndex, element);
             }
+        }
+
+        /// <summary>
+        /// Scans placed elements to determine which materials and type definitions are actually in use.
+        /// </summary>
+        /// <param name="doc">Document to analyze.</param>
+        /// <returns>Tuple containing the used material and type IDs.</returns>
+        private static (HashSet<ElementId> usedMaterialIds, HashSet<ElementId> usedTypeIds) CollectUsedElementData(Document doc)
+        {
+            HashSet<ElementId> usedMaterialIds = new HashSet<ElementId>();
+            HashSet<ElementId> usedTypeIds = new HashSet<ElementId>();
+
+            IEnumerable<Element> placedElements = new FilteredElementCollector(doc)
+                .WhereElementIsNotElementType()
+                .ToElements();
+
+            foreach (Element element in placedElements)
+            {
+                ElementId typeId = element.GetTypeId();
+                if (typeId != null && typeId != ElementId.InvalidElementId)
+                {
+                    usedTypeIds.Add(typeId);
+                }
+
+                ICollection<ElementId> materialIds = element.GetMaterialIds(false);
+                foreach (ElementId materialId in materialIds)
+                {
+                    if (materialId != null && materialId != ElementId.InvalidElementId)
+                    {
+                        usedMaterialIds.Add(materialId);
+                    }
+                }
+            }
+
+            return (usedMaterialIds, usedTypeIds);
         }
 
         /// <summary>

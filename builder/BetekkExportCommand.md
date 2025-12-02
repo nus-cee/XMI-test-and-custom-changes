@@ -15,7 +15,9 @@ This document captures how the Revit `ExportJson` ribbon button (defined in `App
 
 ## Sequential Extraction Stages
 
-`BetekkXmiBuilder.BuildModel` executes these stages in order. Keep this list updated when adding new collectors.
+`BetekkXmiBuilder.BuildModel` executes these stages in order. Keep this list updated when adding new collectors.  
+Before the stage loop runs, the builder scans placed elements to determine which materials and element
+types are actually used; only those referenced entities are exported, which keeps template defaults or unused family types from generating noisy warnings.
 
 | Order | Stage | Responsibility |
 | ----- | ----- | -------------- |
