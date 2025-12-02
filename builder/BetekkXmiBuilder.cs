@@ -11,17 +11,29 @@ using XmiSchema.Core.Relationships;
 
 namespace Betekk.RevitXmiExporter.Builder
 {
-    public class XmiBuilder
+    /// <summary>
+    /// Coordinates the extraction of structural data from a Revit document and writes it into
+    /// an <see cref="IXmiManager"/> instance for JSON serialization.
+    /// </summary>
+    public class BetekkXmiBuilder
     {
         private readonly IXmiManager _manager;
         private const int ModelIndex = 0;
 
-        public XmiBuilder()
+        /// <summary>
+        /// Initializes the XMI manager with a single model slot used for export.
+        /// </summary>
+        public BetekkXmiBuilder()
         {
             _manager = new XmiManager();
             _manager.Models = new List<XmiModel> { new XmiModel() };
         }
 
+        /// <summary>
+        /// Executes each structural extraction loop in a fixed order so downstream mappers can
+        /// rely on data created earlier in the pipeline.
+        /// </summary>
+        /// <param name="doc">Document to traverse.</param>
         public void BuildModel(Document doc)
         {
             StructuralMaterialLooper(doc);
@@ -32,11 +44,19 @@ namespace Betekk.RevitXmiExporter.Builder
             StructuralSurfaceMemberLooper(doc);
         }
 
+        /// <summary>
+        /// Serializes the built model to JSON using the backing XMI manager.
+        /// </summary>
+        /// <returns>JSON string representing the structural model.</returns>
         public string GetJson()
         {
             return _manager.BuildJson(ModelIndex);
         }
 
+        /// <summary>
+        /// Iterates analytical node elements and registers structural point connections.
+        /// </summary>
+        /// <param name="doc">Document providing analytical nodes.</param>
         public void StructuralPointConnectionLooper(Document doc)
         {
             IEnumerable<Element> nodes = new FilteredElementCollector(doc)
@@ -51,6 +71,10 @@ namespace Betekk.RevitXmiExporter.Builder
             }
         }
 
+        /// <summary>
+        /// Collects level elements and maps them into structural storeys.
+        /// </summary>
+        /// <param name="doc">Document providing level data.</param>
         public void StructuralStoreyLooper(Document doc)
         {
             IEnumerable<Element> levels = new FilteredElementCollector(doc)
@@ -65,6 +89,10 @@ namespace Betekk.RevitXmiExporter.Builder
             }
         }
 
+        /// <summary>
+        /// Registers all Revit materials with the XMI manager.
+        /// </summary>
+        /// <param name="doc">Document providing materials.</param>
         public void StructuralMaterialLooper(Document doc)
         {
             IEnumerable<Element> materials = new FilteredElementCollector(doc)
@@ -79,6 +107,10 @@ namespace Betekk.RevitXmiExporter.Builder
             }
         }
 
+        /// <summary>
+        /// Maps analytical curve members (beams, braces, etc.) into structural curve members.
+        /// </summary>
+        /// <param name="doc">Document providing analytical members.</param>
         public void StructuralCurveMemberLooper(Document doc)
         {
             IEnumerable<AnalyticalMember> analyticalMembers = new FilteredElementCollector(doc)
@@ -91,6 +123,10 @@ namespace Betekk.RevitXmiExporter.Builder
             }
         }
 
+        /// <summary>
+        /// Iterates element types capable of having structural cross sections and maps them.
+        /// </summary>
+        /// <param name="doc">Document providing type definitions.</param>
         public void StructuralCrossSectionLooper(Document doc)
         {
             ElementMulticlassFilter filter = new ElementMulticlassFilter(new[]
@@ -113,6 +149,10 @@ namespace Betekk.RevitXmiExporter.Builder
             }
         }
 
+        /// <summary>
+        /// Converts analytical panels into structural surface members.
+        /// </summary>
+        /// <param name="doc">Document providing analytical panels.</param>
         public void StructuralSurfaceMemberLooper(Document doc)
         {
             IEnumerable<AnalyticalPanel> analyticalPanels = new FilteredElementCollector(doc)

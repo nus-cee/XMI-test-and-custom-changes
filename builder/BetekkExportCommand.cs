@@ -11,9 +11,21 @@ using RevitTaskDialog = Autodesk.Revit.UI.TaskDialog;
 
 namespace Betekk.RevitXmiExporter
 {
+    /// <summary>
+    /// Revit external command invoked by the ExportJson button. Collects the output location,
+    /// runs the export pipeline, and surfaces user feedback/error logging.
+    /// </summary>
     [Transaction(TransactionMode.Manual)]
-    public class ExportCommand : IExternalCommand
+    public class BetekkExportCommand : IExternalCommand
     {
+        /// <summary>
+        /// Executes the export by prompting for a destination, delegating to <see cref="BetekkJsonExporter"/>,
+        /// and handling success/failure notifications.
+        /// </summary>
+        /// <param name="commandData">Revit provided context (documents, application, selection).</param>
+        /// <param name="message">Populated when returning <see cref="Result.Failed"/>.</param>
+        /// <param name="elements">Unused; provided for completeness per Revit API.</param>
+        /// <returns><see cref="Result.Succeeded"/> when the JSON file is written.</returns>
         public Result Execute(
             ExternalCommandData commandData,
             ref string message,
@@ -46,7 +58,7 @@ namespace Betekk.RevitXmiExporter
                     Path.GetDirectoryName(saveDialog.FileName) ?? string.Empty,
                     Path.GetFileNameWithoutExtension(saveDialog.FileName) ?? "StructuredAnalyticalModel");
 
-                JsonExporter exporter = new JsonExporter();
+                BetekkJsonExporter exporter = new BetekkJsonExporter();
                 string exportJson = exporter.Export(doc);
                 string exportPath = basePath + "_xmi_export.json";
                 File.WriteAllText(exportPath, exportJson, Encoding.UTF8);
@@ -62,7 +74,7 @@ namespace Betekk.RevitXmiExporter
             }
             catch (Exception ex)
             {
-                ModelInfoBuilder.WriteErrorLogToFile($"[ExportCommand] {ex}");
+                ModelInfoBuilder.WriteErrorLogToFile($"[BetekkExportCommand] {ex}");
                 RevitTaskDialog.Show("Export error", "An exception occurred during export. See error_log.txt for details.");
                 return Result.Failed;
             }

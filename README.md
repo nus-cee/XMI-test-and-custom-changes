@@ -16,7 +16,7 @@ This repository contains a .NET 8 add-in for Autodesk Revit 2025 that exports st
 
 ## Project Layout
 - `App.cs` - Revit `IExternalApplication` entry point that builds ribbon UI.
-- `builder/ExportCommand.cs` - Implements `IExternalCommand` invoked from Revit, orchestrating `XmiBuilder` and `JsonExporter`.
+- `builder/BetekkExportCommand.cs` - Implements `IExternalCommand` invoked from Revit, orchestrating `BetekkXmiBuilder` and `BetekkJsonExporter`.
 - `classMapper/` - Type-specific converters that project Revit entities to the schema types.
 - `utils/` - Cross-cutting helpers (naming services, document traversal, validation).
 - `test/` - Lightweight entity builders and JSON generators to validate serialization logic offline.
@@ -56,7 +56,7 @@ The root `Directory.Build.props` supplies defaults for Revit 2026 on both Window
        <Name>RevitXmiExporter</Name>
        <Assembly>C:\Users\%USERNAME%\AppData\Roaming\Autodesk\Revit\Addins\2025\RevitXmiExporter\RevitXmiExporter.dll</Assembly>
        <AddInId>8D83E68A-B739-4ACD-A9DB-1BC78F315B08</AddInId>
-       <FullClassName>Betekk.RevitXmiExporter.ExportCommand</FullClassName>
+       <FullClassName>Betekk.RevitXmiExporter.BetekkExportCommand</FullClassName>
        <VendorId>RXP</VendorId>
        <VendorDescription>Revit to XMI Exporter</VendorDescription>
      </AddIn>

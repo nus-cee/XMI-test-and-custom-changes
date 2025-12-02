@@ -83,7 +83,7 @@
 	</Target>
 
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-	  <Exec Command="xcopy &quot;$(ProjectDir)dist\Plugin\*.*&quot; &quot;C:\Program Files\Autodesk\Revit Xmi Exporter 2026\&quot; /E /Y /I" />
+	  <Exec Command="robocopy &quot;$(ProjectDir)dist\Plugin&quot; &quot;C:\Program Files\Autodesk\Revit Xmi Exporter 2026&quot; *.* /E /NFL /NDL /NJH /NJS&#xD;&#xA;exit 0&#xD;&#xA;" />
 	</Target>
 
 </Project>

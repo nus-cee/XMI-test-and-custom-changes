@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-The solution file `RevitXmiExporter.sln` loads the single project `RevitXmiExporter.csproj`, which targets `net8.0` and references Revit 2025 assemblies plus `XmiSchema.Core`. Entry points in `App.cs` call into the `builder/` pipeline: `XmiBuilder` orchestrates Revit collectors, `JsonExporter` serializes, and `ExportCommand` wires everything into the Revit external command. Domain mapping logic is separated in `classMapper/`, while reusable helpers (naming, geometry, Revit lookups) live in `utils/`. The `test/` folder hosts scaffolding (e.g., `EntityTest/TestStorey.cs`) for constructing dummy entities and JSON snapshots-reuse these when extending automation.
+The solution file `RevitXmiExporter.sln` loads the single project `RevitXmiExporter.csproj`, which targets `net8.0` and references Revit 2025 assemblies plus `XmiSchema.Core`. Entry points in `App.cs` call into the `builder/` pipeline: `BetekkXmiBuilder` orchestrates Revit collectors, `BetekkJsonExporter` serializes, and `BetekkExportCommand` wires everything into the Revit external command. Domain mapping logic is separated in `classMapper/`, while reusable helpers (naming, geometry, Revit lookups) live in `utils/`. The `test/` folder hosts scaffolding (e.g., `EntityTest/TestStorey.cs`) for constructing dummy entities and JSON snapshots-reuse these when extending automation.
 
 ## Build, Test, and Development Commands
 - `dotnet restore RevitXmiExporter.csproj` - pull all NuGet and COM interop dependencies before building.
