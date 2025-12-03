@@ -15,7 +15,7 @@ using XmiSchema.Core.Utils;
 
 namespace Betekk.RevitXmiExporter.ClassMapper
 {
-    internal class StructuralSurfaceMemberMapper : BaseMapper
+    internal class StructuralSurfaceMemberMapper : StructuralBaseEntityMapper
     {
         public static XmiStructuralSurfaceMember Map(IXmiManager manager, int modelIndex, Element element)
         {

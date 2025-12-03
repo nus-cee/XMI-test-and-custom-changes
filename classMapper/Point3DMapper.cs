@@ -7,7 +7,7 @@ using XmiSchema.Core.Manager;
 
 namespace Betekk.RevitXmiExporter.ClassMapper
 {
-    internal class Point3DMapper : BaseMapper
+    internal class Point3DMapper : StructuralBaseEntityMapper
     {
         public static XmiPoint3D Map(IXmiManager manager, int modelIndex, Element element)
         {

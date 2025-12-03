@@ -9,7 +9,7 @@ using XmiSchema.Core.Manager;
 
 namespace Betekk.RevitXmiExporter.ClassMapper
 {
-    internal class StructuralPointConnectionMapper : BaseMapper
+    internal class StructuralPointConnectionMapper : StructuralBaseEntityMapper
     {
         // Cache connections by coordinate tuple to avoid duplicates.
         private static readonly Dictionary<string, XmiStructuralPointConnection> ConnectionCache = new();

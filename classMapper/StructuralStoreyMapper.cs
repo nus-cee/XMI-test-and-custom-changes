@@ -8,7 +8,7 @@ using XmiSchema.Core.Manager;
 
 namespace Betekk.RevitXmiExporter.ClassMapper
 {
-    internal class StructuralStoreyMapper : BaseMapper
+    internal class StructuralStoreyMapper : StructuralBaseEntityMapper
     {
         public static XmiStructuralStorey Map(IXmiManager manager, int modelIndex, Element element)
         {
