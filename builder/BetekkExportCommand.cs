@@ -107,17 +107,17 @@ namespace Betekk.RevitXmiExporter
 
         private static string BuildDefaultFileName(Document doc)
         {
-            string docTitle = doc?.Title;
+            string? docTitle = doc?.Title;
             string sanitizedName = string.IsNullOrWhiteSpace(docTitle) ? "xmi_export" : docTitle.Trim();
             return $"{sanitizedName}.json";
         }
 
         private static string GetInitialDirectory(Document doc)
         {
-            string docPath = doc?.PathName;
+            string? docPath = doc?.PathName;
             if (!string.IsNullOrWhiteSpace(docPath))
             {
-                string directory = Path.GetDirectoryName(docPath);
+                string? directory = Path.GetDirectoryName(docPath);
                 if (!string.IsNullOrWhiteSpace(directory) && Directory.Exists(directory))
                 {
                     return directory;
@@ -135,7 +135,7 @@ namespace Betekk.RevitXmiExporter
 
         private static void SaveExport(string exportPath, string payload)
         {
-            string directory = Path.GetDirectoryName(exportPath);
+            string? directory = Path.GetDirectoryName(exportPath);
             if (!string.IsNullOrWhiteSpace(directory))
             {
                 Directory.CreateDirectory(directory);
@@ -169,7 +169,7 @@ namespace Betekk.RevitXmiExporter
             dialog.Show();
         }
 
-        private static void ShowErrorDialog(string header, Exception exception)
+        private static void ShowErrorDialog(string header, Exception? exception)
         {
             string logPath = ModelInfoBuilder.GetErrorLogPath();
 

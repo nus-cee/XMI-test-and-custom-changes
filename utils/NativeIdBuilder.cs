@@ -4,7 +4,7 @@ namespace Betekk.RevitXmiExporter.utils
 {
     public static class SessionUuidBuilder
     {
-        private static string _sessionUuid;
+        private static string? _sessionUuid;
 
         public static string SessionUuid
         {

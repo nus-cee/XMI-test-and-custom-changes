@@ -96,7 +96,7 @@ namespace Betekk.RevitXmiExporter.Builder
         /// </summary>
         /// <param name="doc">Document providing materials.</param>
         /// <param name="allowedMaterialIds">Optional filter restricting exports to materials referenced by placed elements.</param>
-        public void StructuralMaterialLooper(Document doc, ISet<ElementId> allowedMaterialIds = null)
+        public void StructuralMaterialLooper(Document doc, ISet<ElementId>? allowedMaterialIds = null)
         {
             IEnumerable<Element> materials = new FilteredElementCollector(doc)
                 .OfClass(typeof(Material))
@@ -136,7 +136,7 @@ namespace Betekk.RevitXmiExporter.Builder
         /// </summary>
         /// <param name="doc">Document providing type definitions.</param>
         /// <param name="allowedTypeIds">Optional filter restricting exports to types actually placed in the model.</param>
-        public void StructuralCrossSectionLooper(Document doc, ISet<ElementId> allowedTypeIds = null)
+        public void StructuralCrossSectionLooper(Document doc, ISet<ElementId>? allowedTypeIds = null)
         {
             ElementMulticlassFilter filter = new ElementMulticlassFilter(new[]
             {
