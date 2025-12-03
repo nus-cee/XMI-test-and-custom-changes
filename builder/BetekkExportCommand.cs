@@ -40,7 +40,7 @@ namespace Betekk.RevitXmiExporter
                 SaveFileDialog saveDialog = new SaveFileDialog
                 {
                     Title = "Choose an export location",
-                    FileName = "StructuredAnalyticalModel.json",
+                    FileName = "xmi_export.json",
                     DefaultExt = "json",
                     Filter = "JSON files (*.json)|*.json"
                 };
@@ -60,7 +60,7 @@ namespace Betekk.RevitXmiExporter
 
                 BetekkJsonExporter exporter = new BetekkJsonExporter();
                 string exportJson = exporter.Export(doc);
-                string exportPath = basePath + "_xmi_export.json";
+                string exportPath = basePath + ".json";
                 File.WriteAllText(exportPath, exportJson, Encoding.UTF8);
 
                 RevitTaskDialog dialog = new RevitTaskDialog("Export complete")
