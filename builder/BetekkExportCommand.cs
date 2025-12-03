@@ -1,7 +1,7 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
-using System.Windows.Forms;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
@@ -31,53 +31,158 @@ namespace Betekk.RevitXmiExporter
             ref string message,
             ElementSet elements)
         {
-            string lastExportPath = null;
             try
             {
-                UIDocument uidoc = commandData.Application.ActiveUIDocument;
-                Document doc = uidoc.Document;
-
-                SaveFileDialog saveDialog = new SaveFileDialog
+                UIDocument? uidoc = commandData.Application.ActiveUIDocument;
+                Document? doc = uidoc?.Document;
+                if (doc == null)
                 {
-                    Title = "Choose an export location",
-                    FileName = "xmi_export.json",
-                    DefaultExt = "json",
-                    Filter = "JSON files (*.json)|*.json"
-                };
+                    message = "Revit did not supply an active document to export.";
+                    ShowErrorDialog("No active document", null);
+                    return Result.Failed;
+                }
 
-                if (saveDialog.ShowDialog() != DialogResult.OK)
+                if (!TryPromptForExportPath(doc, out string? exportPath))
                 {
-                    RevitTaskDialog.Show("Export canceled", "No path selected. The export has been canceled.");
+                    ShowCancellationDialog();
                     return Result.Cancelled;
                 }
 
-                lastExportPath = saveDialog.FileName;
-                ModelInfoBuilder.SetLogDirectory(Path.GetDirectoryName(lastExportPath));
-
-                string basePath = Path.Combine(
-                    Path.GetDirectoryName(saveDialog.FileName) ?? string.Empty,
-                    Path.GetFileNameWithoutExtension(saveDialog.FileName) ?? "StructuredAnalyticalModel");
+                string? logDirectory = Path.GetDirectoryName(exportPath);
+                if (!string.IsNullOrWhiteSpace(logDirectory))
+                {
+                    ModelInfoBuilder.SetLogDirectory(logDirectory);
+                }
 
                 BetekkJsonExporter exporter = new BetekkJsonExporter();
                 string exportJson = exporter.Export(doc);
-                string exportPath = basePath + ".json";
-                File.WriteAllText(exportPath, exportJson, Encoding.UTF8);
 
-                RevitTaskDialog dialog = new RevitTaskDialog("Export complete")
-                {
-                    MainInstruction = "The structural model was exported successfully.",
-                    MainContent = exportPath
-                };
-                dialog.Show();
+                SaveExport(exportPath, exportJson);
+                ShowSuccessDialog(exportPath);
 
                 return Result.Succeeded;
             }
             catch (Exception ex)
             {
                 ModelInfoBuilder.WriteErrorLogToFile($"[BetekkExportCommand] {ex}");
-                RevitTaskDialog.Show("Export error", "An exception occurred during export. See error_log.txt for details.");
+                message = ex.Message;
+                ShowErrorDialog("An exception occurred during export.", ex);
                 return Result.Failed;
             }
+        }
+
+        private static bool TryPromptForExportPath(Document doc, [NotNullWhen(true)] out string? exportPath)
+        {
+            exportPath = null;
+            string initialDirectory = GetInitialDirectory(doc);
+            string defaultFileName = BuildDefaultFileName(doc);
+
+            FileSaveDialog saveDialog = new FileSaveDialog("JSON files (*.json)|*.json")
+            {
+                Title = "Export structural model to JSON",
+                InitialFileName = Path.Combine(initialDirectory, defaultFileName)
+            };
+
+            ItemSelectionDialogResult result = saveDialog.Show();
+            if (result != ItemSelectionDialogResult.Confirmed)
+            {
+                return false;
+            }
+
+            ModelPath? modelPath = saveDialog.GetSelectedModelPath();
+            if (modelPath == null)
+            {
+                return false;
+            }
+
+            string? userVisiblePath = ModelPathUtils.ConvertModelPathToUserVisiblePath(modelPath);
+            if (string.IsNullOrWhiteSpace(userVisiblePath))
+            {
+                return false;
+            }
+
+            exportPath = EnsureJsonExtension(userVisiblePath);
+            return true;
+        }
+
+        private static string BuildDefaultFileName(Document doc)
+        {
+            string docTitle = doc?.Title;
+            string sanitizedName = string.IsNullOrWhiteSpace(docTitle) ? "xmi_export" : docTitle.Trim();
+            return $"{sanitizedName}.json";
+        }
+
+        private static string GetInitialDirectory(Document doc)
+        {
+            string docPath = doc?.PathName;
+            if (!string.IsNullOrWhiteSpace(docPath))
+            {
+                string directory = Path.GetDirectoryName(docPath);
+                if (!string.IsNullOrWhiteSpace(directory) && Directory.Exists(directory))
+                {
+                    return directory;
+                }
+            }
+
+            string documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            return string.IsNullOrWhiteSpace(documents) ? Directory.GetCurrentDirectory() : documents;
+        }
+
+        private static string EnsureJsonExtension(string path)
+        {
+            return Path.ChangeExtension(path, ".json");
+        }
+
+        private static void SaveExport(string exportPath, string payload)
+        {
+            string directory = Path.GetDirectoryName(exportPath);
+            if (!string.IsNullOrWhiteSpace(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            File.WriteAllText(exportPath, payload, Encoding.UTF8);
+        }
+
+        private static void ShowSuccessDialog(string exportPath)
+        {
+            RevitTaskDialog dialog = new RevitTaskDialog("Export complete")
+            {
+                MainInstruction = "The structural model was exported successfully.",
+                MainContent = $"File saved to:{Environment.NewLine}{exportPath}",
+                FooterText = "Press Ctrl+C to copy the file path from this dialog.",
+                CommonButtons = TaskDialogCommonButtons.Close
+            };
+
+            dialog.Show();
+        }
+
+        private static void ShowCancellationDialog()
+        {
+            RevitTaskDialog dialog = new RevitTaskDialog("Export canceled")
+            {
+                MainInstruction = "No file was exported.",
+                MainContent = "Choose a destination to generate a JSON file.",
+                CommonButtons = TaskDialogCommonButtons.Close
+            };
+
+            dialog.Show();
+        }
+
+        private static void ShowErrorDialog(string header, Exception exception)
+        {
+            string logPath = ModelInfoBuilder.GetErrorLogPath();
+
+            RevitTaskDialog dialog = new RevitTaskDialog("Export error")
+            {
+                MainInstruction = string.IsNullOrWhiteSpace(header) ? "The export failed." : header,
+                MainContent = $"Details were written to:{Environment.NewLine}{logPath}{Environment.NewLine}{Environment.NewLine}Press Ctrl+C to copy this message.",
+                ExpandedContent = exception?.ToString(),
+                FooterText = "Include error_log.txt when reporting the issue.",
+                CommonButtons = TaskDialogCommonButtons.Close
+            };
+
+            dialog.Show();
         }
     }
 }
