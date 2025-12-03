@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using Autodesk.Revit.DB;
-using Betekk.RevitXmiExporter.classMapper.Base;
+using Betekk.RevitXmiExporter.ClassMapper.Base;
 using Betekk.RevitXmiExporter.Utils;
 using XmiSchema.Core.Entities;
 using XmiSchema.Core.Manager;

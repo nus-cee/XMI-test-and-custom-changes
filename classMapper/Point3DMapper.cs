@@ -1,6 +1,6 @@
 ﻿using System;
 using Autodesk.Revit.DB;
-using Betekk.RevitXmiExporter.classMapper.Base;
+using Betekk.RevitXmiExporter.ClassMapper.Base;
 using Betekk.RevitXmiExporter.Utils;
 using XmiSchema.Core.Geometries;
 using XmiSchema.Core.Manager;

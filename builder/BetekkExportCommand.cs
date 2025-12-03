@@ -5,11 +5,10 @@ using System.Text;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
-using Betekk.RevitXmiExporter.Builder;
 using Betekk.RevitXmiExporter.Utils;
 using RevitTaskDialog = Autodesk.Revit.UI.TaskDialog;
 
-namespace Betekk.RevitXmiExporter
+namespace Betekk.RevitXmiExporter.Builder
 {
     /// <summary>
     /// Revit external command invoked by the ExportJson button. Collects the output location,

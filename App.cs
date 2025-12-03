@@ -6,7 +6,7 @@ namespace Betekk.RevitXmiExporter
 {
     /// <summary>
     /// Revit entry point that registers the XMI-Schema ribbon tab and buttons, including the
-    /// ExportJson command. ExportJson delegates to <c>Betekk.RevitXmiExporter.BetekkExportCommand</c>,
+    /// ExportJson command. ExportJson delegates to <c>Betekk.RevitXmiExporter.Builder.BetekkExportCommand</c>,
     /// which gathers model data through <c>BetekkXmiBuilder</c>, serializes it with <c>BetekkJsonExporter</c>,
     /// and writes the JSON to disk.
     /// </summary>
@@ -36,25 +36,25 @@ namespace Betekk.RevitXmiExporter
                     "ExportStructureBtn",
                     "ExportJson",
                     typeof(App).Assembly.Location,
-                    "Betekk.RevitXmiExporter.BetekkExportCommand"
+                    "Betekk.RevitXmiExporter.Builder.BetekkExportCommand"
                 )
                 {
-                    ToolTip = "Export the structural data set to JSON",
+                    ToolTip = "Export the revit data into XmiSchema (JSON)",
                     LargeImage = largeIcon,
                     Image = smallIcon
                 };
 
-                PushButtonData harnessButtonData = new PushButtonData(
-                    "SegmentHarnessBtn",
-                    "SegmentTests",
-                    typeof(App).Assembly.Location,
-                    "Betekk.RevitXmiExporter.StructuralSegmentHarnessCommand")
-                {
-                    ToolTip = "Run StructuralSegmentMapper smoke tests and report the results"
-                };
+                // PushButtonData harnessButtonData = new PushButtonData(
+                //     "SegmentHarnessBtn",
+                //     "SegmentTests",
+                //     typeof(App).Assembly.Location,
+                //     "Betekk.RevitXmiExporter.StructuralSegmentHarnessCommand")
+                // {
+                //     ToolTip = "Run StructuralSegmentMapper smoke tests and report the results"
+                // };
 
                 panel.AddItem(buttonData);
-                panel.AddItem(harnessButtonData);
+                // panel.AddItem(harnessButtonData);
                 return Result.Succeeded;
             }
             catch
