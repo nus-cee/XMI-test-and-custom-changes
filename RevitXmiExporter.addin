@@ -6,7 +6,7 @@
     <Text>RevitXmiExporter</Text>
     <Description>Revit XMI Exporter</Description>
     <VisibilityMode>AlwaysVisible</VisibilityMode>
-    <Assembly>C:\Users\darel\AppData\Roaming\Autodesk\Revit\Addins\2025\RevitXmiExporter\RevitXmiExporter.dll</Assembly>
+    <Assembly>C:\ProgramData\Autodesk\Revit\Addins\2026\BetekkRevitXmiExporter\RevitXmiExporter.dll</Assembly>
     <AddInId>8D83E68A-B739-4ACD-A9DB-1BC78F315B08</AddInId>
     <VendorId>BTK</VendorId>
     <VendorDescription>BETEKK Pte Ltd, www.betekk.com</VendorDescription>

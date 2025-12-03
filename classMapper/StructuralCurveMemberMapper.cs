@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
-using Betekk.RevitXmiExporter.classMapper.Base;
+using Betekk.RevitXmiExporter.ClassMapper.Base;
 using Betekk.RevitXmiExporter.Utils;
 using XmiSchema.Core.Entities;
 using XmiSchema.Core.Enums;
@@ -14,7 +14,7 @@ using XmiSchema.Core.Utils;
 
 namespace Betekk.RevitXmiExporter.ClassMapper
 {
-    internal class StructuralCurveMemberMapper : BaseMapper
+    internal class StructuralCurveMemberMapper : StructuralBaseEntityMapper
     {
         public static XmiStructuralCurveMember Map(IXmiManager manager, int modelIndex, AnalyticalMember member)
         {

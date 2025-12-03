@@ -25,6 +25,7 @@
 		<AssemblyVersion>$(VersionPrefix)</AssemblyVersion>
 		<FileVersion>$(VersionPrefix)</FileVersion>
 		<SignAssembly>False</SignAssembly>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -82,8 +83,21 @@
 		<Copy SourceFiles="@(PublishedFiles)" DestinationFiles="@(PublishedFiles->'$(PostPublishDestination)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
 	</Target>
 
-	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-	  <Exec Command="xcopy &quot;$(ProjectDir)dist\Plugin\*.*&quot; &quot;C:\Program Files\Autodesk\Revit Xmi Exporter 2026\&quot; /E /Y /I" />
-	</Target>
+		<PropertyGroup>
+			<ProgramDataAddinDir>$(ProgramData)\Autodesk\Revit\Addins\2026</ProgramDataAddinDir>
+			<ProgramDataPluginDir>$(ProgramDataAddinDir)\BetekkRevitXmiExporter</ProgramDataPluginDir>
+		</PropertyGroup>
 
-</Project>
+		<ItemGroup>
+			<AddinFiles Include="$(ProjectDir)*.addin" />
+			<PluginOutput Include="$(TargetDir)**\*.*" />
+		</ItemGroup>
+
+		<Target Name="CopyToProgramData" AfterTargets="Build" Condition="'$(OS)' == 'Windows_NT' and Exists('$(TargetDir)')">
+			<MakeDir Directories="$(ProgramDataAddinDir)" />
+			<MakeDir Directories="$(ProgramDataPluginDir)" />
+			<Copy SourceFiles="@(AddinFiles)" DestinationFolder="$(ProgramDataAddinDir)" SkipUnchangedFiles="true" />
+			<Copy SourceFiles="@(PluginOutput)" DestinationFiles="@(PluginOutput->'$(ProgramDataPluginDir)\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+		</Target>
+
+	</Project>

@@ -21,7 +21,7 @@
      ```
 
 5. **Deploy for manual testing**  
-   Copy `dist/Plugin` into `%APPDATA%\Autodesk\Revit\Addins\2026\RevitXmiExporter` and ensure the `.addin` manifest references `Betekk.RevitXmiExporter.ExportCommand`.
+   Copy `dist/Plugin` into `%APPDATA%\Autodesk\Revit\Addins\2026\RevitXmiExporter` and ensure the `.addin` manifest references `Betekk.RevitXmiExporter.BetekkExportCommand`.
 
 # Headless Test via RevitCoreConsole
 

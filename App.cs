@@ -4,11 +4,22 @@ using Autodesk.Revit.UI;
 
 namespace Betekk.RevitXmiExporter
 {
+    /// <summary>
+    /// Revit entry point that registers the XMI-Schema ribbon tab and buttons, including the
+    /// ExportJson command. ExportJson delegates to <c>Betekk.RevitXmiExporter.Builder.BetekkExportCommand</c>,
+    /// which gathers model data through <c>BetekkXmiBuilder</c>, serializes it with <c>BetekkJsonExporter</c>,
+    /// and writes the JSON to disk.
+    /// </summary>
     public class App : IExternalApplication
     {
         private const string RibbonTab = "XMI-Schema";
         private const string RibbonPanel = "ExportJson";
 
+        /// <summary>
+        /// Creates the XMI-Schema ribbon tab/panel in Revit and wires the ExportJson and
+        /// SegmentTests buttons to their corresponding external commands, applying the generated
+        /// icon assets for visual clarity.
+        /// </summary>
         public Result OnStartup(UIControlledApplication application)
         {
             try
@@ -25,25 +36,25 @@ namespace Betekk.RevitXmiExporter
                     "ExportStructureBtn",
                     "ExportJson",
                     typeof(App).Assembly.Location,
-                    "Betekk.RevitXmiExporter.ExportCommand"
+                    "Betekk.RevitXmiExporter.Builder.BetekkExportCommand"
                 )
                 {
-                    ToolTip = "Export the structural data set to JSON",
+                    ToolTip = "Export the revit data into XmiSchema (JSON)",
                     LargeImage = largeIcon,
                     Image = smallIcon
                 };
 
-                PushButtonData harnessButtonData = new PushButtonData(
-                    "SegmentHarnessBtn",
-                    "SegmentTests",
-                    typeof(App).Assembly.Location,
-                    "Betekk.RevitXmiExporter.StructuralSegmentHarnessCommand")
-                {
-                    ToolTip = "Run StructuralSegmentMapper smoke tests and report the results"
-                };
+                // PushButtonData harnessButtonData = new PushButtonData(
+                //     "SegmentHarnessBtn",
+                //     "SegmentTests",
+                //     typeof(App).Assembly.Location,
+                //     "Betekk.RevitXmiExporter.StructuralSegmentHarnessCommand")
+                // {
+                //     ToolTip = "Run StructuralSegmentMapper smoke tests and report the results"
+                // };
 
                 panel.AddItem(buttonData);
-                panel.AddItem(harnessButtonData);
+                // panel.AddItem(harnessButtonData);
                 return Result.Succeeded;
             }
             catch
@@ -52,11 +63,19 @@ namespace Betekk.RevitXmiExporter
             }
         }
 
+        /// <summary>
+        /// No-op shutdown handler; Revit invokes this when unloading the add-in. Stub kept for
+        /// completeness in case future cleanup logic is required.
+        /// </summary>
         public Result OnShutdown(UIControlledApplication application)
         {
             return Result.Succeeded;
         }
 
+        /// <summary>
+        /// Builds a square vector icon that combines a data panel motif with an export arrow.
+        /// </summary>
+        /// <param name="size">Desired icon size in device-independent pixels.</param>
         private static ImageSource CreateExportIcon(double size)
         {
             SolidColorBrush backgroundBrush = new SolidColorBrush(Color.FromRgb(19, 68, 116));
@@ -110,6 +129,10 @@ namespace Betekk.RevitXmiExporter
             return image;
         }
 
+        /// <summary>
+        /// Creates the arrow geometry layered on top of the export icon.
+        /// </summary>
+        /// <param name="size">Icon size to scale the arrow proportions.</param>
         private static Geometry BuildArrowGeometry(double size)
         {
             double centerX = size / 2d;

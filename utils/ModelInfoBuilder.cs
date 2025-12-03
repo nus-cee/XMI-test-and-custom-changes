@@ -9,6 +9,7 @@ namespace Betekk.RevitXmiExporter.Utils
     public static class ModelInfoBuilder
     {
         private static string _logDirectory = Directory.GetCurrentDirectory();
+        private const string ErrorLogFileName = "error_log.txt";
 
         public static void SetLogDirectory(string directory)
         {
@@ -48,10 +49,19 @@ namespace Betekk.RevitXmiExporter.Utils
 
         public static void WriteErrorLogToFile(string errorMessage)
         {
-            Directory.CreateDirectory(_logDirectory);
-            string logPath = Path.Combine(_logDirectory, "error_log.txt");
             string logEntry = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {errorMessage}{Environment.NewLine}";
-            File.AppendAllText(logPath, logEntry);
+            File.AppendAllText(GetErrorLogPath(), logEntry);
+        }
+
+        public static string GetLogDirectory()
+        {
+            return _logDirectory;
+        }
+
+        public static string GetErrorLogPath()
+        {
+            Directory.CreateDirectory(_logDirectory);
+            return Path.Combine(_logDirectory, ErrorLogFileName);
         }
     }
 }

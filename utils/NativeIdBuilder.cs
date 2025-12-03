@@ -1,10 +1,10 @@
 ﻿using System;
 
-namespace Betekk.RevitXmiExporter.utils
+namespace Betekk.RevitXmiExporter.Utils
 {
     public static class SessionUuidBuilder
     {
-        private static string _sessionUuid;
+        private static string? _sessionUuid;
 
         public static string SessionUuid
         {

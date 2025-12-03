@@ -1,14 +1,14 @@
 using System;
 using System.Linq;
 using Autodesk.Revit.DB;
-using Betekk.RevitXmiExporter.classMapper.Base;
+using Betekk.RevitXmiExporter.ClassMapper.Base;
 using Betekk.RevitXmiExporter.Utils;
 using XmiSchema.Core.Entities;
 using XmiSchema.Core.Manager;
 
 namespace Betekk.RevitXmiExporter.ClassMapper
 {
-    internal class StructuralStoreyMapper : BaseMapper
+    internal class StructuralStoreyMapper : StructuralBaseEntityMapper
     {
         public static XmiStructuralStorey Map(IXmiManager manager, int modelIndex, Element element)
         {

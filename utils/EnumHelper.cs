@@ -10,7 +10,7 @@ namespace Betekk.RevitXmiExporter.Utils
         {
             foreach (FieldInfo field in typeof(TEnum).GetFields(BindingFlags.Public | BindingFlags.Static))
             {
-                EnumValueAttribute attribute = field.GetCustomAttribute<EnumValueAttribute>();
+                EnumValueAttribute? attribute = field.GetCustomAttribute<EnumValueAttribute>();
                 if (attribute != null && attribute.Value.Equals(value, StringComparison.OrdinalIgnoreCase))
                 {
                     return (TEnum)field.GetValue(null)!;

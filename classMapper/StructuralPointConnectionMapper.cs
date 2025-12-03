@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Autodesk.Revit.DB;
-using Betekk.RevitXmiExporter.classMapper.Base;
+using Betekk.RevitXmiExporter.ClassMapper.Base;
 using Betekk.RevitXmiExporter.Utils;
 using XmiSchema.Core.Entities;
 using XmiSchema.Core.Geometries;
@@ -9,7 +9,7 @@ using XmiSchema.Core.Manager;
 
 namespace Betekk.RevitXmiExporter.ClassMapper
 {
-    internal class StructuralPointConnectionMapper : BaseMapper
+    internal class StructuralPointConnectionMapper : StructuralBaseEntityMapper
     {
         // Cache connections by coordinate tuple to avoid duplicates.
         private static readonly Dictionary<string, XmiStructuralPointConnection> ConnectionCache = new();
