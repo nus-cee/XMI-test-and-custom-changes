@@ -5,9 +5,9 @@ This repository contains a .NET 8 add-in for Autodesk Revit 2025 that exports st
 
 ## Features
 - Ribbon integration for one-click JSON exports from within Revit.
-- Modular builders (`builder/`) and mappers (`classMapper/`) that keep schema translation isolated from UI concerns.
-- Utility helpers (`utils/`) for naming, geometry conversion, and Revit lookups.
-- Test scaffolding (`test/`) that generates deterministic JSON payloads for regression checks.
+- Modular builders (`Builder/`) and mappers (`ClassMapper/`) that keep schema translation isolated from UI concerns.
+- Utility helpers (`Utils/`) for naming, geometry conversion, and Revit lookups.
+- Test scaffolding (`Test/`) that generates deterministic JSON payloads for regression checks.
 
 ## Prerequisites
 - Autodesk Revit 2025 with `RevitAPI.dll` and `RevitAPIUI.dll` accessible one directory above the repo (`../Revit/Revit 2025/`).
@@ -16,10 +16,10 @@ This repository contains a .NET 8 add-in for Autodesk Revit 2025 that exports st
 
 ## Project Layout
 - `App.cs` - Revit `IExternalApplication` entry point that builds ribbon UI.
-- `builder/BetekkExportCommand.cs` - Implements `IExternalCommand` invoked from Revit, orchestrating `BetekkXmiBuilder` and `BetekkJsonExporter`.
-- `classMapper/` - Type-specific converters that project Revit entities to the schema types.
-- `utils/` - Cross-cutting helpers (naming services, document traversal, validation).
-- `test/` - Lightweight entity builders and JSON generators to validate serialization logic offline.
+- `Builder/BetekkExportCommand.cs` - Implements `IExternalCommand` invoked from Revit, orchestrating `BetekkXmiBuilder` and `BetekkJsonExporter`.
+- `ClassMapper/` - Type-specific converters that project Revit entities to the schema types.
+- `Utils/` - Cross-cutting helpers (naming services, document traversal, validation).
+- `Test/` - Lightweight entity builders and JSON generators to validate serialization logic offline.
 - `AGENTS.md` - contributor workflow guide; `PLAN.md` - roadmap for installer/versioning work.
 
 ## Build & Publish
@@ -66,9 +66,9 @@ The root `Directory.Build.props` supplies defaults for Revit 2026 on both Window
 
 ## Testing
 Testing is currently manual plus lightweight serialization checks:
-- Use the builders under `test/EntityTest/` to create fixture data and compare JSON snapshots.
+- Use the builders under `Test/EntityTest/` to create fixture data and compare JSON snapshots.
 - When unit tests are added to the solution, run `dotnet test RevitXmiExporter.sln` locally and in CI.
-- Document manual export scenarios (sample models, parameters toggled) under `test/README.md` as you expand coverage.
+- Document manual export scenarios (sample models, parameters toggled) under `Test/README.md` as you expand coverage.
 
 ## Contributing & Roadmap
 Follow `AGENTS.md` for coding style, commit conventions, and PR expectations. Enable the shared pre-push hook to keep builds reproducible before pushing: `git config core.hooksPath .githooks`. Upcoming work-installer automation, semantic versioning, and the upgrade to `XmiSchema.Core` 0.6.0-is tracked in `PLAN.md`. Feel free to open issues or PRs referencing the relevant plan phase.
