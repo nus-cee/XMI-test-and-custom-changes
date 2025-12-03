@@ -39,11 +39,11 @@ namespace Betekk.RevitXmiExporter.Builder
             (HashSet<ElementId> usedMaterialIds, HashSet<ElementId> usedTypeIds) usage = CollectUsedElementData(doc);
 
             StructuralMaterialLooper(doc, usage.usedMaterialIds);
-            StructuralCrossSectionLooper(doc, usage.usedTypeIds);
-            StructuralPointConnectionLooper(doc);
-            StructuralStoreyLooper(doc);
-            StructuralCurveMemberLooper(doc);
-            StructuralSurfaceMemberLooper(doc);
+            // StructuralCrossSectionLooper(doc, usage.usedTypeIds);
+            // StructuralPointConnectionLooper(doc);
+            // StructuralStoreyLooper(doc);
+            // StructuralCurveMemberLooper(doc);
+            // StructuralSurfaceMemberLooper(doc);
         }
 
         /// <summary>

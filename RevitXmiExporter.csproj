@@ -83,16 +83,21 @@
 		<Copy SourceFiles="@(PublishedFiles)" DestinationFiles="@(PublishedFiles->'$(PostPublishDestination)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
 	</Target>
 
-	<PropertyGroup>
-		<ProgramDataAddinDir>$(ProgramData)\Autodesk\Revit\Addins\2026</ProgramDataAddinDir>
-		<ProgramDataPluginDir>$(ProgramDataAddinDir)\BetekkRevitXmiExporter</ProgramDataPluginDir>
-	</PropertyGroup>
+		<PropertyGroup>
+			<ProgramDataAddinDir>$(ProgramData)\Autodesk\Revit\Addins\2026</ProgramDataAddinDir>
+			<ProgramDataPluginDir>$(ProgramDataAddinDir)\BetekkRevitXmiExporter</ProgramDataPluginDir>
+		</PropertyGroup>
 
-	<Target Name="CopyToProgramData" AfterTargets="Build">
-		<Exec Command="if not exist &quot;$(ProgramDataAddinDir)&quot; md &quot;$(ProgramDataAddinDir)&quot;" />
-		<Exec Command="if not exist &quot;$(ProgramDataPluginDir)&quot; md &quot;$(ProgramDataPluginDir)&quot;" />
-		<Exec Command="copy /Y &quot;$(ProjectDir)*.addin&quot; &quot;$(ProgramDataAddinDir)\&quot;" />
-		<Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(ProgramDataPluginDir)\&quot; /E /Y /I" />
-	</Target>
+		<ItemGroup>
+			<AddinFiles Include="$(ProjectDir)*.addin" />
+			<PluginOutput Include="$(TargetDir)**\*.*" />
+		</ItemGroup>
 
-</Project>
+		<Target Name="CopyToProgramData" AfterTargets="Build" Condition="'$(OS)' == 'Windows_NT' and Exists('$(TargetDir)')">
+			<MakeDir Directories="$(ProgramDataAddinDir)" />
+			<MakeDir Directories="$(ProgramDataPluginDir)" />
+			<Copy SourceFiles="@(AddinFiles)" DestinationFolder="$(ProgramDataAddinDir)" SkipUnchangedFiles="true" />
+			<Copy SourceFiles="@(PluginOutput)" DestinationFiles="@(PluginOutput->'$(ProgramDataPluginDir)\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+		</Target>
+
+	</Project>
