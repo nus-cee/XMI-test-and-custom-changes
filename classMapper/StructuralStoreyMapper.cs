@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using Autodesk.Revit.DB;
 using Betekk.RevitXmiExporter.ClassMapper.Base;
 using Betekk.RevitXmiExporter.Utils;
@@ -10,7 +8,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
 {
     internal class StructuralStoreyMapper : StructuralBaseEntityMapper
     {
-        public static XmiStructuralStorey Map(IXmiManager manager, int modelIndex, Element element)
+        public static XmiStorey Map(IXmiManager manager, int modelIndex, Element element)
         {
             try
             {
@@ -22,8 +20,8 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                     storeyElevation = Converters.ConvertValueToMillimeter(level.Elevation);
                 }
 
-                XmiStructuralStorey existingStorey = manager
-                    .GetEntitiesOfType<XmiStructuralStorey>(modelIndex)
+                XmiStorey existingStorey = manager
+                    .GetEntitiesOfType<XmiStorey>(modelIndex)
                     .FirstOrDefault(s => string.Equals(s.NativeId, nativeId, StringComparison.OrdinalIgnoreCase));
                 if (existingStorey != null)
                 {

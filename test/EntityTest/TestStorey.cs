@@ -4,7 +4,7 @@ namespace Betekk.RevitXmiExporter.Test.EntityTest;
 
 public static class TestStorey
 {
-    public static XmiStructuralStorey Dummy => new XmiStructuralStorey(
+    public static XmiStorey Dummy => new XmiStorey(
         "Optional",
         "Optional",
         "Optional",

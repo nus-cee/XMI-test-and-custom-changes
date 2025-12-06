@@ -9,7 +9,7 @@
 - `IXmiManager` models are explicit objects—consumers must populate `manager.Models` and address entities through a model index (the README sample initializes `new XmiModel()` before building graph content).
 - Entity identifiers follow PascalCase (`Id`, `NativeId`, `IfcGuid`). Any legacy code that referenced `ID`/`NativeID` or custom struct wrappers must be renamed accordingly.
 - Constructors enforce richer geometry payloads (e.g., `CreateStructuralCurveMember` now demands `List<XmiStructuralPointConnection>` and `List<XmiSegment>` objects plus local axis strings; surface members mirror that contract).
-- Material helpers rely on the enum helpers (`ExtensionEnumHelper.FromEnumValue<T>()`) to hydrate `XmiStructuralMaterialTypeEnum` rather than magic numbers.
+- Material helpers rely on the enum helpers (`ExtensionEnumHelper.FromEnumValue<T>()`) to hydrate `XmiMaterialTypeEnum` rather than magic numbers.
 
 ## Builder Implications
 - `builder/BetekkXmiBuilder.cs`: we already initialize `_manager.Models` with a `new XmiModel()`, which satisfies the new multi-model requirement. However, `BuildModel` never calls `StructuralMaterialLooper` or `StructuralCrossSectionLooper`, so the schema graph misses materials/sections that the 0.6.0 sample expects for downstream members. Action: insert those loops before curve/surface mappers.

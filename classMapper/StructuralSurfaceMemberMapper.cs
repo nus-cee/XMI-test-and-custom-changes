@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
@@ -8,9 +5,8 @@ using Betekk.RevitXmiExporter.ClassMapper.Base;
 using Betekk.RevitXmiExporter.Utils;
 using XmiSchema.Core.Entities;
 using XmiSchema.Core.Enums;
-using XmiSchema.Core.Geometries;
 using XmiSchema.Core.Manager;
-using XmiSchema.Core.Relationships;
+using XmiSchema.Core.Models.Entities.StructuralAnalytical;
 using XmiSchema.Core.Utils;
 
 namespace Betekk.RevitXmiExporter.ClassMapper
@@ -23,8 +19,8 @@ namespace Betekk.RevitXmiExporter.ClassMapper
             {
                 var (id, name, ifcGuid, nativeId, description) = ExtractBasicProperties(element);
 
-                XmiStructuralMaterial material = ResolveMaterial(manager, modelIndex, element);
-                XmiStructuralStorey storey = ResolveStorey(manager, modelIndex, element);
+                XmiMaterial material = ResolveMaterial(manager, modelIndex, element);
+                XmiStorey storey = ResolveStorey(manager, modelIndex, element);
 
                 (List<XmiStructuralPointConnection> nodes, List<XmiSegment> segments) = BuildSurfaceTopology(
                     manager,
@@ -84,7 +80,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
             IXmiManager manager,
             int modelIndex,
             Element element,
-            XmiStructuralStorey storey,
+            XmiStorey storey,
             string ownerId,
             string ownerName,
             string ownerNativeId)
@@ -229,7 +225,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
         private static void AddNode(
             IXmiManager manager,
             int modelIndex,
-            XmiStructuralStorey storey,
+            XmiStorey storey,
             string ownerId,
             string ownerName,
             string ownerNativeId,
@@ -275,7 +271,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
             nodeIndex++;
         }
 
-        private static XmiStructuralMaterial ResolveMaterial(IXmiManager manager, int modelIndex, Element element)
+        private static XmiMaterial ResolveMaterial(IXmiManager manager, int modelIndex, Element element)
         {
             ICollection<ElementId> materialIds = null;
             if (element is FamilyInstance familyInstance && familyInstance.Symbol != null)
@@ -296,7 +292,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
             return materialElement != null ? StructuralMaterialMapper.Map(manager, modelIndex, materialElement) : null;
         }
 
-        private static XmiStructuralStorey ResolveStorey(IXmiManager manager, int modelIndex, Element element)
+        private static XmiStorey ResolveStorey(IXmiManager manager, int modelIndex, Element element)
         {
             if (element.LevelId == null || element.LevelId == ElementId.InvalidElementId)
             {
@@ -309,14 +305,14 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                 return null;
             }
 
-            XmiStructuralStorey storey = StructuralStoreyMapper.Map(manager, modelIndex, levelElement);
+            XmiStorey storey = StructuralStoreyMapper.Map(manager, modelIndex, levelElement);
             if (storey == null)
             {
                 return null;
             }
 
-            XmiStructuralStorey existingStorey = manager.GetEntitiesOfType<XmiStructuralStorey>(modelIndex)
-                .FirstOrDefault(s => s.NativeId == storey.NativeId);
+            XmiStorey existingStorey = manager.GetEntitiesOfType<XmiStorey>(modelIndex)
+                .FirstOrDefault(s => s.Id == storey.Id);
             return existingStorey ?? storey;
         }
 

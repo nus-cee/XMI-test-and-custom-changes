@@ -1,15 +1,12 @@
 ﻿using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
 using Betekk.RevitXmiExporter.ClassMapper.Base;
 using Betekk.RevitXmiExporter.Utils;
 using XmiSchema.Core.Entities;
 using XmiSchema.Core.Enums;
-using XmiSchema.Core.Geometries;
 using XmiSchema.Core.Manager;
+using XmiSchema.Core.Models.Entities.StructuralAnalytical;
 using XmiSchema.Core.Utils;
 
 namespace Betekk.RevitXmiExporter.ClassMapper
@@ -45,7 +42,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                     return null;
                 }
 
-                XmiStructuralCrossSection crossSection = null;
+                XmiCrossSection crossSection = null;
                 ElementType sectionType = null;
                 if (member.SectionTypeId != ElementId.InvalidElementId)
                 {
@@ -82,7 +79,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                     ErrorStatistics.Increment("SectionType_Invalid");
                 }
 
-                XmiStructuralStorey storey = null;
+                XmiStorey storey = null;
                 if (member.LevelId != ElementId.InvalidElementId)
                 {
                     Level level = member.Document.GetElement(member.LevelId) as Level;
@@ -131,7 +128,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                     memberType,
                     nodes,
                     segments,
-                    XmiStructuralCurveMemberSystemLineEnum.Unknown,
+                    XmiSystemLineEnum.TopMiddle,
                     beginNode,
                     endNode,
                     curve.Length,

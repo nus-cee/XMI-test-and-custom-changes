@@ -13,13 +13,13 @@ namespace Betekk.RevitXmiExporter.ClassMapper
 {
     internal class StructuralCrossSectionMapper : StructuralBaseEntityMapper
     {
-        public static XmiStructuralCrossSection Map(IXmiManager manager, int modelIndex, Element element)
+        public static XmiCrossSection Map(IXmiManager manager, int modelIndex, Element element)
         {
             try
             {
                 var (id, name, ifcGuid, nativeId, description) = ExtractBasicProperties(element);
 
-                XmiStructuralMaterial material = null;
+                XmiMaterial material = null;
                 if (element is ElementType typeElement)
                 {
                     ICollection<ElementId> matIds = typeElement.GetMaterialIds(false);

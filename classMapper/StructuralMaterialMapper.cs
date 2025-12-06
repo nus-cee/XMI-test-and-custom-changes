@@ -13,7 +13,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
 {
     internal class StructuralMaterialMapper : StructuralBaseEntityMapper
     {
-        public static XmiStructuralMaterial Map(IXmiManager manager, int modelIndex, Material material)
+        public static XmiMaterial Map(IXmiManager manager, int modelIndex, Material material)
         {
             try
             {
@@ -30,9 +30,9 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                     ? material.MaterialClass
                     : "Unknown";
 
-                XmiStructuralMaterialTypeEnum materialType =
-                    ExtensionEnumHelper.FromEnumValue<XmiStructuralMaterialTypeEnum>(materialTypeString)
-                    ?? XmiStructuralMaterialTypeEnum.Unknown;
+                XmiMaterialTypeEnum materialType =
+                    ExtensionEnumHelper.FromEnumValue<XmiMaterialTypeEnum>(materialTypeString)
+                    ?? XmiMaterialTypeEnum.Unknown;
                 double? grade = GetMaterialDoubleParameter(material, "Grade");
                 double? unitWeight = GetMaterialDoubleParameter(material, "Unit Weight");
 
@@ -55,8 +55,8 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                     }
                 }
 
-                XmiStructuralMaterial existingMaterial = manager
-                    .GetEntitiesOfType<XmiStructuralMaterial>(modelIndex)
+                XmiMaterial existingMaterial = manager
+                    .GetEntitiesOfType<XmiMaterial>(modelIndex)
                     .FirstOrDefault(m => string.Equals(m.NativeId, nativeId, StringComparison.OrdinalIgnoreCase));
                 if (existingMaterial != null)
                 {

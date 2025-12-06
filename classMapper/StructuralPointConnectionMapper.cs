@@ -6,6 +6,7 @@ using Betekk.RevitXmiExporter.Utils;
 using XmiSchema.Core.Entities;
 using XmiSchema.Core.Geometries;
 using XmiSchema.Core.Manager;
+using XmiSchema.Core.Models.Entities.StructuralAnalytical;
 
 namespace Betekk.RevitXmiExporter.ClassMapper
 {
@@ -20,7 +21,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
             {
                 var (id, name, ifcGuid, nativeId, description) = ExtractBasicProperties(element);
 
-                XmiStructuralStorey storey = null;
+                XmiStorey storey = null;
                 if (element.LevelId != null && element.LevelId != ElementId.InvalidElementId)
                 {
                     Level levelElement = element.Document.GetElement(element.LevelId) as Level;
@@ -40,7 +41,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
             }
         }
 
-        public static XmiStructuralPointConnection Map(IXmiManager manager, int modelIndex, string id, string name, string nativeId, XmiStructuralStorey storey, XYZ position)
+        public static XmiStructuralPointConnection Map(IXmiManager manager, int modelIndex, string id, string name, string nativeId, XmiStorey storey, XYZ position)
         {
             try
             {
@@ -83,7 +84,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
             }
         }
 
-        public static XmiStructuralPointConnection Map(IXmiManager manager, int modelIndex, string id, string name, string nativeId, XmiStructuralStorey storey, XmiPoint3D point)
+        public static XmiStructuralPointConnection Map(IXmiManager manager, int modelIndex, string id, string name, string nativeId, XmiStorey storey, XmiPoint3D point)
         {
             try
             {
