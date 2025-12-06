@@ -67,6 +67,12 @@
 		<FrameworkReference Include="Microsoft.WindowsDesktop.App.WPF" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<Compile Remove="Tests\**" />
+		<EmbeddedResource Remove="Tests\**" />
+		<None Remove="Tests\**" />
+	</ItemGroup>
+
 	<PropertyGroup>
 		<PostPublishDestination>C:\Program Files\Autodesk\Revit Xmi Exporter\</PostPublishDestination>
 	</PropertyGroup>

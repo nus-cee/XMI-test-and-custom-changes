@@ -1,7 +1,7 @@
 # Revit Export Plugin
 
 ## Overview
-This repository contains a .NET 8 add-in for Autodesk Revit 2025 that exports structural entities (storeys, segments, materials, point connections) to JSON aligned with the XMI schema. The add-in registers a ribbon tab (`XMI-Schema`) with an `ExportJson` button that marshals model data through dedicated builders and mappers before serializing via `XmiSchema.Core`.
+This repository contains a .NET 8 add-in for Autodesk Revit 2025 that exports structural entities (storeys, segments, materials, point connections) to JSON aligned with the XMI schema. The add-in registers a ribbon tab (`XMI-Schema`) with an `ExportXmi` button that marshals model data through dedicated builders and mappers before serializing via `XmiSchema.Core`.
 
 ## Features
 - Ribbon integration for one-click JSON exports from within Revit.
@@ -62,7 +62,7 @@ The root `Directory.Build.props` supplies defaults for Revit 2026 on both Window
      </AddIn>
    </RevitAddIns>
    ```
-4. Launch Revit; open any model and click `XMI-Schema` -> `ExportJson`.
+4. Launch Revit; open any model and click `XMI-Schema` -> `ExportXmi`.
 
 ## Testing
 Testing is currently manual plus lightweight serialization checks:

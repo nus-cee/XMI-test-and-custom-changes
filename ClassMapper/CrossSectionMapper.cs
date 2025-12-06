@@ -4,6 +4,7 @@ using Betekk.RevitXmiExporter.Utils;
 using XmiSchema.Core.Entities;
 using XmiSchema.Core.Enums;
 using XmiSchema.Core.Manager;
+using XmiSchema.Core.Parameters;
 using XmiSchema.Core.Utils;
 
 namespace Betekk.RevitXmiExporter.ClassMapper
@@ -48,11 +49,6 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                 if (element.LookupParameter("h") is Parameter hParam && hParam.HasValue)
                     height = Converters.ConvertValueToMillimeter(hParam.AsDouble());
 
-                // TODO: Update to use IXmiShapeParameters when shape parameter structure is defined
-                // string[] parameters = (width > 0 || height > 0)
-                //     ? new[] { width.ToString("F2"), height.ToString("F2") }
-                //     : Array.Empty<string>();
-
                 double area = 0;
                 if (element is ElementType areaType)
                 {
@@ -94,6 +90,21 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                     material = null;
                 }
 
+                // Create appropriate shape parameters based on available data
+                IXmiShapeParameters shapeParameters;
+                if (width > 0 && height > 0)
+                {
+                    shapeParameters = new RectangularShapeParameters(height, width);
+                }
+                else
+                {
+                    // Use UnknownShapeParameters when we don't have specific shape data
+                    var paramDict = new Dictionary<string, double>();
+                    if (width > 0) paramDict["width"] = width;
+                    if (height > 0) paramDict["height"] = height;
+                    shapeParameters = new UnknownShapeParameters(paramDict);
+                }
+
                 return manager.CreateCrossSection(
                     modelIndex,
                     id,
@@ -103,7 +114,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                     description,
                     material,
                     shapeEnum,
-                    null, // TODO: Provide IXmiShapeParameters when structure is defined
+                    shapeParameters,
                     area,
                     Ix,
                     Iy,

@@ -1,11 +1,11 @@
 # BetekkExportCommand Workflow
 
-This document captures how the Revit `ExportJson` ribbon button (defined in `App.cs`) drives the export workflow and how `BetekkExportCommand` orchestrates the sequential extraction of model data.
+This document captures how the Revit `ExportXmi` ribbon button (defined in `App.cs`) drives the export workflow and how `BetekkExportCommand` orchestrates the sequential extraction of model data.
 
 ## High-Level Flow
 
 1. **Button Click (Revit UI)**  
-   `App.OnStartup` wires the `ExportJson` button to `Betekk.RevitXmiExporter.BetekkExportCommand`.
+   `App.OnStartup` wires the `ExportXmi` button to `Betekk.RevitXmiExporter.BetekkExportCommand`.
 2. **User Chooses Destination**  
    `BetekkExportCommand.Execute` prompts with a `SaveFileDialog`, ensuring the user chooses where to write the exported JSON and log files.
 3. **Builder Pipeline**  

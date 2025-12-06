@@ -39,7 +39,7 @@
 # Inline Harness Checks
 
 - Load the add-in inside Revit (UI or CoreConsole).  
-- Open the **XMI-Schema → ExportJson** panel and click **SegmentTests**.  
+- Open the **XMI-Schema → ExportXmi** panel and click **SegmentTests**.  
 - Success: dialog displays “All segment smoke tests passed.”  
 - Failure: dialog lists each mismatch and `error_log.txt` in the export/log directory is updated with the same details for later review.  
 - Rerun after schema changes to confirm the mapper still emits Line/Arc/Spline segments that match `XmiSchema.Core` expectations.

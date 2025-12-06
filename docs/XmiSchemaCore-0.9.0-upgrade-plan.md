@@ -159,7 +159,7 @@
 **Checklist**:
 - [ ] Plugin loads in Revit 2026 without errors
 - [ ] Ribbon tab appears correctly
-- [ ] ExportJson button clickable and responsive
+- [ ] ExportXmi button clickable and responsive
 - [ ] File save dialog appears
 - [ ] JSON export completes without exceptions
 - [ ] `error_log.txt` contains no unexpected warnings

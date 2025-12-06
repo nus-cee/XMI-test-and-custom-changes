@@ -9,7 +9,7 @@ using RevitTaskDialog = Autodesk.Revit.UI.TaskDialog;
 namespace Betekk.RevitXmiExporter.Builder
 {
     /// <summary>
-    /// Revit external command invoked by the ExportJson button. Collects the output location,
+    /// Revit external command invoked by the ExportXmi button. Collects the output location,
     /// runs the export pipeline, and surfaces user feedback/error logging.
     /// </summary>
     [Transaction(TransactionMode.Manual)]
