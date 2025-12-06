@@ -99,7 +99,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                 }
 
                 List<XmiStructuralPointConnection> nodes = new List<XmiStructuralPointConnection> { beginNode, endNode };
-                List<XmiSegment> segments = StructuralSegmentMapper.MapCurveSegments(id, name, nativeId, curve);
+                List<XmiSegment> segments = SegmentMapper.MapCurveSegments(id, name, nativeId, curve);
                 if (segments.Count == 0)
                 {
                     ModelInfoBuilder.WriteErrorLogToFile($"[StructuralCurveMemberMapper] Missing segment geometry for member id={id}, name={name}");

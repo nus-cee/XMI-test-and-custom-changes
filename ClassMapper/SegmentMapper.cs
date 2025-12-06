@@ -8,7 +8,7 @@ using XmiSchema.Core.Geometries;
 
 namespace Betekk.RevitXmiExporter.ClassMapper
 {
-    internal static class StructuralSegmentMapper
+    internal static class SegmentMapper
     {
         public static List<XmiSegment> MapCurveSegments(string ownerId, string ownerName, string ownerNativeId, Curve curve)
         {

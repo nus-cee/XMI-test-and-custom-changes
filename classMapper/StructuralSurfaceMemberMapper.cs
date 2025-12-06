@@ -124,7 +124,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                     AddNode(manager, modelIndex, storey, ownerId, ownerName, ownerNativeId, nodes, nodeLookup, ref nodeIndex, lastEdge.GetEndPoint(1));
                 }
 
-                segments.AddRange(StructuralSegmentMapper.MapLoopSegments(ownerId, ownerName, ownerNativeId, edges));
+                segments.AddRange(SegmentMapper.MapLoopSegments(ownerId, ownerName, ownerNativeId, edges));
             }
 
             return (nodes, segments);

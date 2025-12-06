@@ -25,7 +25,7 @@ namespace Betekk.RevitXmiExporter.Utils
             {
                 ["Name"] = doc.Title,
                 ["Path"] = doc.PathName,
-                ["ISSVersion"] = "1.0.0"
+                ["XmiVersion"] = "1.0.0"
             };
 
             XYZ basePoint = BasePoint.GetProjectBasePoint(doc).Position;

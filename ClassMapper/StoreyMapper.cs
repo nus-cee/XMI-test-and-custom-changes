@@ -35,7 +35,8 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                     ifcGuid,
                     nativeId,
                     description,
-                    storeyElevation);
+                    storeyElevation,
+                    0.0); // storeyMass
             }
             catch (Exception ex)
             {
