@@ -26,9 +26,9 @@ namespace Betekk.RevitXmiExporter.Test
             var structured = new Dictionary<string, object>
             {
                 { "StructuralModel", new List<Dictionary<string, string>>() },
-                { "StructuralMaterial", new List<Dictionary<string, string>>() },
-                { "StructuralCrossSection", new List<Dictionary<string, string>>() },
-                { "StructuralStorey", new List<Dictionary<string, string>>() },
+                { "Material", new List<Dictionary<string, string>>() },
+                { "CrossSection", new List<Dictionary<string, string>>() },
+                { "Storey", new List<Dictionary<string, string>>() },
                 { "StructuralPointConnection", new List<Dictionary<string, string>>() },
                 { "StructuralCurveMember", new List<Dictionary<string, string>>() },
                 { "StructuralSurfaceMember", new List<Dictionary<string, string>>() },
@@ -68,7 +68,7 @@ namespace Betekk.RevitXmiExporter.Test
                     [SchemaKeys.Name] = mat.Name,
                     [SchemaKeys.Class] = mat.MaterialClass ?? "N/A"
                 };
-                ((List<Dictionary<string, string>>)structured["StructuralMaterial"]).Add(data);
+                ((List<Dictionary<string, string>>)structured["Material"]).Add(data);
             }
 
             var levels = new FilteredElementCollector(doc).OfClass(typeof(Level));
@@ -80,7 +80,7 @@ namespace Betekk.RevitXmiExporter.Test
                     [SchemaKeys.Name] = lvl.Name,
                     [SchemaKeys.Elevation] = lvl.Elevation.ToString()
                 };
-                ((List<Dictionary<string, string>>)structured["StructuralStorey"]).Add(data);
+                ((List<Dictionary<string, string>>)structured["Storey"]).Add(data);
             }
 
             var rebars = new FilteredElementCollector(doc).OfClass(typeof(Rebar));
@@ -98,7 +98,7 @@ namespace Betekk.RevitXmiExporter.Test
                 {
                     var data = CollectElementData(type, doc);
                     data[SchemaKeys.FromInstance] = inst.Id.ToString();
-                    ((List<Dictionary<string, string>>)structured["StructuralCrossSection"]).Add(data);
+                    ((List<Dictionary<string, string>>)structured["CrossSection"]).Add(data);
                 }
             }
 

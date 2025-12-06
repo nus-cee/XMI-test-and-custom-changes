@@ -35,10 +35,10 @@ namespace Betekk.RevitXmiExporter.Builder
         {
             (HashSet<ElementId> usedMaterialIds, HashSet<ElementId> usedTypeIds) usage = CollectUsedElementData(doc);
 
-            StructuralMaterialLooper(doc, usage.usedMaterialIds);
-            // StructuralCrossSectionLooper(doc, usage.usedTypeIds);
+            MaterialLooper(doc, usage.usedMaterialIds);
+            // CrossSectionLooper(doc, usage.usedTypeIds);
             // StructuralPointConnectionLooper(doc);
-            // StructuralStoreyLooper(doc);
+            // StoreyLooper(doc);
             // StructuralCurveMemberLooper(doc);
             // StructuralSurfaceMemberLooper(doc);
         }
@@ -74,7 +74,7 @@ namespace Betekk.RevitXmiExporter.Builder
         /// Collects level elements and maps them into structural storeys.
         /// </summary>
         /// <param name="doc">Document providing level data.</param>
-        public void StructuralStoreyLooper(Document doc)
+        public void StoreyLooper(Document doc)
         {
             IEnumerable<Element> levels = new FilteredElementCollector(doc)
                 .OfClass(typeof(Level))
@@ -84,7 +84,7 @@ namespace Betekk.RevitXmiExporter.Builder
 
             foreach (Element level in levels)
             {
-                StructuralStoreyMapper.Map(_manager, ModelIndex, level);
+                StoreyMapper.Map(_manager, ModelIndex, level);
             }
         }
 
@@ -93,7 +93,7 @@ namespace Betekk.RevitXmiExporter.Builder
         /// </summary>
         /// <param name="doc">Document providing materials.</param>
         /// <param name="allowedMaterialIds">Optional filter restricting exports to materials referenced by placed elements.</param>
-        public void StructuralMaterialLooper(Document doc, ISet<ElementId>? allowedMaterialIds = null)
+        public void MaterialLooper(Document doc, ISet<ElementId>? allowedMaterialIds = null)
         {
             IEnumerable<Element> materials = new FilteredElementCollector(doc)
                 .OfClass(typeof(Material))
@@ -108,7 +108,7 @@ namespace Betekk.RevitXmiExporter.Builder
                     continue;
                 }
 
-                StructuralMaterialMapper.Map(_manager, ModelIndex, material);
+                MaterialMapper.Map(_manager, ModelIndex, material);
             }
         }
 
@@ -133,7 +133,7 @@ namespace Betekk.RevitXmiExporter.Builder
         /// </summary>
         /// <param name="doc">Document providing type definitions.</param>
         /// <param name="allowedTypeIds">Optional filter restricting exports to types actually placed in the model.</param>
-        public void StructuralCrossSectionLooper(Document doc, ISet<ElementId>? allowedTypeIds = null)
+        public void CrossSectionLooper(Document doc, ISet<ElementId>? allowedTypeIds = null)
         {
             ElementMulticlassFilter filter = new ElementMulticlassFilter(new[]
             {
@@ -156,7 +156,7 @@ namespace Betekk.RevitXmiExporter.Builder
                     continue;
                 }
 
-                StructuralCrossSectionMapper.Map(_manager, ModelIndex, element);
+                CrossSectionMapper.Map(_manager, ModelIndex, element);
             }
         }
 

@@ -289,7 +289,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
             }
 
             Material materialElement = element.Document.GetElement(materialIds.First()) as Material;
-            return materialElement != null ? StructuralMaterialMapper.Map(manager, modelIndex, materialElement) : null;
+            return materialElement != null ? MaterialMapper.Map(manager, modelIndex, materialElement) : null;
         }
 
         private static XmiStorey ResolveStorey(IXmiManager manager, int modelIndex, Element element)
@@ -305,7 +305,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                 return null;
             }
 
-            XmiStorey storey = StructuralStoreyMapper.Map(manager, modelIndex, levelElement);
+            XmiStorey storey = StoreyMapper.Map(manager, modelIndex, levelElement);
             if (storey == null)
             {
                 return null;

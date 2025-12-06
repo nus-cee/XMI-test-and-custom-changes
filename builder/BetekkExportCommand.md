@@ -21,10 +21,10 @@ types are actually used; only those referenced entities are exported, which keep
 
 | Order | Stage | Responsibility |
 | ----- | ----- | -------------- |
-| 1 | `StructuralMaterialLooper` | Gather every `Material` to seed XMI structural material definitions. |
-| 2 | `StructuralCrossSectionLooper` | Visit Revit element types (`FloorType`, `WallType`, `FamilySymbol`, etc.) and map cross sections. |
+| 1 | `MaterialLooper` | Gather every `Material` to seed XMI structural material definitions. |
+| 2 | `CrossSectionLooper` | Visit Revit element types (`FloorType`, `WallType`, `FamilySymbol`, etc.) and map cross sections. |
 | 3 | `StructuralPointConnectionLooper` | Build structural point connections from analytical nodes (`ReferencePoint`). |
-| 4 | `StructuralStoreyLooper` | Extract `Level` elements representing structural storeys. |
+| 4 | `StoreyLooper` | Extract `Level` elements representing structural storeys. |
 | 5 | `StructuralCurveMemberLooper` | Map `AnalyticalMember` instances into structural curve members. |
 | 6 | `StructuralSurfaceMemberLooper` | Convert `AnalyticalPanel` elements into structural surface members. |
 
@@ -33,7 +33,7 @@ When refactoring, keep the order stable so downstream mappers (e.g., surface mem
 ## Error Handling & Logging
 
 - `BetekkExportCommand` uses `ModelInfoBuilder.SetLogDirectory` to place `info_log.txt` and `error_log.txt` beside the exported JSON.
-- Each mapper writes category-specific warnings (e.g., missing materials in `StructuralCrossSectionMapper`).  
+- Each mapper writes category-specific warnings (e.g., missing materials in `CrossSectionMapper`).  
   These logs do not block export but highlight gaps in the model data.
 - Exceptions propagate back to `BetekkExportCommand`, which shows the user a failure dialog and writes the stack trace to `error_log.txt`.
 

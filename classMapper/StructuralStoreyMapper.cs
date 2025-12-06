@@ -6,7 +6,7 @@ using XmiSchema.Core.Manager;
 
 namespace Betekk.RevitXmiExporter.ClassMapper
 {
-    internal class StructuralStoreyMapper : StructuralBaseEntityMapper
+    internal class StoreyMapper : StructuralBaseEntityMapper
     {
         public static XmiStorey Map(IXmiManager manager, int modelIndex, Element element)
         {
@@ -28,22 +28,18 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                     return existingStorey;
                 }
 
-                return manager.CreateStructuralStorey(
+                return manager.CreateStorey(
                     modelIndex,
                     id,
                     name,
                     ifcGuid,
                     nativeId,
                     description,
-                    storeyElevation,
-                    1f,
-                    null,
-                    null,
-                    null);
+                    storeyElevation);
             }
             catch (Exception ex)
             {
-                ModelInfoBuilder.WriteErrorLogToFile($"[StructuralStoreyMapper] {ex}");
+                ModelInfoBuilder.WriteErrorLogToFile($"[StoreyMapper] {ex}");
                 throw;
             }
         }

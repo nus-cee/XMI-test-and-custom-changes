@@ -11,7 +11,7 @@ using XmiSchema.Core.Utils;
 
 namespace Betekk.RevitXmiExporter.ClassMapper
 {
-    internal class StructuralMaterialMapper : StructuralBaseEntityMapper
+    internal class MaterialMapper : StructuralBaseEntityMapper
     {
         public static XmiMaterial Map(IXmiManager manager, int modelIndex, Material material)
         {
@@ -22,7 +22,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                 if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(name))
                 {
                     ModelInfoBuilder.WriteErrorLogToFile(
-                        $"[StructuralMaterialMapper] Skipped invalid material. ID={id}, Name={name}, NativeID={nativeId}");
+                        $"[MaterialMapper] Skipped invalid material. ID={id}, Name={name}, NativeID={nativeId}");
                     return null;
                 }
 
@@ -63,7 +63,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                     return existingMaterial;
                 }
 
-                return manager.CreateStructuralMaterial(
+                return manager.CreateMaterial(
                     modelIndex,
                     id,
                     name,
@@ -80,7 +80,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
             }
             catch (Exception ex)
             {
-                ModelInfoBuilder.WriteErrorLogToFile($"[StructuralMaterialMapper] {ex}");
+                ModelInfoBuilder.WriteErrorLogToFile($"[MaterialMapper] {ex}");
                 throw;
             }
         }

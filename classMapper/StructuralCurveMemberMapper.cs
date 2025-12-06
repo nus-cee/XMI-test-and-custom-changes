@@ -49,7 +49,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                     sectionType = member.Document.GetElement(member.SectionTypeId) as ElementType;
                     if (sectionType != null)
                     {
-                        crossSection = StructuralCrossSectionMapper.Map(manager, modelIndex, sectionType);
+                        crossSection = CrossSectionMapper.Map(manager, modelIndex, sectionType);
 
                         ICollection<ElementId> matIds = sectionType.GetMaterialIds(false);
                         if (matIds.Count == 0)
@@ -85,7 +85,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                     Level level = member.Document.GetElement(member.LevelId) as Level;
                     if (level != null)
                     {
-                        storey = StructuralStoreyMapper.Map(manager, modelIndex, level);
+                        storey = StoreyMapper.Map(manager, modelIndex, level);
                     }
                 }
 

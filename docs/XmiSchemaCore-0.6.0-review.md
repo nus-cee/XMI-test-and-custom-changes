@@ -12,14 +12,14 @@
 - Material helpers rely on the enum helpers (`ExtensionEnumHelper.FromEnumValue<T>()`) to hydrate `XmiMaterialTypeEnum` rather than magic numbers.
 
 ## Builder Implications
-- `builder/BetekkXmiBuilder.cs`: we already initialize `_manager.Models` with a `new XmiModel()`, which satisfies the new multi-model requirement. However, `BuildModel` never calls `StructuralMaterialLooper` or `StructuralCrossSectionLooper`, so the schema graph misses materials/sections that the 0.6.0 sample expects for downstream members. Action: insert those loops before curve/surface mappers.
+- `builder/BetekkXmiBuilder.cs`: we already initialize `_manager.Models` with a `new XmiModel()`, which satisfies the new multi-model requirement. However, `BuildModel` never calls `MaterialLooper` or `CrossSectionLooper`, so the schema graph misses materials/sections that the 0.6.0 sample expects for downstream members. Action: insert those loops before curve/surface mappers.
 - `builder/BetekkExportCommand.cs` and `BetekkJsonExporter.cs` do not handle missing payloads gracefully. If new schema validation requires non-empty cross sections, we need to surface actionable TaskDialog messages (e.g., “missing materials detected”) before writing JSON.
 
 ## ClassMapper Implications
-- `classMapper/StructuralMaterialMapper.cs`: confirm that every return path sets `materialType`, `grade`, and modulus strings. Release requirements emphasize typed values; add guards/logging for `StructuralAssetId` that fails to resolve.
+- `classMapper/MaterialMapper.cs`: confirm that every return path sets `materialType`, `grade`, and modulus strings. Release requirements emphasize typed values; add guards/logging for `StructuralAssetId` that fails to resolve.
 - `classMapper/StructuralCurveMemberMapper.cs`: the new `CreateStructuralCurveMember` signature expects actual `segments` entries. We currently pass an empty list. Implement `StructuralSegmentMapper` wiring (there is a mapper skeleton but it is unused) and include torsion/bending releases derived from the Revit member when available.
 - `classMapper/StructuralSurfaceMemberMapper.cs`: same issue as curve members—the method fabricates empty `nodes`/`segments`. Populate those collections through the existing `StructuralPointConnectionMapper` and `StructuralSegmentMapper` so JSON consumers receive polygons that satisfy 0.6.0 validation.
-- `classMapper/StructuralPointConnectionMapper.cs` & `StructuralStoreyMapper.cs`: release docs highlight unique IDs per native entity. Ensure the current strategy (creating a new storey per level) de-duplicates entries through `manager.GetEntitiesOfType<T>()` before creating duplicates, otherwise `BuildJson` may emit invalid duplicates.
+- `classMapper/StructuralPointConnectionMapper.cs` & `StoreyMapper.cs`: release docs highlight unique IDs per native entity. Ensure the current strategy (creating a new storey per level) de-duplicates entries through `manager.GetEntitiesOfType<T>()` before creating duplicates, otherwise `BuildJson` may emit invalid duplicates.
 
 ## Follow-Up Actions
 1. Update `BetekkXmiBuilder.BuildModel` to loop materials and cross sections, then re-run MSBuild to verify no missing references.

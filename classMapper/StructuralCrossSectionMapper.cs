@@ -11,7 +11,7 @@ using XmiSchema.Core.Utils;
 
 namespace Betekk.RevitXmiExporter.ClassMapper
 {
-    internal class StructuralCrossSectionMapper : StructuralBaseEntityMapper
+    internal class CrossSectionMapper : StructuralBaseEntityMapper
     {
         public static XmiCrossSection Map(IXmiManager manager, int modelIndex, Element element)
         {
@@ -31,12 +31,12 @@ namespace Betekk.RevitXmiExporter.ClassMapper
 
                         if (!string.IsNullOrWhiteSpace(matName) && !string.IsNullOrWhiteSpace(matId))
                         {
-                            material = StructuralMaterialMapper.Map(manager, modelIndex, matElement);
+                            material = MaterialMapper.Map(manager, modelIndex, matElement);
                         }
                         else
                         {
                             ModelInfoBuilder.WriteErrorLogToFile(
-                                $"[StructuralCrossSectionMapper] Skipped invalid material: ID={matId}, Name={matName}");
+                                $"[CrossSectionMapper] Skipped invalid material: ID={matId}, Name={matName}");
                         }
                     }
                 }
@@ -51,9 +51,10 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                 if (element.LookupParameter("h") is Parameter hParam && hParam.HasValue)
                     height = Converters.ConvertValueToMillimeter(hParam.AsDouble());
 
-                string[] parameters = (width > 0 || height > 0)
-                    ? new[] { width.ToString("F2"), height.ToString("F2") }
-                    : Array.Empty<string>();
+                // TODO: Update to use IXmiShapeParameters when shape parameter structure is defined
+                // string[] parameters = (width > 0 || height > 0)
+                //     ? new[] { width.ToString("F2"), height.ToString("F2") }
+                //     : Array.Empty<string>();
 
                 double area = 0;
                 if (element is ElementType areaType)
@@ -92,11 +93,11 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                 if (material == null || string.IsNullOrWhiteSpace(material.Id))
                 {
                     ModelInfoBuilder.WriteErrorLogToFile(
-                        $"[StructuralCrossSectionMapper] Invalid material. Element ID={element.Id}, Name={element.Name}, MatID={material?.Id}");
+                        $"[CrossSectionMapper] Invalid material. Element ID={element.Id}, Name={element.Name}, MatID={material?.Id}");
                     material = null;
                 }
 
-                return manager.CreateStructuralCrossSection(
+                return manager.CreateCrossSection(
                     modelIndex,
                     id,
                     name,
@@ -105,7 +106,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
                     description,
                     material,
                     shapeEnum,
-                    parameters,
+                    null, // TODO: Provide IXmiShapeParameters when structure is defined
                     area,
                     Ix,
                     Iy,
@@ -122,7 +123,7 @@ namespace Betekk.RevitXmiExporter.ClassMapper
             {
                 string info = $"Element ID={element?.Id}, Name={element?.Name}";
                 ModelInfoBuilder.WriteErrorLogToFile(
-                    $"[StructuralCrossSectionMapper] Error: {ex.Message}\n{info}\n{ex}");
+                    $"[CrossSectionMapper] Error: {ex.Message}\n{info}\n{ex}");
                 throw;
             }
         }

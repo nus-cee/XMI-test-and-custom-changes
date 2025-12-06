@@ -30,12 +30,12 @@
 - [ ] Compare namespace structure (any new namespaces or reorganization?)
 - [ ] Document changes to `IXmiManager` interface and implementation
 - [ ] Review entity creation methods (any signature changes?):
-  - `CreateStructuralMaterial`
-  - `CreateStructuralCrossSection`
+  - `CreateMaterial`
+  - `CreateCrossSection`
   - `CreateStructuralCurveMember`
   - `CreateStructuralSurfaceMember`
   - `CreateStructuralPointConnection`
-  - `CreateStructuralStorey`
+  - `CreateStorey`
   - `CreateStructuralSegment`
 - [ ] Check enum changes (`XmiMaterialTypeEnum`, etc.)
 - [ ] Review helper utilities (`ExtensionEnumHelper`, geometry helpers)
@@ -97,10 +97,10 @@
 **Files to Review** (in dependency order):
 1. `ClassMapper/Base/StructuralBaseEntityMapper.cs`
 2. `ClassMapper/Point3DMapper.cs`
-3. `ClassMapper/StructuralMaterialMapper.cs`
-4. `ClassMapper/StructuralCrossSectionMapper.cs`
+3. `ClassMapper/MaterialMapper.cs`
+4. `ClassMapper/CrossSectionMapper.cs`
 5. `ClassMapper/StructuralPointConnectionMapper.cs`
-6. `ClassMapper/StructuralStoreyMapper.cs`
+6. `ClassMapper/StoreyMapper.cs`
 7. `ClassMapper/StructuralSegmentMapper.cs`
 8. `ClassMapper/StructuralCurveMemberMapper.cs`
 9. `ClassMapper/StructuralSurfaceMemberMapper.cs`
@@ -108,10 +108,10 @@
 **Tasks**:
 - [ ] Update `ExtractBasicProperties()` if identifier requirements changed
 - [ ] Fix property naming (PascalCase enforcement: `Id`, `NativeId`, `IfcGuid`)
-- [ ] Update `manager.CreateStructuralMaterial()` signature:
+- [ ] Update `manager.CreateMaterial()` signature:
   - Check if new parameters added (sustainability metrics, certifications, etc.)
   - Verify enum handling still uses `ExtensionEnumHelper`
-- [ ] Update `manager.CreateStructuralCrossSection()` if changed
+- [ ] Update `manager.CreateCrossSection()` if changed
 - [ ] Fix geometry creation (`CreateStructuralCurveMember`, `CreateStructuralSurfaceMember`):
   - Check if segment/node requirements changed
   - Verify local axis string format
