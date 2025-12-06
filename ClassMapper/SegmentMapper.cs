@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using Autodesk.Revit.DB;
+﻿using Autodesk.Revit.DB;
 using Betekk.RevitXmiExporter.Utils;
 using XmiSchema.Core.Entities;
 using XmiSchema.Core.Enums;
-using XmiSchema.Core.Geometries;
 
 namespace Betekk.RevitXmiExporter.ClassMapper
 {
