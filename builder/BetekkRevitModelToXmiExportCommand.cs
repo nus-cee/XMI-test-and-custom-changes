@@ -13,10 +13,10 @@ namespace Betekk.RevitXmiExporter.Builder
     /// runs the export pipeline, and surfaces user feedback/error logging.
     /// </summary>
     [Transaction(TransactionMode.Manual)]
-    public class BetekkExportCommand : IExternalCommand
+    public class BetekkRevitModelToXmiExportCommand : IExternalCommand
     {
         /// <summary>
-        /// Executes the export by prompting for a destination, delegating to <see cref="BetekkJsonExporter"/>,
+        /// Executes the export by prompting for a destination, delegating to <see cref="BetekkRevitToXmiModelManager"/>,
         /// and handling success/failure notifications.
         /// </summary>
         /// <param name="commandData">Revit provided context (documents, application, selection).</param>
@@ -51,7 +51,7 @@ namespace Betekk.RevitXmiExporter.Builder
                     ModelInfoBuilder.SetLogDirectory(logDirectory);
                 }
 
-                BetekkJsonExporter exporter = new BetekkJsonExporter();
+                BetekkRevitToXmiModelManager exporter = new BetekkRevitToXmiModelManager();
                 string exportJson = exporter.Export(doc);
 
                 SaveExport(exportPath, exportJson);

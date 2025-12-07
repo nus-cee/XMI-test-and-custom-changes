@@ -6,7 +6,7 @@ namespace Betekk.RevitXmiExporter.Builder
     /// Helper facade that instantiates <see cref="BetekkXmiBuilder"/>, builds the model, and returns
     /// the serialized JSON string.
     /// </summary>
-    public class BetekkJsonExporter
+    public class BetekkRevitToXmiModelManager
     {
         /// <summary>
         /// Runs the XMI builder pipeline against the provided Revit document and returns the

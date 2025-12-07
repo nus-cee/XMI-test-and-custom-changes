@@ -34,24 +34,15 @@ namespace Betekk.RevitXmiExporter
 
                 PushButtonData buttonData = new PushButtonData(
                     "ExportStructureBtn",
-                    "ExportXmi",
+                    "Export XMI",
                     typeof(App).Assembly.Location,
-                    "Betekk.RevitXmiExporter.Builder.BetekkExportCommand"
+                    "Betekk.RevitXmiExporter.Builder.BetekkRevitModelToXmiExportCommand"
                 )
                 {
                     ToolTip = "Export the revit data into XmiSchema (JSON)",
                     LargeImage = largeIcon,
                     Image = smallIcon
                 };
-
-                // PushButtonData harnessButtonData = new PushButtonData(
-                //     "SegmentHarnessBtn",
-                //     "SegmentTests",
-                //     typeof(App).Assembly.Location,
-                //     "Betekk.RevitXmiExporter.StructuralSegmentHarnessCommand")
-                // {
-                //     ToolTip = "Run StructuralSegmentMapper smoke tests and report the results"
-                // };
 
                 panel.AddItem(buttonData);
                 // panel.AddItem(harnessButtonData);
