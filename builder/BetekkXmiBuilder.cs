@@ -225,31 +225,15 @@ namespace Betekk.RevitXmiExporter.Builder
                 _storeyCache.TryGetValue(levelNativeId, out storey);
             }
 
+            // Get analytical element ID using the new Revit 2023+ API (returns null if no association exists)
+            string? analyticalNativeId = GetAnalyticalElementId(doc, familyInstance);
+
             // Generate separate IDs for physical and analytical entities
-            // Both represent the same Revit element (nativeId), but are different XMI entities
             string physicalId = Guid.NewGuid().ToString();
-            string analyticalId = Guid.NewGuid().ToString();
 
             // Create deduplicated Point3D entities
             XmiPoint3D startXmiPoint = GetOrCreatePoint3D(startPoint, $"{physicalId}_start_point");
             XmiPoint3D endXmiPoint = GetOrCreatePoint3D(endPoint, $"{physicalId}_end_point");
-
-            // Create StructuralPointConnections for analytical domain
-            XmiStructuralPointConnection startConnection = GetOrCreatePointConnection(
-                startPoint,
-                $"{analyticalId}_start_connection",
-                $"{name}_start",
-                $"{nativeId}_start",
-                storey,
-                startXmiPoint);
-
-            XmiStructuralPointConnection endConnection = GetOrCreatePointConnection(
-                endPoint,
-                $"{analyticalId}_end_connection",
-                $"{name}_end",
-                $"{nativeId}_end",
-                storey,
-                endXmiPoint);
 
             // Create physical entity (XmiBeam or XmiColumn)
             CreatePhysicalElement(
@@ -263,20 +247,43 @@ namespace Betekk.RevitXmiExporter.Builder
                 endXmiPoint,
                 out XmiBasePhysicalEntity physicalEntity);
 
-            // Create analytical representation (XmiStructuralCurveMember)
-            XmiStructuralCurveMember analyticalMember = CreateStructuralCurveMember(
-                analyticalId,
-                name,
-                ifcGuid,
-                nativeId,
-                storey,
-                isColumn,
-                startConnection,
-                endConnection,
-                curve);
+            // Only create analytical representation if an analytical element exists in Revit
+            if (!string.IsNullOrEmpty(analyticalNativeId))
+            {
+                string analyticalId = Guid.NewGuid().ToString();
 
-            // Create relationship: Physical Element → Analytical Member
-            CreatePhysicalToAnalyticalRelationship(physicalEntity, analyticalMember);
+                // Create StructuralPointConnections for analytical domain
+                XmiStructuralPointConnection startConnection = GetOrCreatePointConnection(
+                    startPoint,
+                    $"{analyticalId}_start_connection",
+                    $"{name}_start",
+                    $"{analyticalNativeId}_start",
+                    storey,
+                    startXmiPoint);
+
+                XmiStructuralPointConnection endConnection = GetOrCreatePointConnection(
+                    endPoint,
+                    $"{analyticalId}_end_connection",
+                    $"{name}_end",
+                    $"{analyticalNativeId}_end",
+                    storey,
+                    endXmiPoint);
+
+                // Create analytical representation (XmiStructuralCurveMember)
+                XmiStructuralCurveMember analyticalMember = CreateStructuralCurveMember(
+                    analyticalId,
+                    name,
+                    ifcGuid,
+                    analyticalNativeId,  // Use analytical element's NativeId from Revit
+                    storey,
+                    isColumn,
+                    startConnection,
+                    endConnection,
+                    curve);
+
+                // Create relationship: Physical Element → Analytical Member
+                CreatePhysicalToAnalyticalRelationship(physicalEntity, analyticalMember);
+            }
         }
 
         /// <summary>
@@ -358,7 +365,7 @@ namespace Betekk.RevitXmiExporter.Builder
             XmiPoint3D newPoint = _model.CreatePoint3D(
                 id,
                 name,
-                id,        // ifcGuid
+                string.Empty,  // ifcGuid (empty - synthetic geometry, not a Revit element)
                 $"synthetic:point:{key}",  // nativeId (synthetic - not a Revit element)
                 string.Empty,  // description
                 roundedX,
@@ -401,7 +408,7 @@ namespace Betekk.RevitXmiExporter.Builder
             XmiStructuralPointConnection connection = _model.CreateStructurePointConnection(
                 id,
                 fallbackName ?? id,
-                id,           // ifcGuid
+                string.Empty, // ifcGuid (empty - synthetic analytical node, not a Revit element)
                 $"synthetic:connection:{nativeId}",  // nativeId (synthetic - analytical node, not a Revit element)
                 string.Empty, // description
                 storey,       // XmiStorey (can be null)
@@ -565,6 +572,40 @@ namespace Betekk.RevitXmiExporter.Builder
 
                 _model.AddXmiHasStructuralCurveMember(relationship);
             }
+        }
+
+        /// <summary>
+        /// Gets the associated analytical element ID from a physical element using Revit 2023+ API.
+        /// Returns null if no analytical association exists.
+        /// </summary>
+        /// <param name="doc">Revit document</param>
+        /// <param name="physicalElement">Physical structural element (beam or column)</param>
+        /// <returns>Analytical element ID as string, or null if no analytical model exists</returns>
+        private string? GetAnalyticalElementId(Document doc, Element physicalElement)
+        {
+            try
+            {
+                AnalyticalToPhysicalAssociationManager manager =
+                    AnalyticalToPhysicalAssociationManager.GetAnalyticalToPhysicalAssociationManager(doc);
+
+                if (manager != null)
+                {
+                    ElementId analyticalElementId = manager.GetAssociatedElementId(physicalElement.Id);
+
+                    if (analyticalElementId != null && analyticalElementId != ElementId.InvalidElementId)
+                    {
+                        return analyticalElementId.ToString();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ModelInfoBuilder.WriteErrorLogToFile(
+                    $"[BetekkXmiBuilder] Failed to get analytical element ID for {physicalElement.Id}: {ex.Message}");
+            }
+
+            // Return null if no analytical association exists
+            return null;
         }
     }
 }
