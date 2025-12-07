@@ -9,13 +9,14 @@ using XmiSchema.Core.Models.Entities.Physical;
 using XmiSchema.Core.Relationships;
 using XmiSchema.Core.Geometries;
 using XmiSchema.Core.Enums;
+using XmiSchema.Core.Parameters;
 
 namespace Betekk.RevitXmiExporter.Builder
 {
     /// <summary>
     /// Coordinates extraction of structural framing elements (beams, columns) from Revit
     /// and builds dual-representation XMI model (physical + analytical domains).
-    /// Phase 1: Geometry only - no cross-sections or materials.
+    /// Includes materials, cross-sections, and geometry.
     /// </summary>
     public class BetekkXmiBuilder
     {
@@ -32,6 +33,12 @@ namespace Betekk.RevitXmiExporter.Builder
         // StructuralPointConnection cache
         private readonly Dictionary<string, XmiStructuralPointConnection> _connectionCache;
 
+        // Material cache (keyed by Revit Material ElementId)
+        private readonly Dictionary<string, XmiMaterial> _materialCache;
+
+        // CrossSection cache (keyed by Revit FamilySymbol/Type ElementId)
+        private readonly Dictionary<string, XmiCrossSection> _crossSectionCache;
+
         // Tolerance for point deduplication (1e-10 in mm)
         private const double PointTolerance = 1e-10;
 
@@ -44,6 +51,8 @@ namespace Betekk.RevitXmiExporter.Builder
             _pointCache = new Dictionary<string, XmiPoint3D>();
             _storeyCache = new Dictionary<string, XmiStorey>();
             _connectionCache = new Dictionary<string, XmiStructuralPointConnection>();
+            _materialCache = new Dictionary<string, XmiMaterial>();
+            _crossSectionCache = new Dictionary<string, XmiCrossSection>();
         }
 
         /// <summary>
@@ -237,6 +246,8 @@ namespace Betekk.RevitXmiExporter.Builder
 
             // Create physical entity (XmiBeam or XmiColumn)
             CreatePhysicalElement(
+                doc,
+                familyInstance,
                 physicalId,
                 name,
                 ifcGuid,
@@ -454,7 +465,7 @@ namespace Betekk.RevitXmiExporter.Builder
             string localAxisY = "0,1,0";
             string localAxisZ = "0,0,1";
 
-            XmiStructuralCurveMember member = _model.CreateStructuralCurveMember(
+             finXmiStructuralCurveMember member = _model.CreateStructuralCurveMember(
                 id,
                 name,
                 ifcGuid,
@@ -481,10 +492,12 @@ namespace Betekk.RevitXmiExporter.Builder
         }
 
         /// <summary>
-        /// Creates physical element (XmiBeam or XmiColumn) and relationships to Point3D geometry.
+        /// Creates physical element (XmiBeam or XmiColumn) and relationships to Point3D geometry and cross-section.
         /// Uses description field to indicate "startNode" or "endNode" for point relationships.
         /// </summary>
         private void CreatePhysicalElement(
+            Document doc,
+            FamilyInstance familyInstance,
             string id,
             string name,
             string ifcGuid,
@@ -550,6 +563,14 @@ namespace Betekk.RevitXmiExporter.Builder
             XmiHasPoint3D endPointRel = new XmiHasPoint3D(physicalEntity, endPoint);
             endPointRel.Description = "endNode";
             _model.AddXmiHasPoint3D(endPointRel);
+
+            // Create cross-section and link via XmiHasCrossSection relationship
+            XmiCrossSection? crossSection = GetOrCreateCrossSection(doc, familyInstance);
+            if (crossSection != null)
+            {
+                XmiHasCrossSection hasCrossSection = new XmiHasCrossSection(physicalEntity, crossSection);
+                _model.AddXmiHasCrossSection(hasCrossSection);
+            }
         }
 
         /// <summary>
@@ -606,6 +627,315 @@ namespace Betekk.RevitXmiExporter.Builder
 
             // Return null if no analytical association exists
             return null;
+        }
+
+        /// <summary>
+        /// Gets or creates a deduplicated XmiMaterial from a Revit Material.
+        /// Uses Revit Material ElementId as cache key.
+        /// </summary>
+        private XmiMaterial? GetOrCreateMaterial(Document doc, ElementId materialId)
+        {
+            if (materialId == null || materialId == ElementId.InvalidElementId)
+            {
+                return null;
+            }
+
+            string cacheKey = materialId.ToString();
+
+            // Check cache
+            if (_materialCache.TryGetValue(cacheKey, out XmiMaterial existingMaterial))
+            {
+                return existingMaterial;
+            }
+
+            // Get Revit material
+            Material revitMaterial = doc.GetElement(materialId) as Material;
+            if (revitMaterial == null)
+            {
+                return null;
+            }
+
+            // Extract properties
+            string id = Guid.NewGuid().ToString();
+            string name = revitMaterial.Name ?? "Unknown Material";
+            string nativeId = materialId.ToString();
+
+            // Map Revit material class to XmiMaterialTypeEnum
+            XmiMaterialTypeEnum materialType = MapRevitMaterialClass(revitMaterial);
+
+            // Extract structural properties
+            StructuralAsset structuralAsset = null;
+            try
+            {
+                PropertySetElement propSet = doc.GetElement(revitMaterial.StructuralAssetId) as PropertySetElement;
+                if (propSet != null)
+                {
+                    structuralAsset = propSet.GetStructuralAsset();
+                }
+            }
+            catch { }
+
+            // Default values
+            double grade = 0;
+            double unitWeight = 0; // kg/m³
+            string elasticModulus = "0";
+            string shearModulus = "0";
+            string poissonRatio = "0";
+            double thermalCoefficient = 0;
+
+            if (structuralAsset != null)
+            {
+                // Unit weight (density) - Revit stores in lb/ft³, convert to kg/m³
+                if (structuralAsset.Density != null)
+                {
+                    double densityLbPerCubicFt = structuralAsset.Density;
+                    unitWeight = densityLbPerCubicFt * 16.0185; // lb/ft³ to kg/m³
+                }
+
+                // Elastic modulus - Revit stores in psi, convert to MPa
+                if (structuralAsset.YoungModulus != null)
+                {
+                    double youngModulusPsi = structuralAsset.YoungModulus.X; // Use X-axis value
+                    double youngModulusMPa = youngModulusPsi * 0.00689476; // psi to MPa
+                    elasticModulus = youngModulusMPa.ToString("F2");
+                }
+
+                // Shear modulus - Revit stores in psi, convert to MPa
+                if (structuralAsset.ShearModulus != null)
+                {
+                    double shearModulusPsi = structuralAsset.ShearModulus.X;
+                    double shearModulusMPa = shearModulusPsi * 0.00689476; // psi to MPa
+                    shearModulus = shearModulusMPa.ToString("F2");
+                }
+
+                // Poisson's ratio (dimensionless)
+                if (structuralAsset.PoissonRatio != null)
+                {
+                    poissonRatio = structuralAsset.PoissonRatio.X.ToString("F4");
+                }
+
+                // Thermal expansion coefficient - Revit stores in 1/°F, convert to 1/°C
+                if (structuralAsset.ThermalExpansionCoefficient != null)
+                {
+                    double thermalExpPerF = structuralAsset.ThermalExpansionCoefficient.X;
+                    thermalCoefficient = thermalExpPerF * 1.8; // 1/°F to 1/°C
+                }
+
+                // Try to extract grade/strength (material-specific)
+                // For concrete: CompressiveStrength
+                // For steel: MinimumYieldStress or MinimumTensileStrength
+                if (structuralAsset.ConcreteCompression != null)
+                {
+                    double strengthPsi = structuralAsset.ConcreteCompression;
+                    grade = strengthPsi * 0.00689476; // Convert psi to MPa
+                }
+                else if (structuralAsset.MinimumYieldStress != null)
+                {
+                    double yieldPsi = structuralAsset.MinimumYieldStress;
+                    grade = yieldPsi * 0.00689476; // Convert psi to MPa
+                }
+                else if (structuralAsset.MinimumTensileStrength != null)
+                {
+                    double tensilePsi = structuralAsset.MinimumTensileStrength;
+                    grade = tensilePsi * 0.00689476; // Convert psi to MPa
+                }
+            }
+
+            // Create XmiMaterial
+            XmiMaterial xmiMaterial = _model.CreateMaterial(
+                id,
+                name,
+                string.Empty,  // ifcGuid (materials don't have IFC GUIDs from Revit)
+                nativeId,
+                string.Empty,  // description
+                materialType,
+                grade,
+                unitWeight,
+                elasticModulus,
+                shearModulus,
+                poissonRatio,
+                thermalCoefficient
+            );
+
+            _materialCache[cacheKey] = xmiMaterial;
+            return xmiMaterial;
+        }
+
+        /// <summary>
+        /// Maps Revit material class to XmiMaterialTypeEnum.
+        /// </summary>
+        private XmiMaterialTypeEnum MapRevitMaterialClass(Material revitMaterial)
+        {
+            string materialClass = revitMaterial.MaterialClass ?? "";
+
+            // Revit material classes (common ones)
+            if (materialClass.Contains("Concrete", StringComparison.OrdinalIgnoreCase))
+                return XmiMaterialTypeEnum.Concrete;
+            if (materialClass.Contains("Steel", StringComparison.OrdinalIgnoreCase) ||
+                materialClass.Contains("Metal", StringComparison.OrdinalIgnoreCase))
+                return XmiMaterialTypeEnum.Steel;
+            if (materialClass.Contains("Wood", StringComparison.OrdinalIgnoreCase) ||
+                materialClass.Contains("Timber", StringComparison.OrdinalIgnoreCase))
+                return XmiMaterialTypeEnum.Timber;
+            if (materialClass.Contains("Aluminum", StringComparison.OrdinalIgnoreCase) ||
+                materialClass.Contains("Aluminium", StringComparison.OrdinalIgnoreCase))
+                return XmiMaterialTypeEnum.Aluminium;
+            if (materialClass.Contains("Masonry", StringComparison.OrdinalIgnoreCase))
+                return XmiMaterialTypeEnum.Masonry;
+
+            return XmiMaterialTypeEnum.Unknown;
+        }
+
+        /// <summary>
+        /// Gets or creates a deduplicated XmiCrossSection from a Revit FamilySymbol (Type).
+        /// Uses Revit FamilySymbol ElementId as cache key.
+        /// </summary>
+        private XmiCrossSection? GetOrCreateCrossSection(Document doc, FamilyInstance familyInstance)
+        {
+            if (familyInstance == null)
+            {
+                return null;
+            }
+
+            FamilySymbol familySymbol = familyInstance.Symbol;
+            if (familySymbol == null)
+            {
+                return null;
+            }
+
+            ElementId typeId = familySymbol.Id;
+            string cacheKey = typeId.ToString();
+
+            // Check cache
+            if (_crossSectionCache.TryGetValue(cacheKey, out XmiCrossSection existingCrossSection))
+            {
+                return existingCrossSection;
+            }
+
+            // Extract properties
+            string id = Guid.NewGuid().ToString();
+            string name = familySymbol.Name ?? "Unknown Section";
+            string nativeId = typeId.ToString();
+
+            // Extract material from family instance
+            ElementId materialId = familyInstance.StructuralMaterialId;
+            if (materialId == null || materialId == ElementId.InvalidElementId)
+            {
+                // Try to get material from type
+                materialId = familySymbol.get_Parameter(BuiltInParameter.STRUCTURAL_MATERIAL_PARAM)?.AsElementId();
+            }
+
+            XmiMaterial? material = GetOrCreateMaterial(doc, materialId);
+
+            // Extract cross-section dimensions
+            // For now, use a simplified approach - we'll try to detect common profile types
+            // and extract basic dimensions
+            (XmiShapeEnum shape, IXmiShapeParameters parameters, double area) = ExtractCrossSectionShape(familySymbol);
+
+            // Extract or calculate section properties
+            // Note: Revit doesn't always expose these directly, so we'll use defaults for now
+            double secondMomentXAxis = 0;
+            double secondMomentYAxis = 0;
+            double radiusOfGyrationX = 0;
+            double radiusOfGyrationY = 0;
+            double elasticModulusX = 0;
+            double elasticModulusY = 0;
+            double plasticModulusX = 0;
+            double plasticModulusY = 0;
+            double torsionalConstant = 0;
+
+            // Try to extract area from family parameters
+            Parameter areaParam = familySymbol.get_Parameter(BuiltInParameter.STRUCTURAL_SECTION_AREA);
+            if (areaParam != null && areaParam.HasValue)
+            {
+                // Revit stores area in ft², convert to mm²
+                double areaFt2 = areaParam.AsDouble();
+                area = areaFt2 * 92903.04; // ft² to mm²
+            }
+
+            // Create XmiCrossSection
+            XmiCrossSection xmiCrossSection = _model.CreateCrossSection(
+                id,
+                name,
+                string.Empty,  // ifcGuid (cross-sections don't have IFC GUIDs from Revit)
+                nativeId,
+                string.Empty,  // description
+                material,      // optional material reference
+                shape,
+                parameters,
+                area,
+                secondMomentXAxis,
+                secondMomentYAxis,
+                radiusOfGyrationX,
+                radiusOfGyrationY,
+                elasticModulusX,
+                elasticModulusY,
+                plasticModulusX,
+                plasticModulusY,
+                torsionalConstant
+            );
+
+            _crossSectionCache[cacheKey] = xmiCrossSection;
+            return xmiCrossSection;
+        }
+
+        /// <summary>
+        /// Extracts cross-section shape and parameters from Revit FamilySymbol.
+        /// Returns shape enum, parameters, and calculated area.
+        /// </summary>
+        private (XmiShapeEnum shape, IXmiShapeParameters parameters, double area) ExtractCrossSectionShape(FamilySymbol familySymbol)
+        {
+            // Try to extract common structural framing parameters
+            // Width (b)
+            Parameter widthParam = familySymbol.LookupParameter("b") ??
+                                   familySymbol.LookupParameter("Width") ??
+                                   familySymbol.LookupParameter("w");
+
+            // Height (h or d)
+            Parameter heightParam = familySymbol.LookupParameter("h") ??
+                                    familySymbol.LookupParameter("d") ??
+                                    familySymbol.LookupParameter("Height") ??
+                                    familySymbol.LookupParameter("Depth");
+
+            if (widthParam != null && heightParam != null && widthParam.HasValue && heightParam.HasValue)
+            {
+                // Convert from feet to mm
+                double width = Converters.ConvertValueToMillimeter(widthParam.AsDouble());
+                double height = Converters.ConvertValueToMillimeter(heightParam.AsDouble());
+
+                // Check if it's square or rectangular
+                if (Math.Abs(width - height) < 0.1)
+                {
+                    // Square section
+                    var parameters = new RectangularShapeParameters(height, width);
+                    double area = height * width;
+                    return (XmiShapeEnum.Rectangular, parameters, area);
+                }
+                else
+                {
+                    // Rectangular section
+                    var parameters = new RectangularShapeParameters(height, width);
+                    double area = height * width;
+                    return (XmiShapeEnum.Rectangular, parameters, area);
+                }
+            }
+
+            // Try to detect circular sections
+            Parameter diameterParam = familySymbol.LookupParameter("Diameter") ??
+                                      familySymbol.LookupParameter("D") ??
+                                      familySymbol.LookupParameter("d");
+
+            if (diameterParam != null && diameterParam.HasValue)
+            {
+                double diameter = Converters.ConvertValueToMillimeter(diameterParam.AsDouble());
+                var parameters = new CircularShapeParameters(diameter);
+                double area = Math.PI * diameter * diameter / 4.0;
+                return (XmiShapeEnum.Circular, parameters, area);
+            }
+
+            // Fallback: Unknown shape with empty parameters dictionary
+            var unknownParams = new UnknownShapeParameters(new Dictionary<string, double>());
+            return (XmiShapeEnum.Unknown, unknownParams, 0);
         }
     }
 }
