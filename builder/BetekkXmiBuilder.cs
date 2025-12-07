@@ -39,6 +39,9 @@ namespace Betekk.RevitXmiExporter.Builder
         // CrossSection cache (keyed by Revit FamilySymbol/Type ElementId)
         private readonly Dictionary<string, XmiCrossSection> _crossSectionCache;
 
+        // Track processed analytical element IDs to avoid duplicates
+        private readonly HashSet<string> _processedAnalyticalElementIds;
+
         // Tolerance for point deduplication (1e-10 in mm)
         private const double PointTolerance = 1e-10;
 
@@ -53,6 +56,7 @@ namespace Betekk.RevitXmiExporter.Builder
             _connectionCache = new Dictionary<string, XmiStructuralPointConnection>();
             _materialCache = new Dictionary<string, XmiMaterial>();
             _crossSectionCache = new Dictionary<string, XmiCrossSection>();
+            _processedAnalyticalElementIds = new HashSet<string>();
         }
 
         /// <summary>
@@ -66,6 +70,9 @@ namespace Betekk.RevitXmiExporter.Builder
 
             // Phase 2: Process structural framing elements (beams and columns)
             ProcessStructuralFramingElements(doc);
+
+            // Phase 3: Process standalone analytical elements (those without physical associations)
+            ProcessStandaloneAnalyticalElements(doc);
         }
 
         /// <summary>
@@ -294,6 +301,9 @@ namespace Betekk.RevitXmiExporter.Builder
 
                 // Create relationship: Physical Element → Analytical Member
                 CreatePhysicalToAnalyticalRelationship(physicalEntity, analyticalMember);
+
+                // Track this analytical element ID as processed
+                _processedAnalyticalElementIds.Add(analyticalNativeId);
             }
         }
 
@@ -465,7 +475,7 @@ namespace Betekk.RevitXmiExporter.Builder
             string localAxisY = "0,1,0";
             string localAxisZ = "0,0,1";
 
-             finXmiStructuralCurveMember member = _model.CreateStructuralCurveMember(
+             XmiStructuralCurveMember member = _model.CreateStructuralCurveMember(
                 id,
                 name,
                 ifcGuid,
@@ -936,6 +946,112 @@ namespace Betekk.RevitXmiExporter.Builder
             // Fallback: Unknown shape with empty parameters dictionary
             var unknownParams = new UnknownShapeParameters(new Dictionary<string, double>());
             return (XmiShapeEnum.Unknown, unknownParams, 0);
+        }
+
+        /// <summary>
+        /// Processes standalone analytical elements that don't have physical associations.
+        /// This captures analytical-only elements that exist in the model independently.
+        /// </summary>
+        private void ProcessStandaloneAnalyticalElements(Document doc)
+        {
+            try
+            {
+                // Collect all analytical curve members in the model
+                // In Revit 2023+, analytical elements are in their own categories
+                FilteredElementCollector analyticalCollector = new FilteredElementCollector(doc)
+                    .OfClass(typeof(AnalyticalMember))
+                    .WhereElementIsNotElementType();
+
+                foreach (Element element in analyticalCollector)
+                {
+                    AnalyticalMember analyticalMember = element as AnalyticalMember;
+                    if (analyticalMember == null)
+                        continue;
+
+                    string analyticalNativeId = analyticalMember.Id.ToString();
+
+                    // Skip if we already processed this analytical element
+                    // (i.e., it has a physical association that we handled in Phase 2)
+                    if (_processedAnalyticalElementIds.Contains(analyticalNativeId))
+                        continue;
+
+                    // Get the analytical curve
+                    Curve curve = analyticalMember.GetCurve();
+                    if (curve == null)
+                        continue;
+
+                    XYZ startPoint = curve.GetEndPoint(0);
+                    XYZ endPoint = curve.GetEndPoint(1);
+
+                    // Get element name
+                    string name = analyticalMember.Name ?? $"Analytical_{analyticalNativeId}";
+
+                    // Get IFC GUID if exists
+                    string ifcGuid = GetIfcGuidFromElement(analyticalMember);
+
+                    // Try to determine if it's a column or beam based on orientation
+                    // Vertical elements (columns) have significant Z-component
+                    XYZ direction = (endPoint - startPoint).Normalize();
+                    bool isColumn = Math.Abs(direction.Z) > 0.7; // If >70% vertical, treat as column
+
+                    // Try to get storey/level
+                    XmiStorey? storey = null;
+                    try
+                    {
+                        Level level = doc.GetElement(analyticalMember.LevelId) as Level;
+                        if (level != null)
+                        {
+                            string levelId = level.Id.ToString();
+                            _storeyCache.TryGetValue(levelId, out storey);
+                        }
+                    }
+                    catch { }
+
+                    // Generate IDs for XMI entities
+                    string analyticalId = Guid.NewGuid().ToString();
+
+                    // Create deduplicated Point3D entities
+                    XmiPoint3D startXmiPoint = GetOrCreatePoint3D(startPoint, $"{analyticalId}_start_point");
+                    XmiPoint3D endXmiPoint = GetOrCreatePoint3D(endPoint, $"{analyticalId}_end_point");
+
+                    // Create StructuralPointConnections for analytical domain
+                    XmiStructuralPointConnection startConnection = GetOrCreatePointConnection(
+                        startPoint,
+                        $"{analyticalId}_start_connection",
+                        $"{name}_start",
+                        $"{analyticalNativeId}_start",
+                        storey,
+                        startXmiPoint);
+
+                    XmiStructuralPointConnection endConnection = GetOrCreatePointConnection(
+                        endPoint,
+                        $"{analyticalId}_end_connection",
+                        $"{name}_end",
+                        $"{analyticalNativeId}_end",
+                        storey,
+                        endXmiPoint);
+
+                    // Create analytical representation (XmiStructuralCurveMember)
+                    XmiStructuralCurveMember xmiAnalyticalMember = CreateStructuralCurveMember(
+                        analyticalId,
+                        name,
+                        ifcGuid,
+                        analyticalNativeId,  // Use analytical element's NativeId
+                        storey,
+                        isColumn,
+                        startConnection,
+                        endConnection,
+                        curve);
+
+                    // Track as processed
+                    _processedAnalyticalElementIds.Add(analyticalNativeId);
+                }
+            }
+            catch (Exception ex)
+            {
+                ModelInfoBuilder.WriteErrorLogToFile(
+                    $"[BetekkXmiBuilder] Error processing standalone analytical elements: {ex.Message}");
+            }
         }
     }
 }
