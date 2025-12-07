@@ -39,8 +39,13 @@ namespace Betekk.RevitXmiExporter.Builder
         // CrossSection cache (keyed by Revit FamilySymbol/Type ElementId)
         private readonly Dictionary<string, XmiCrossSection> _crossSectionCache;
 
-        // Track processed analytical element IDs to avoid duplicates
-        private readonly HashSet<string> _processedAnalyticalElementIds;
+        // Cache for analytical members (keyed by Revit ElementId as string)
+        // Stores XmiStructuralCurveMember entities created from AnalyticalMember elements
+        private readonly Dictionary<string, XmiStructuralCurveMember> _analyticalMemberCache;
+
+        // Placeholder cross-section for analytical members without section types assigned
+        // This is a temporary workaround until XmiSchema.Core supports nullable cross-sections
+        private XmiCrossSection? _placeholderCrossSection;
 
         // Tolerance for point deduplication (1e-10 in mm)
         private const double PointTolerance = 1e-10;
@@ -56,7 +61,7 @@ namespace Betekk.RevitXmiExporter.Builder
             _connectionCache = new Dictionary<string, XmiStructuralPointConnection>();
             _materialCache = new Dictionary<string, XmiMaterial>();
             _crossSectionCache = new Dictionary<string, XmiCrossSection>();
-            _processedAnalyticalElementIds = new HashSet<string>();
+            _analyticalMemberCache = new Dictionary<string, XmiStructuralCurveMember>();
         }
 
         /// <summary>
@@ -68,11 +73,11 @@ namespace Betekk.RevitXmiExporter.Builder
             // Phase 1: Process levels/storeys
             ProcessStoreys(doc);
 
-            // Phase 2: Process structural framing elements (beams and columns)
-            ProcessStructuralFramingElements(doc);
+            // Phase 2: Process ALL analytical members first (with or without physical associations)
+            ProcessAnalyticalMembers(doc);
 
-            // Phase 3: Process standalone analytical elements (those without physical associations)
-            ProcessStandaloneAnalyticalElements(doc);
+            // Phase 3: Process physical elements (beams and columns) and link to analytical members
+            ProcessStructuralFramingElements(doc);
         }
 
         /// <summary>
@@ -265,45 +270,15 @@ namespace Betekk.RevitXmiExporter.Builder
                 endXmiPoint,
                 out XmiBasePhysicalEntity physicalEntity);
 
-            // Only create analytical representation if an analytical element exists in Revit
+            // Link to existing analytical member if it was already processed in Phase 2
             if (!string.IsNullOrEmpty(analyticalNativeId))
             {
-                string analyticalId = Guid.NewGuid().ToString();
-
-                // Create StructuralPointConnections for analytical domain
-                XmiStructuralPointConnection startConnection = GetOrCreatePointConnection(
-                    startPoint,
-                    $"{analyticalId}_start_connection",
-                    $"{name}_start",
-                    $"{analyticalNativeId}_start",
-                    storey,
-                    startXmiPoint);
-
-                XmiStructuralPointConnection endConnection = GetOrCreatePointConnection(
-                    endPoint,
-                    $"{analyticalId}_end_connection",
-                    $"{name}_end",
-                    $"{analyticalNativeId}_end",
-                    storey,
-                    endXmiPoint);
-
-                // Create analytical representation (XmiStructuralCurveMember)
-                XmiStructuralCurveMember analyticalMember = CreateStructuralCurveMember(
-                    analyticalId,
-                    name,
-                    ifcGuid,
-                    analyticalNativeId,  // Use analytical element's NativeId from Revit
-                    storey,
-                    isColumn,
-                    startConnection,
-                    endConnection,
-                    curve);
-
-                // Create relationship: Physical Element → Analytical Member
-                CreatePhysicalToAnalyticalRelationship(physicalEntity, analyticalMember);
-
-                // Track this analytical element ID as processed
-                _processedAnalyticalElementIds.Add(analyticalNativeId);
+                // Look up the analytical member from cache (created in Phase 2)
+                if (_analyticalMemberCache.TryGetValue(analyticalNativeId, out XmiStructuralCurveMember analyticalMember))
+                {
+                    // Create relationship: Physical Element → Analytical Member
+                    CreatePhysicalToAnalyticalRelationship(physicalEntity, analyticalMember);
+                }
             }
         }
 
@@ -441,8 +416,7 @@ namespace Betekk.RevitXmiExporter.Builder
         }
 
         /// <summary>
-        /// Creates XmiStructuralCurveMember (analytical representation).
-        /// Phase 1: Simplified - no cross-section, no segments, basic properties only.
+        /// Creates XmiStructuralCurveMember (analytical representation) with optional cross-section.
         /// </summary>
         private XmiStructuralCurveMember CreateStructuralCurveMember(
             string id,
@@ -453,7 +427,8 @@ namespace Betekk.RevitXmiExporter.Builder
             bool isColumn,
             XmiStructuralPointConnection startConnection,
             XmiStructuralPointConnection endConnection,
-            Curve curve)
+            Curve curve,
+            XmiCrossSection? crossSection = null)
         {
             // Determine member type
             XmiStructuralCurveMemberTypeEnum memberType = isColumn
@@ -475,17 +450,17 @@ namespace Betekk.RevitXmiExporter.Builder
             string localAxisY = "0,1,0";
             string localAxisZ = "0,0,1";
 
-             XmiStructuralCurveMember member = _model.CreateStructuralCurveMember(
+            XmiStructuralCurveMember member = _model.CreateStructuralCurveMember(
                 id,
                 name,
                 ifcGuid,
                 nativeId,
                 string.Empty,    // description
-                null,            // crossSection (Phase 1: deferred)
+                crossSection,    // crossSection (optional)
                 storey,          // storey (can be null)
                 memberType,
                 nodes,
-                null,            // segments (Phase 1: deferred)
+                null,            // segments (deferred)
                 XmiSystemLineEnum.TopMiddle,  // default system line
                 startConnection,
                 endConnection,
@@ -949,10 +924,11 @@ namespace Betekk.RevitXmiExporter.Builder
         }
 
         /// <summary>
-        /// Processes standalone analytical elements that don't have physical associations.
-        /// This captures analytical-only elements that exist in the model independently.
+        /// Processes ALL analytical members in the model (with or without physical associations).
+        /// Extracts section types, creates cross-sections, and builds the analytical model.
+        /// This runs BEFORE physical element processing to establish analytical entities first.
         /// </summary>
-        private void ProcessStandaloneAnalyticalElements(Document doc)
+        private void ProcessAnalyticalMembers(Document doc)
         {
             try
             {
@@ -969,11 +945,6 @@ namespace Betekk.RevitXmiExporter.Builder
                         continue;
 
                     string analyticalNativeId = analyticalMember.Id.ToString();
-
-                    // Skip if we already processed this analytical element
-                    // (i.e., it has a physical association that we handled in Phase 2)
-                    if (_processedAnalyticalElementIds.Contains(analyticalNativeId))
-                        continue;
 
                     // Get the analytical curve
                     Curve curve = analyticalMember.GetCurve();
@@ -1031,6 +1002,9 @@ namespace Betekk.RevitXmiExporter.Builder
                         storey,
                         endXmiPoint);
 
+                    // Extract Section Type property from analytical member and create cross-section
+                    XmiCrossSection? crossSection = GetOrCreateCrossSectionFromAnalyticalMember(doc, analyticalMember);
+
                     // Create analytical representation (XmiStructuralCurveMember)
                     XmiStructuralCurveMember xmiAnalyticalMember = CreateStructuralCurveMember(
                         analyticalId,
@@ -1041,17 +1015,217 @@ namespace Betekk.RevitXmiExporter.Builder
                         isColumn,
                         startConnection,
                         endConnection,
-                        curve);
+                        curve,
+                        crossSection);  // Pass cross-section (optional)
 
-                    // Track as processed
-                    _processedAnalyticalElementIds.Add(analyticalNativeId);
+                    // Store in cache for later lookup by physical elements
+                    _analyticalMemberCache[analyticalNativeId] = xmiAnalyticalMember;
                 }
             }
             catch (Exception ex)
             {
                 ModelInfoBuilder.WriteErrorLogToFile(
-                    $"[BetekkXmiBuilder] Error processing standalone analytical elements: {ex.Message}");
+                    $"[BetekkXmiBuilder] Error processing analytical members: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Extracts the Section Type property from an Revit AnalyticalMember and creates
+        /// an XmiCrossSection if a section type is assigned.
+        /// Returns null if no section type is found.
+        /// </summary>
+        private XmiCrossSection? GetOrCreateCrossSectionFromAnalyticalMember(Document doc, AnalyticalMember analyticalMember)
+        {
+            try
+            {
+                // Try to get the Section Type parameter from the analytical member
+                // In Revit's analytical model, this is typically stored as a parameter
+                Parameter sectionTypeParam = analyticalMember.LookupParameter("Section Type");
+
+                if (sectionTypeParam == null || !sectionTypeParam.HasValue)
+                {
+                    // No section type assigned - return placeholder cross-section
+                    // This is a temporary workaround until XmiSchema.Core supports nullable cross-sections
+                    return GetOrCreatePlaceholderCrossSection();
+                }
+
+                // Get the element ID of the section type
+                ElementId sectionTypeId = sectionTypeParam.AsElementId();
+                if (sectionTypeId == null || sectionTypeId == ElementId.InvalidElementId)
+                {
+                    // Invalid section type - return placeholder cross-section
+                    return GetOrCreatePlaceholderCrossSection();
+                }
+
+                string cacheKey = sectionTypeId.ToString();
+
+                // Check cache for existing cross-section
+                if (_crossSectionCache.TryGetValue(cacheKey, out XmiCrossSection existingCrossSection))
+                {
+                    return existingCrossSection;
+                }
+
+                // Get the section type element (this is typically a FamilySymbol for structural sections)
+                Element sectionTypeElement = doc.GetElement(sectionTypeId);
+                if (sectionTypeElement == null)
+                {
+                    return null;
+                }
+
+                // Extract properties from the section type
+                string id = Guid.NewGuid().ToString();
+                string name = sectionTypeElement.Name ?? "Unknown Section";
+                string nativeId = sectionTypeId.ToString();
+
+                // Try to extract material from the section type
+                XmiMaterial? material = null;
+                ElementId materialId = ElementId.InvalidElementId;
+
+                // Try to get material from section type
+                if (sectionTypeElement is FamilySymbol familySymbol)
+                {
+                    Parameter materialParam = familySymbol.get_Parameter(BuiltInParameter.STRUCTURAL_MATERIAL_PARAM);
+                    if (materialParam != null && materialParam.HasValue)
+                    {
+                        materialId = materialParam.AsElementId();
+                    }
+                }
+
+                if (materialId != ElementId.InvalidElementId)
+                {
+                    material = GetOrCreateMaterial(doc, materialId);
+                }
+
+                // Extract shape parameters from the section type
+                (XmiShapeEnum shape, IXmiShapeParameters parameters, double area) =
+                    ExtractCrossSectionShapeFromElement(sectionTypeElement);
+
+                // Try to extract area from section parameters
+                Parameter areaParam = sectionTypeElement.get_Parameter(BuiltInParameter.STRUCTURAL_SECTION_AREA);
+                if (areaParam != null && areaParam.HasValue)
+                {
+                    // Revit stores area in ft², convert to mm²
+                    double areaFt2 = areaParam.AsDouble();
+                    area = areaFt2 * 92903.04; // ft² to mm²
+                }
+
+                // Create XmiCrossSection
+                XmiCrossSection xmiCrossSection = _model.CreateCrossSection(
+                    id,
+                    name,
+                    string.Empty,  // ifcGuid (sections don't have IFC GUIDs)
+                    nativeId,
+                    string.Empty,  // description
+                    material,      // optional material reference
+                    shape,
+                    parameters,
+                    area,
+                    0, 0, 0, 0, 0, 0, 0, 0, 0  // section properties (deferred for now)
+                );
+
+                _crossSectionCache[cacheKey] = xmiCrossSection;
+                return xmiCrossSection;
+            }
+            catch (Exception ex)
+            {
+                ModelInfoBuilder.WriteErrorLogToFile(
+                    $"[BetekkXmiBuilder] Error extracting section type from analytical member {analyticalMember.Id}: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Extracts cross-section shape and parameters from any Revit element (works for both
+        /// FamilySymbol and other element types).
+        /// </summary>
+        private (XmiShapeEnum shape, IXmiShapeParameters parameters, double area) ExtractCrossSectionShapeFromElement(Element element)
+        {
+            // Try FamilySymbol first
+            if (element is FamilySymbol familySymbol)
+            {
+                return ExtractCrossSectionShape(familySymbol);
+            }
+
+            // Try to extract parameters directly from the element
+            // Width (b)
+            Parameter widthParam = element.LookupParameter("b") ??
+                                   element.LookupParameter("Width") ??
+                                   element.LookupParameter("w");
+
+            // Height (h or d)
+            Parameter heightParam = element.LookupParameter("h") ??
+                                    element.LookupParameter("d") ??
+                                    element.LookupParameter("Height") ??
+                                    element.LookupParameter("Depth");
+
+            if (widthParam != null && heightParam != null && widthParam.HasValue && heightParam.HasValue)
+            {
+                // Convert from feet to mm
+                double width = Converters.ConvertValueToMillimeter(widthParam.AsDouble());
+                double height = Converters.ConvertValueToMillimeter(heightParam.AsDouble());
+
+                var parameters = new RectangularShapeParameters(height, width);
+                double area = height * width;
+                return (XmiShapeEnum.Rectangular, parameters, area);
+            }
+
+            // Try circular
+            Parameter diameterParam = element.LookupParameter("Diameter") ??
+                                      element.LookupParameter("D") ??
+                                      element.LookupParameter("d");
+
+            if (diameterParam != null && diameterParam.HasValue)
+            {
+                double diameter = Converters.ConvertValueToMillimeter(diameterParam.AsDouble());
+                var parameters = new CircularShapeParameters(diameter);
+                double area = Math.PI * diameter * diameter / 4.0;
+                return (XmiShapeEnum.Circular, parameters, area);
+            }
+
+            // Fallback: Unknown shape
+            var unknownParams = new UnknownShapeParameters(new Dictionary<string, double>());
+            return (XmiShapeEnum.Unknown, unknownParams, 0);
+        }
+
+        /// <summary>
+        /// Gets or creates a placeholder cross-section for analytical members without section types assigned.
+        /// This is a temporary workaround until XmiSchema.Core supports nullable cross-sections.
+        /// Creates a single shared placeholder instance to avoid polluting the model with duplicates.
+        /// </summary>
+        private XmiCrossSection GetOrCreatePlaceholderCrossSection()
+        {
+            // Return cached instance if it exists
+            if (_placeholderCrossSection != null)
+            {
+                return _placeholderCrossSection;
+            }
+
+            // Create placeholder cross-section with clearly identifiable properties
+            string id = "placeholder-no-section-type";
+            string name = "[PLACEHOLDER] No Section Type Assigned";
+            string nativeId = "synthetic:placeholder:no-section-type";
+            string description = "TEMPORARY PLACEHOLDER: This analytical member does not have a section type assigned in Revit. " +
+                                 "This placeholder exists because XmiSchema.Core v0.9.1 requires non-nullable cross-sections. " +
+                                 "Once the library is upgraded to support nullable cross-sections, this placeholder will be removed.";
+
+            // Use Unknown shape with empty parameters
+            var unknownParams = new UnknownShapeParameters(new Dictionary<string, double>());
+
+            // Create the placeholder cross-section
+            _placeholderCrossSection = _model.CreateCrossSection(
+                id,
+                name,
+                string.Empty,  // ifcGuid
+                nativeId,
+                description,
+                null,          // material (no material for placeholder)
+                XmiShapeEnum.Unknown,
+                unknownParams,
+                0,  // area
+                0, 0, 0, 0, 0, 0, 0, 0, 0  // all section properties zero
+            );
+
+            return _placeholderCrossSection;
         }
     }
 }
