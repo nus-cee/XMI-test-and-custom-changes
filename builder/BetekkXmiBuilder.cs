@@ -509,7 +509,7 @@ namespace Betekk.RevitXmiExporter.Builder
                     ifcGuid,
                     nativeId,
                     string.Empty,  // description
-                    XmiSystemLineEnum.TopMiddle,
+                    XmiSystemLineEnum.MiddleMiddle,
                     lengthMm,
                     localAxisX,
                     localAxisY,
