@@ -50,6 +50,16 @@ namespace Betekk.RevitXmiExporter.Builder
         // Tolerance for point deduplication (1e-10 in mm)
         private const double PointTolerance = 1e-10;
 
+        // Export counters
+        private int _storeyCount = 0;
+        private int _beamCount = 0;
+        private int _columnCount = 0;
+        private int _analyticalMemberCount = 0;
+        private int _materialCount = 0;
+        private int _crossSectionCount = 0;
+        private int _pointCount = 0;
+        private int _connectionCount = 0;
+
         public BetekkXmiBuilder()
         {
             _manager = new XmiManager();
@@ -90,6 +100,25 @@ namespace Betekk.RevitXmiExporter.Builder
         }
 
         /// <summary>
+        /// Gets export statistics containing counts of all exported entities.
+        /// </summary>
+        /// <returns>Export statistics object.</returns>
+        public ExportStatistics GetExportStatistics()
+        {
+            return new ExportStatistics
+            {
+                StoreyCount = _storeyCount,
+                BeamCount = _beamCount,
+                ColumnCount = _columnCount,
+                AnalyticalMemberCount = _analyticalMemberCount,
+                MaterialCount = _materialCount,
+                CrossSectionCount = _crossSectionCount,
+                PointCount = _pointCount,
+                ConnectionCount = _connectionCount
+            };
+        }
+
+        /// <summary>
         /// Extracts all Level elements and creates XmiStorey entities.
         /// Populates _storeyCache for later reference by structural elements.
         /// </summary>
@@ -127,6 +156,7 @@ namespace Betekk.RevitXmiExporter.Builder
                         );
 
                         _storeyCache[nativeId] = storey;
+                        _storeyCount++;
                     }
                     catch (Exception ex)
                     {
@@ -370,6 +400,7 @@ namespace Betekk.RevitXmiExporter.Builder
             );
 
             _pointCache[key] = newPoint;
+            _pointCount++;
             return newPoint;
         }
 
@@ -412,6 +443,7 @@ namespace Betekk.RevitXmiExporter.Builder
             );
 
             _connectionCache[key] = connection;
+            _connectionCount++;
             return connection;
         }
 
@@ -517,6 +549,7 @@ namespace Betekk.RevitXmiExporter.Builder
 
                 _model.AddXmiColumn(column);
                 physicalEntity = column;
+                _columnCount++;
             }
             else
             {
@@ -536,6 +569,7 @@ namespace Betekk.RevitXmiExporter.Builder
 
                 _model.AddXmiBeam(beam);
                 physicalEntity = beam;
+                _beamCount++;
             }
 
             // Create relationships: Physical Element → Point3D
@@ -743,6 +777,7 @@ namespace Betekk.RevitXmiExporter.Builder
             );
 
             _materialCache[cacheKey] = xmiMaterial;
+            _materialCount++;
             return xmiMaterial;
         }
 
@@ -861,6 +896,7 @@ namespace Betekk.RevitXmiExporter.Builder
             );
 
             _crossSectionCache[cacheKey] = xmiCrossSection;
+            _crossSectionCount++;
             return xmiCrossSection;
         }
 
@@ -932,30 +968,93 @@ namespace Betekk.RevitXmiExporter.Builder
         {
             try
             {
-                // Collect all analytical curve members in the model
-                // In Revit 2023+, analytical elements are in their own categories
-                FilteredElementCollector analyticalCollector = new FilteredElementCollector(doc)
+                // Try multiple collection strategies to find analytical members
+
+                // Strategy 1: By Class (AnalyticalMember)
+                FilteredElementCollector byClass = new FilteredElementCollector(doc)
                     .OfClass(typeof(AnalyticalMember))
                     .WhereElementIsNotElementType();
+                int byClassCount = byClass.GetElementCount();
+
+                // Strategy 2: By Category OST_AnalyticalMember
+                FilteredElementCollector byCategory = new FilteredElementCollector(doc)
+                    .OfCategory(BuiltInCategory.OST_AnalyticalMember)
+                    .WhereElementIsNotElementType();
+                int byCategoryCount = byCategory.GetElementCount();
+
+                ModelInfoBuilder.WriteErrorLogToFile(
+                    $"[BetekkXmiBuilder] Collection strategies - ByClass: {byClassCount}, ByCategory: {byCategoryCount}");
+
+                // If no elements found, do a diagnostic scan
+                if (byClassCount == 0 && byCategoryCount == 0)
+                {
+                    ModelInfoBuilder.WriteErrorLogToFile(
+                        $"[BetekkXmiBuilder] No analytical members found. Running diagnostic scan...");
+
+                    // Check if there are any analytical elements at all
+                    FilteredElementCollector allElements = new FilteredElementCollector(doc);
+                    HashSet<string> analyticalTypes = new HashSet<string>();
+
+                    foreach (Element elem in allElements)
+                    {
+                        string typeName = elem.GetType().Name;
+                        if (typeName.Contains("Analytical", StringComparison.OrdinalIgnoreCase))
+                        {
+                            analyticalTypes.Add($"{typeName} (Category: {elem.Category?.Name ?? "None"})");
+                        }
+                    }
+
+                    if (analyticalTypes.Count > 0)
+                    {
+                        ModelInfoBuilder.WriteErrorLogToFile(
+                            $"[BetekkXmiBuilder] Found these analytical element types: {string.Join(", ", analyticalTypes)}");
+                    }
+                    else
+                    {
+                        ModelInfoBuilder.WriteErrorLogToFile(
+                            $"[BetekkXmiBuilder] No analytical elements found in model. The model may not have analytical model enabled.");
+                    }
+                }
+
+                // Use whichever strategy found elements
+                FilteredElementCollector analyticalCollector = byClassCount > 0 ? byClass : byCategory;
+                int collectedCount = analyticalCollector.GetElementCount();
+
+                ModelInfoBuilder.WriteErrorLogToFile(
+                    $"[BetekkXmiBuilder] Using collection strategy that found {collectedCount} analytical members");
 
                 foreach (Element element in analyticalCollector)
                 {
-                    AnalyticalMember analyticalMember = element as AnalyticalMember;
-                    if (analyticalMember == null)
-                        continue;
+                    try
+                    {
+                        AnalyticalMember analyticalMember = element as AnalyticalMember;
+                        if (analyticalMember == null)
+                        {
+                            ModelInfoBuilder.WriteErrorLogToFile(
+                                $"[BetekkXmiBuilder] Skipping element {element?.Id} (Type: {element?.GetType().Name}) - not an AnalyticalMember type");
+                            continue;
+                        }
 
-                    string analyticalNativeId = analyticalMember.Id.ToString();
+                        string analyticalNativeId = analyticalMember.Id.ToString();
+                        ModelInfoBuilder.WriteErrorLogToFile(
+                            $"[BetekkXmiBuilder] Processing analytical member {analyticalNativeId} - {analyticalMember.Name}");
 
                     // Get the analytical curve
                     Curve curve = analyticalMember.GetCurve();
                     if (curve == null)
+                    {
+                        ModelInfoBuilder.WriteErrorLogToFile(
+                            $"[BetekkXmiBuilder] Skipping analytical member {analyticalNativeId} - no curve found");
                         continue;
+                    }
 
                     XYZ startPoint = curve.GetEndPoint(0);
                     XYZ endPoint = curve.GetEndPoint(1);
 
-                    // Get element name
-                    string name = analyticalMember.Name ?? $"Analytical_{analyticalNativeId}";
+                    // Get element name - handle both null and empty strings
+                    string name = string.IsNullOrWhiteSpace(analyticalMember.Name)
+                        ? $"Analytical_{analyticalNativeId}"
+                        : analyticalMember.Name;
 
                     // Get IFC GUID if exists
                     string ifcGuid = GetIfcGuidFromElement(analyticalMember);
@@ -1018,9 +1117,21 @@ namespace Betekk.RevitXmiExporter.Builder
                         curve,
                         crossSection);  // Pass cross-section (optional)
 
-                    // Store in cache for later lookup by physical elements
-                    _analyticalMemberCache[analyticalNativeId] = xmiAnalyticalMember;
+                        // Store in cache for later lookup by physical elements
+                        _analyticalMemberCache[analyticalNativeId] = xmiAnalyticalMember;
+                        _analyticalMemberCount++;
+                    }
+                    catch (Exception ex)
+                    {
+                        string elementId = element?.Id?.ToString() ?? "unknown";
+                        ModelInfoBuilder.WriteErrorLogToFile(
+                            $"[BetekkXmiBuilder] Failed to process analytical member {elementId}: {ex.Message}");
+                        ModelInfoBuilder.WriteErrorLogToFile($"[BetekkXmiBuilder] Stack trace: {ex.StackTrace}");
+                    }
                 }
+
+                ModelInfoBuilder.WriteErrorLogToFile(
+                    $"[BetekkXmiBuilder] Successfully processed {_analyticalMemberCount} analytical members");
             }
             catch (Exception ex)
             {
@@ -1124,6 +1235,7 @@ namespace Betekk.RevitXmiExporter.Builder
                 );
 
                 _crossSectionCache[cacheKey] = xmiCrossSection;
+                _crossSectionCount++;
                 return xmiCrossSection;
             }
             catch (Exception ex)
@@ -1227,5 +1339,20 @@ namespace Betekk.RevitXmiExporter.Builder
 
             return _placeholderCrossSection;
         }
+    }
+
+    /// <summary>
+    /// Contains statistics about exported entities.
+    /// </summary>
+    public class ExportStatistics
+    {
+        public int StoreyCount { get; set; }
+        public int BeamCount { get; set; }
+        public int ColumnCount { get; set; }
+        public int AnalyticalMemberCount { get; set; }
+        public int MaterialCount { get; set; }
+        public int CrossSectionCount { get; set; }
+        public int PointCount { get; set; }
+        public int ConnectionCount { get; set; }
     }
 }

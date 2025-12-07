@@ -52,10 +52,10 @@ namespace Betekk.RevitXmiExporter.Builder
                 }
 
                 BetekkRevitToXmiModelManager exporter = new BetekkRevitToXmiModelManager();
-                string exportJson = exporter.Export(doc);
+                ExportResult result = exporter.Export(doc);
 
-                SaveExport(exportPath, exportJson);
-                ShowSuccessDialog(exportPath);
+                SaveExport(exportPath, result.Json);
+                ShowSuccessDialog(exportPath, result.Statistics);
 
                 return Result.Succeeded;
             }
@@ -141,12 +141,26 @@ namespace Betekk.RevitXmiExporter.Builder
             File.WriteAllText(exportPath, payload, Encoding.UTF8);
         }
 
-        private static void ShowSuccessDialog(string exportPath)
+        private static void ShowSuccessDialog(string exportPath, ExportStatistics stats)
         {
+            StringBuilder summaryBuilder = new StringBuilder();
+            summaryBuilder.AppendLine("Export Summary:");
+            summaryBuilder.AppendLine($"  • Storeys: {stats.StoreyCount}");
+            summaryBuilder.AppendLine($"  • Beams: {stats.BeamCount}");
+            summaryBuilder.AppendLine($"  • Columns: {stats.ColumnCount}");
+            summaryBuilder.AppendLine($"  • Analytical Members: {stats.AnalyticalMemberCount}");
+            summaryBuilder.AppendLine($"  • Materials: {stats.MaterialCount}");
+            summaryBuilder.AppendLine($"  • Cross-Sections: {stats.CrossSectionCount}");
+            summaryBuilder.AppendLine($"  • 3D Points: {stats.PointCount}");
+            summaryBuilder.AppendLine($"  • Structural Connections: {stats.ConnectionCount}");
+            summaryBuilder.AppendLine();
+            summaryBuilder.AppendLine($"File saved to:");
+            summaryBuilder.Append(exportPath);
+
             RevitTaskDialog dialog = new RevitTaskDialog("Export complete")
             {
                 MainInstruction = "The structural model was exported successfully.",
-                MainContent = $"File saved to:{Environment.NewLine}{exportPath}",
+                MainContent = summaryBuilder.ToString(),
                 FooterText = "Press Ctrl+C to copy the file path from this dialog.",
                 CommonButtons = TaskDialogCommonButtons.Close
             };
