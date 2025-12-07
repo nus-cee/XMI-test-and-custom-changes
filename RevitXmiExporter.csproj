@@ -36,15 +36,6 @@
 		<NoWarn>1701;1702;MSB3277</NoWarn>
 	</PropertyGroup>
 
-	<ItemGroup Condition="'$(MSBuildRuntimeType)'=='Full'">
-		<COMReference Include="{215d64d2-031c-33c7-96e3-61794cd1ee61}">
-			<WrapperTool>tlbimp</WrapperTool>
-			<VersionMinor>4</VersionMinor>
-			<VersionMajor>2</VersionMajor>
-			<Guid>215d64d2-031c-33c7-96e3-61794cd1ee61</Guid>
-		</COMReference>
-	</ItemGroup>
-
 	<ItemGroup>
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
 		<PackageReference Include="XmiSchema.Core" Version="0.9.1" />
