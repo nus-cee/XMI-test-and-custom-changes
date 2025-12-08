@@ -1,9 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "mcp__atlassian__getAccessibleAtlassianResources",
+      "mcp__github__get_commit",
+      "mcp__github__get_file_contents"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "github"
+  ]
 }
