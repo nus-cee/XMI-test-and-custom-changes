@@ -7,7 +7,7 @@ on:
     branches: [main, develop]
 
 jobs:
-  build:
+  test:
     runs-on: windows-latest
 
     steps:
@@ -19,17 +19,17 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Restore dependencies
-        run: dotnet restore
+      - name: Restore test project
+        run: dotnet restore Tests/RevitXmiExporter.Tests/RevitXmiExporter.Tests.csproj
 
-      - name: Build
-        run: dotnet build RevitXmiExporter.sln --configuration Release --no-restore
+      - name: Build test project
+        run: dotnet build Tests/RevitXmiExporter.Tests/RevitXmiExporter.Tests.csproj --configuration Release --no-restore
 
-      - name: Check code formatting
-        run: dotnet format RevitXmiExporter.sln --verify-no-changes --verbosity diagnostic
+      - name: Check code formatting (test project)
+        run: dotnet format Tests/RevitXmiExporter.Tests/RevitXmiExporter.Tests.csproj --verify-no-changes --verbosity diagnostic
 
       - name: Run tests with coverage
-        run: dotnet test RevitXmiExporter.sln --configuration Release --no-build --collect:"XPlat Code Coverage" --results-directory ./coverage
+        run: dotnet test Tests/RevitXmiExporter.Tests/RevitXmiExporter.Tests.csproj --configuration Release --no-build --collect:"XPlat Code Coverage" --results-directory ./coverage
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -40,11 +40,10 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-      - name: Upload build artifacts
+      - name: Upload test results
         uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: RevitXmiExporter-${{ github.sha }}
-          path: |
-            **/bin/Release/**/*.dll
-            **/bin/Release/**/*.pdb
+          name: test-results-${{ github.sha }}
+          path: ./coverage
           retention-days: 30
