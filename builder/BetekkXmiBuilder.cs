@@ -47,9 +47,6 @@ namespace Betekk.RevitXmiExporter.Builder
         // This is a temporary workaround until XmiSchema supports nullable cross-sections
         private XmiCrossSection? _placeholderCrossSection;
 
-        // Placeholder material used when Revit does not provide one
-        private XmiMaterial? _placeholderMaterial;
-
         // Tolerance for point deduplication (1e-10 in mm)
         private const double PointTolerance = 1e-10;
 
@@ -485,7 +482,7 @@ namespace Betekk.RevitXmiExporter.Builder
             string localAxisY = "0,1,0";
             string localAxisZ = "0,0,1";
 
-            XmiMaterial material = GetOrCreatePlaceholderMaterial();
+            XmiMaterial? material = null;
             XmiCrossSection crossSectionToUse = crossSection ?? GetOrCreatePlaceholderXmiCrossSection();
 
             XmiStructuralCurveMember member = _model.CreateXmiStructuralCurveMember(
@@ -494,7 +491,7 @@ namespace Betekk.RevitXmiExporter.Builder
                 ifcGuid,
                 nativeId,
                 string.Empty,    // description
-                material,        // material (required by schema)
+                material,        // material (optional in schema 0.10.2)
                 crossSectionToUse,
                 storey,          // storey (can be null)
                 memberType,
@@ -789,33 +786,6 @@ namespace Betekk.RevitXmiExporter.Builder
         }
 
         /// <summary>
-        /// Provides a shared placeholder material when Revit does not supply one.
-        /// </summary>
-        private XmiMaterial GetOrCreatePlaceholderMaterial()
-        {
-            if (_placeholderMaterial != null)
-            {
-                return _placeholderMaterial;
-            }
-
-            _placeholderMaterial = _model.CreateXmiMaterial(
-                "placeholder-material",
-                "[PLACEHOLDER] Unknown Material",
-                string.Empty,
-                "synthetic:placeholder:material",
-                "Synthetic placeholder material used when no Revit material is available.",
-                XmiMaterialTypeEnum.Unknown,
-                0,
-                0,
-                "0",
-                "0",
-                "0",
-                0);
-
-            return _placeholderMaterial;
-        }
-
-        /// <summary>
         /// Maps Revit material class to XmiMaterialTypeEnum.
         /// </summary>
         private XmiMaterialTypeEnum MapRevitMaterialClass(Material revitMaterial)
@@ -908,15 +878,13 @@ namespace Betekk.RevitXmiExporter.Builder
             }
 
             // Create XmiCrossSection
-            XmiMaterial materialToUse = material ?? GetOrCreatePlaceholderMaterial();
-
             XmiCrossSection xmiCrossSection = _model.CreateXmiCrossSection(
                 id,
                 name,
                 string.Empty,  // ifcGuid (cross-sections don't have IFC GUIDs from Revit)
                 nativeId,
                 string.Empty,  // description
-                materialToUse,
+                material,
                 shape,
                 parameters,
                 area,
@@ -1257,15 +1225,13 @@ namespace Betekk.RevitXmiExporter.Builder
                 }
 
                 // Create XmiCrossSection
-                XmiMaterial materialToUse = material ?? GetOrCreatePlaceholderMaterial();
-
                 XmiCrossSection xmiCrossSection = _model.CreateXmiCrossSection(
                     id,
                     name,
                     string.Empty,  // ifcGuid (sections don't have IFC GUIDs)
                     nativeId,
                     string.Empty,  // description
-                    materialToUse,
+                    material,
                     shape,
                     parameters,
                     area,
@@ -1360,7 +1326,6 @@ namespace Betekk.RevitXmiExporter.Builder
 
             // Use Unknown shape with empty parameters
             var unknownParams = new UnknownShapeParameters(new Dictionary<string, double>());
-            XmiMaterial placeholderMaterial = GetOrCreatePlaceholderMaterial();
 
             // Create the placeholder cross-section
             _placeholderCrossSection = _model.CreateXmiCrossSection(
@@ -1369,7 +1334,7 @@ namespace Betekk.RevitXmiExporter.Builder
                 string.Empty,  // ifcGuid
                 nativeId,
                 description,
-                placeholderMaterial,
+                null,
                 XmiShapeEnum.Unknown,
                 unknownParams,
                 0,  // area
