@@ -1,6 +1,4 @@
-using System;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Text;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
@@ -11,14 +9,14 @@ using RevitTaskDialog = Autodesk.Revit.UI.TaskDialog;
 namespace Betekk.RevitXmiExporter.Builder
 {
     /// <summary>
-    /// Revit external command invoked by the ExportJson button. Collects the output location,
+    /// Revit external command invoked by the ExportXmi button. Collects the output location,
     /// runs the export pipeline, and surfaces user feedback/error logging.
     /// </summary>
     [Transaction(TransactionMode.Manual)]
-    public class BetekkExportCommand : IExternalCommand
+    public class BetekkRevitModelToXmiExportCommand : IExternalCommand
     {
         /// <summary>
-        /// Executes the export by prompting for a destination, delegating to <see cref="BetekkJsonExporter"/>,
+        /// Executes the export by prompting for a destination, delegating to <see cref="BetekkRevitToXmiModelManager"/>,
         /// and handling success/failure notifications.
         /// </summary>
         /// <param name="commandData">Revit provided context (documents, application, selection).</param>
@@ -53,11 +51,11 @@ namespace Betekk.RevitXmiExporter.Builder
                     ModelInfoBuilder.SetLogDirectory(logDirectory);
                 }
 
-                BetekkJsonExporter exporter = new BetekkJsonExporter();
-                string exportJson = exporter.Export(doc);
+                BetekkRevitToXmiModelManager exporter = new BetekkRevitToXmiModelManager();
+                ExportResult result = exporter.Export(doc);
 
-                SaveExport(exportPath, exportJson);
-                ShowSuccessDialog(exportPath);
+                SaveExport(exportPath, result.Json);
+                ShowSuccessDialog(exportPath, result.Statistics);
 
                 return Result.Succeeded;
             }
@@ -143,12 +141,26 @@ namespace Betekk.RevitXmiExporter.Builder
             File.WriteAllText(exportPath, payload, Encoding.UTF8);
         }
 
-        private static void ShowSuccessDialog(string exportPath)
+        private static void ShowSuccessDialog(string exportPath, ExportStatistics stats)
         {
+            StringBuilder summaryBuilder = new StringBuilder();
+            summaryBuilder.AppendLine("Export Summary:");
+            summaryBuilder.AppendLine($"  • Storeys: {stats.StoreyCount}");
+            summaryBuilder.AppendLine($"  • Beams: {stats.BeamCount}");
+            summaryBuilder.AppendLine($"  • Columns: {stats.ColumnCount}");
+            summaryBuilder.AppendLine($"  • Analytical Members: {stats.AnalyticalMemberCount}");
+            summaryBuilder.AppendLine($"  • Materials: {stats.MaterialCount}");
+            summaryBuilder.AppendLine($"  • Cross-Sections: {stats.CrossSectionCount}");
+            summaryBuilder.AppendLine($"  • 3D Points: {stats.PointCount}");
+            summaryBuilder.AppendLine($"  • Structural Connections: {stats.ConnectionCount}");
+            summaryBuilder.AppendLine();
+            summaryBuilder.AppendLine($"File saved to:");
+            summaryBuilder.Append(exportPath);
+
             RevitTaskDialog dialog = new RevitTaskDialog("Export complete")
             {
                 MainInstruction = "The structural model was exported successfully.",
-                MainContent = $"File saved to:{Environment.NewLine}{exportPath}",
+                MainContent = summaryBuilder.ToString(),
                 FooterText = "Press Ctrl+C to copy the file path from this dialog.",
                 CommonButtons = TaskDialogCommonButtons.Close
             };

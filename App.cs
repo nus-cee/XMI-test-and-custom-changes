@@ -6,17 +6,17 @@ namespace Betekk.RevitXmiExporter
 {
     /// <summary>
     /// Revit entry point that registers the XMI-Schema ribbon tab and buttons, including the
-    /// ExportJson command. ExportJson delegates to <c>Betekk.RevitXmiExporter.Builder.BetekkExportCommand</c>,
+    /// ExportXmi command. ExportXmi delegates to <c>Betekk.RevitXmiExporter.Builder.BetekkExportCommand</c>,
     /// which gathers model data through <c>BetekkXmiBuilder</c>, serializes it with <c>BetekkJsonExporter</c>,
     /// and writes the JSON to disk.
     /// </summary>
     public class App : IExternalApplication
     {
-        private const string RibbonTab = "XMI-Schema";
-        private const string RibbonPanel = "ExportJson";
+        private const string RibbonTab = "XMI Schema";
+        private const string RibbonPanel = "Export XMI";
 
         /// <summary>
-        /// Creates the XMI-Schema ribbon tab/panel in Revit and wires the ExportJson and
+        /// Creates the XMI-Schema ribbon tab/panel in Revit and wires the ExportXmi and
         /// SegmentTests buttons to their corresponding external commands, applying the generated
         /// icon assets for visual clarity.
         /// </summary>
@@ -34,24 +34,15 @@ namespace Betekk.RevitXmiExporter
 
                 PushButtonData buttonData = new PushButtonData(
                     "ExportStructureBtn",
-                    "ExportJson",
+                    "Export XMI",
                     typeof(App).Assembly.Location,
-                    "Betekk.RevitXmiExporter.Builder.BetekkExportCommand"
+                    "Betekk.RevitXmiExporter.Builder.BetekkRevitModelToXmiExportCommand"
                 )
                 {
                     ToolTip = "Export the revit data into XmiSchema (JSON)",
                     LargeImage = largeIcon,
                     Image = smallIcon
                 };
-
-                // PushButtonData harnessButtonData = new PushButtonData(
-                //     "SegmentHarnessBtn",
-                //     "SegmentTests",
-                //     typeof(App).Assembly.Location,
-                //     "Betekk.RevitXmiExporter.StructuralSegmentHarnessCommand")
-                // {
-                //     ToolTip = "Run StructuralSegmentMapper smoke tests and report the results"
-                // };
 
                 panel.AddItem(buttonData);
                 // panel.AddItem(harnessButtonData);

@@ -22,6 +22,8 @@
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
 		<AnalysisLevel>latest</AnalysisLevel>
 		<OutputType>Library</OutputType>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		<GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
 		<AssemblyVersion>$(VersionPrefix)</AssemblyVersion>
 		<FileVersion>$(VersionPrefix)</FileVersion>
 		<SignAssembly>False</SignAssembly>
@@ -36,23 +38,9 @@
 		<NoWarn>1701;1702;MSB3277</NoWarn>
 	</PropertyGroup>
 
-	<ItemGroup Condition="'$(MSBuildRuntimeType)'=='Full'">
-		<COMReference Include="{215d64d2-031c-33c7-96e3-61794cd1ee61}">
-			<WrapperTool>tlbimp</WrapperTool>
-			<VersionMinor>4</VersionMinor>
-			<VersionMajor>2</VersionMajor>
-			<Guid>215d64d2-031c-33c7-96e3-61794cd1ee61</Guid>
-		</COMReference>
-	</ItemGroup>
-
 	<ItemGroup>
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-		<PackageReference Include="WindowsAPICodePack-Shell" Version="1.1.1" />
-		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.0.0">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-		<PackageReference Include="XmiSchema.Core" Version="0.6.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+		<PackageReference Include="XmiSchema" Version="0.10.2" />
 	</ItemGroup>
 
 
@@ -70,6 +58,12 @@
 	<ItemGroup>
 		<FrameworkReference Include="Microsoft.WindowsDesktop.App.WindowsForms" />
 		<FrameworkReference Include="Microsoft.WindowsDesktop.App.WPF" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Remove="Tests\**" />
+		<EmbeddedResource Remove="Tests\**" />
+		<None Remove="Tests\**" />
 	</ItemGroup>
 
 	<PropertyGroup>
