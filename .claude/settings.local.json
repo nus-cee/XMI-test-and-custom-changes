@@ -4,7 +4,8 @@
       "WebFetch(domain:github.com)",
       "mcp__atlassian__getAccessibleAtlassianResources",
       "mcp__github__get_commit",
-      "mcp__github__get_file_contents"
+      "mcp__github__get_file_contents",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
