@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build RevitXmiExporter.sln --configuration Release --no-restore
+
+      - name: Check code formatting
+        run: dotnet format RevitXmiExporter.sln --verify-no-changes --verbosity diagnostic
+
+      - name: Run tests with coverage
+        run: dotnet test RevitXmiExporter.sln --configuration Release --no-build --collect:"XPlat Code Coverage" --results-directory ./coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          directory: ./coverage
+          fail_ci_if_error: false
+          verbose: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: RevitXmiExporter-${{ github.sha }}
+          path: |
+            **/bin/Release/**/*.dll
+            **/bin/Release/**/*.pdb
+          retention-days: 30

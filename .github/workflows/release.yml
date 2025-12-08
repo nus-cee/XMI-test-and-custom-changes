@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: windows-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
+
+    steps:
+      - name: Run release-please
+        uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: .github/release-please-config.json
+          manifest-file: .github/release-please-manifest.json
+
+  build-release:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build Release
+        run: dotnet build --configuration Release -p:Version=${{ needs.release-please.outputs.version }}
+
+      - name: Publish
+        run: dotnet publish --configuration Release --output ./publish -p:Version=${{ needs.release-please.outputs.version }}
+
+      - name: Copy addin file
+        run: |
+          Copy-Item "RevitXmiExporter.addin" "./publish/"
+          Copy-Item "README.md" "./publish/"
+        shell: pwsh
+
+      - name: Create ZIP installer
+        run: |
+          Compress-Archive -Path "./publish/*" -DestinationPath "RevitXmiExporter-${{ needs.release-please.outputs.tag_name }}.zip"
+        shell: pwsh
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.release-please.outputs.tag_name }}
+          files: RevitXmiExporter-${{ needs.release-please.outputs.tag_name }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
