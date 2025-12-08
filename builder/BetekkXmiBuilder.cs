@@ -477,13 +477,13 @@ namespace Betekk.RevitXmiExporter.Builder
             // Calculate curve length (in Revit internal units, convert to mm)
             double lengthMm = Converters.ConvertValueToMillimeter(curve.Length);
 
-            // Default axis values (no rotation)
-            string localAxisX = "1,0,0";
-            string localAxisY = "0,1,0";
-            string localAxisZ = "0,0,1";
+            // Default axis values (no rotation) - use XmiAxis (unit vectors)
+            XmiAxis localAxisX = new XmiAxis(1, 0, 0);
+            XmiAxis localAxisY = new XmiAxis(0, 1, 0);
+            XmiAxis localAxisZ = new XmiAxis(0, 0, 1);
 
             XmiMaterial? material = null;
-            XmiCrossSection crossSectionToUse = crossSection ?? GetOrCreatePlaceholderXmiCrossSection();
+            XmiCrossSection? crossSectionToUse = crossSection ?? GetOrCreatePlaceholderXmiCrossSection();
 
             XmiStructuralCurveMember member = _model.CreateXmiStructuralCurveMember(
                 id,
@@ -491,7 +491,7 @@ namespace Betekk.RevitXmiExporter.Builder
                 ifcGuid,
                 nativeId,
                 string.Empty,    // description
-                material,        // material (optional in schema 0.10.2)
+                material,        // material (optional)
                 crossSectionToUse,
                 storey,          // storey (can be null)
                 memberType,
@@ -531,9 +531,10 @@ namespace Betekk.RevitXmiExporter.Builder
         {
             // Calculate curve length and axis values
             double lengthMm = Converters.ConvertValueToMillimeter(curve.Length);
-            string localAxisX = "1,0,0";
-            string localAxisY = "0,1,0";
-            string localAxisZ = "0,0,1";
+            // Use XmiAxis (unit vectors) for local axis definition
+            XmiAxis localAxisX = new XmiAxis(1, 0, 0);
+            XmiAxis localAxisY = new XmiAxis(0, 1, 0);
+            XmiAxis localAxisZ = new XmiAxis(0, 0, 1);
 
             if (isColumn)
             {
@@ -577,15 +578,12 @@ namespace Betekk.RevitXmiExporter.Builder
             }
 
             // Create relationships: Physical Element → Point3D
-            // Note: Using description field to store pointType ("startNode"/"endNode")
-            // until XmiHasPoint3D gets a dedicated pointType property
-            XmiHasPoint3d startPointRel = new XmiHasPoint3d(physicalEntity, startPoint);
-            startPointRel.Description = "startNode";
-            _model.AddXmiHasPoint3D(startPointRel);
+            // Using XmiPoint3dTypeEnum to indicate start/end nodes (v0.11.0+)
+            XmiHasPoint3d startPointRel = new XmiHasPoint3d(physicalEntity, startPoint, XmiPoint3dTypeEnum.Start);
+            _model.AddXmiHasPoint3d(startPointRel);
 
-            XmiHasPoint3d endPointRel = new XmiHasPoint3d(physicalEntity, endPoint);
-            endPointRel.Description = "endNode";
-            _model.AddXmiHasPoint3D(endPointRel);
+            XmiHasPoint3d endPointRel = new XmiHasPoint3d(physicalEntity, endPoint, XmiPoint3dTypeEnum.End);
+            _model.AddXmiHasPoint3d(endPointRel);
 
             // Create cross-section and link via XmiHasCrossSection relationship
             XmiCrossSection? crossSection = GetOrCreateXmiCrossSection(doc, familyInstance);
