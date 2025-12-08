@@ -5,7 +5,10 @@
       "mcp__atlassian__getAccessibleAtlassianResources",
       "mcp__github__get_commit",
       "mcp__github__get_file_contents",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "mcp__github__get_me",
+      "Bash(gh pr create:*)",
+      "Bash(where:*)"
     ],
     "deny": [],
     "ask": []

@@ -87,6 +87,10 @@
 			<PluginOutput Include="$(TargetDir)**\*.*" />
 		</ItemGroup>
 
+		<ItemGroup>
+		  <None Remove="nul" />
+		</ItemGroup>
+
 		<Target Name="CopyToProgramData" AfterTargets="Build" Condition="'$(OS)' == 'Windows_NT' and Exists('$(TargetDir)')">
 			<MakeDir Directories="$(ProgramDataAddinDir)" />
 			<MakeDir Directories="$(ProgramDataPluginDir)" />
