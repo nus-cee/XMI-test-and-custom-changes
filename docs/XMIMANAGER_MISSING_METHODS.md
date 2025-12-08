@@ -325,7 +325,7 @@ The builder is now fully implemented with:
 - Relationships created with constructors, added via `AddXmiHasPoint3D()`, `AddXmiHasStructuralCurveMember()`
 - Using `Description` field on `XmiHasPoint3D` to store pointType ("startNode"/"endNode")
 
-**Recommendations for XmiSchema.Core Library:**
+**Recommendations for XmiSchema Library:**
 
 ### 1. Add `pointType` Property to XmiHasPoint3D
 Currently using the `Description` field as a workaround to store "startNode" vs "endNode" designation.

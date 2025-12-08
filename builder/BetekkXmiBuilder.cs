@@ -1,15 +1,15 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
 using Betekk.RevitXmiExporter.Utils;
-using XmiSchema.Core.Manager;
-using XmiSchema.Core.Models;
-using XmiSchema.Core.Entities;
-using XmiSchema.Core.Models.Entities.StructuralAnalytical;
-using XmiSchema.Core.Models.Entities.Physical;
-using XmiSchema.Core.Relationships;
-using XmiSchema.Core.Geometries;
-using XmiSchema.Core.Enums;
-using XmiSchema.Core.Parameters;
+using XmiSchema.Managers;
+using XmiSchema.Entities.StructuralAnalytical;
+using XmiSchema.Entities.Physical;
+using XmiSchema.Entities.Relationships;
+using XmiSchema.Enums;
+using XmiSchema.Parameters;
+using XmiSchema.Entities.Commons;
+using XmiSchema.Entities.Geometries;
+using XmiSchema.Entities.Bases;
 
 namespace Betekk.RevitXmiExporter.Builder
 {
@@ -25,7 +25,7 @@ namespace Betekk.RevitXmiExporter.Builder
         private const int ModelIndex = 0;
 
         // Point deduplication cache (tolerance: 1e-10)
-        private readonly Dictionary<string, XmiPoint3D> _pointCache;
+        private readonly Dictionary<string, XmiPoint3d> _pointCache;
 
         // Storey cache to avoid duplicates
         private readonly Dictionary<string, XmiStorey> _storeyCache;
@@ -44,8 +44,11 @@ namespace Betekk.RevitXmiExporter.Builder
         private readonly Dictionary<string, XmiStructuralCurveMember> _analyticalMemberCache;
 
         // Placeholder cross-section for analytical members without section types assigned
-        // This is a temporary workaround until XmiSchema.Core supports nullable cross-sections
+        // This is a temporary workaround until XmiSchema supports nullable cross-sections
         private XmiCrossSection? _placeholderCrossSection;
+
+        // Placeholder material used when Revit does not provide one
+        private XmiMaterial? _placeholderMaterial;
 
         // Tolerance for point deduplication (1e-10 in mm)
         private const double PointTolerance = 1e-10;
@@ -66,7 +69,7 @@ namespace Betekk.RevitXmiExporter.Builder
             _model = new XmiModel();
             _manager.Models = new List<XmiModel> { _model };
 
-            _pointCache = new Dictionary<string, XmiPoint3D>();
+            _pointCache = new Dictionary<string, XmiPoint3d>();
             _storeyCache = new Dictionary<string, XmiStorey>();
             _connectionCache = new Dictionary<string, XmiStructuralPointConnection>();
             _materialCache = new Dictionary<string, XmiMaterial>();
@@ -145,7 +148,7 @@ namespace Betekk.RevitXmiExporter.Builder
                         string ifcGuid = GetIfcGuidFromElement(level);
                         double elevationMm = Converters.ConvertValueToMillimeter(level.Elevation);
 
-                        XmiStorey storey = _model.CreateStorey(
+                        XmiStorey storey = _model.CreateXmiStorey(
                             id,
                             name,
                             ifcGuid,
@@ -283,11 +286,11 @@ namespace Betekk.RevitXmiExporter.Builder
             string physicalId = Guid.NewGuid().ToString();
 
             // Create deduplicated Point3D entities
-            XmiPoint3D startXmiPoint = GetOrCreatePoint3D(startPoint, $"{physicalId}_start_point");
-            XmiPoint3D endXmiPoint = GetOrCreatePoint3D(endPoint, $"{physicalId}_end_point");
+            XmiPoint3d startXmiPoint = GetOrCreatePoint3D(startPoint, $"{physicalId}_start_point");
+            XmiPoint3d endXmiPoint = GetOrCreatePoint3D(endPoint, $"{physicalId}_end_point");
 
             // Create physical entity (XmiBeam or XmiColumn)
-            CreatePhysicalElement(
+            CreateXmiPhysicalElement(
                 doc,
                 familyInstance,
                 physicalId,
@@ -323,7 +326,7 @@ namespace Betekk.RevitXmiExporter.Builder
             {
                 return string.Empty;
             }
-            
+
             // Check for IfcGUID parameter (set by Revit IFC exporter when "Store IFC GUID" option is enabled)
             Parameter ifcGuidParam = element.get_Parameter(BuiltInParameter.IFC_GUID);
             if (ifcGuidParam != null && ifcGuidParam.HasValue)
@@ -360,10 +363,10 @@ namespace Betekk.RevitXmiExporter.Builder
 
 
         /// <summary>
-        /// Gets or creates a deduplicated XmiPoint3D.
+        /// Gets or creates a deduplicated XmiPoint3d.
         /// Uses coordinate-based key with tolerance of 1e-10 mm.
         /// </summary>
-        private XmiPoint3D GetOrCreatePoint3D(XYZ revitPoint, string fallbackId)
+        private XmiPoint3d GetOrCreatePoint3D(XYZ revitPoint, string fallbackId)
         {
             // Convert to millimeters
             double x = Converters.ConvertValueToMillimeter(revitPoint.X);
@@ -379,7 +382,7 @@ namespace Betekk.RevitXmiExporter.Builder
             string key = $"{roundedX:F10}_{roundedY:F10}_{roundedZ:F10}";
 
             // Check cache
-            if (_pointCache.TryGetValue(key, out XmiPoint3D existingPoint))
+            if (_pointCache.TryGetValue(key, out XmiPoint3d existingPoint))
             {
                 return existingPoint;
             }
@@ -388,7 +391,7 @@ namespace Betekk.RevitXmiExporter.Builder
             string id = Guid.NewGuid().ToString();
             string name = fallbackId ?? id;
 
-            XmiPoint3D newPoint = _model.CreatePoint3D(
+            XmiPoint3d newPoint = _model.CreateXmiPoint3d(
                 id,
                 name,
                 string.Empty,  // ifcGuid (empty - synthetic geometry, not a Revit element)
@@ -408,13 +411,13 @@ namespace Betekk.RevitXmiExporter.Builder
         /// Gets or creates a deduplicated XmiStructuralPointConnection.
         /// Reuses existing connection at same coordinate.
         /// </summary>
-        private XmiStructuralPointConnection GetOrCreatePointConnection(
+        private XmiStructuralPointConnection GetOrCreateXmiStructuralPointConnection(
             XYZ revitPoint,
             string fallbackId,
             string fallbackName,
             string nativeId,
             XmiStorey storey,
-            XmiPoint3D point)
+            XmiPoint3d point)
         {
             // Use same coordinate key as point cache
             double x = Math.Round(Converters.ConvertValueToMillimeter(revitPoint.X), 10);
@@ -432,14 +435,14 @@ namespace Betekk.RevitXmiExporter.Builder
             // Create new connection
             string id = Guid.NewGuid().ToString();
 
-            XmiStructuralPointConnection connection = _model.CreateStructurePointConnection(
+            XmiStructuralPointConnection connection = _model.CreateXmiStructurePointConnection(
                 id,
                 fallbackName ?? id,
                 string.Empty, // ifcGuid (empty - synthetic analytical node, not a Revit element)
                 $"synthetic:connection:{nativeId}",  // nativeId (synthetic - analytical node, not a Revit element)
                 string.Empty, // description
                 storey,       // XmiStorey (can be null)
-                point         // XmiPoint3D
+                point         // XmiPoint3d
             );
 
             _connectionCache[key] = connection;
@@ -450,7 +453,7 @@ namespace Betekk.RevitXmiExporter.Builder
         /// <summary>
         /// Creates XmiStructuralCurveMember (analytical representation) with optional cross-section.
         /// </summary>
-        private XmiStructuralCurveMember CreateStructuralCurveMember(
+        private XmiStructuralCurveMember CreateXmiStructuralCurveMember(
             string id,
             string name,
             string ifcGuid,
@@ -482,13 +485,17 @@ namespace Betekk.RevitXmiExporter.Builder
             string localAxisY = "0,1,0";
             string localAxisZ = "0,0,1";
 
-            XmiStructuralCurveMember member = _model.CreateStructuralCurveMember(
+            XmiMaterial material = GetOrCreatePlaceholderMaterial();
+            XmiCrossSection crossSectionToUse = crossSection ?? GetOrCreatePlaceholderXmiCrossSection();
+
+            XmiStructuralCurveMember member = _model.CreateXmiStructuralCurveMember(
                 id,
                 name,
                 ifcGuid,
                 nativeId,
                 string.Empty,    // description
-                crossSection,    // crossSection (optional)
+                material,        // material (required by schema)
+                crossSectionToUse,
                 storey,          // storey (can be null)
                 memberType,
                 nodes,
@@ -512,7 +519,7 @@ namespace Betekk.RevitXmiExporter.Builder
         /// Creates physical element (XmiBeam or XmiColumn) and relationships to Point3D geometry and cross-section.
         /// Uses description field to indicate "startNode" or "endNode" for point relationships.
         /// </summary>
-        private void CreatePhysicalElement(
+        private void CreateXmiPhysicalElement(
             Document doc,
             FamilyInstance familyInstance,
             string id,
@@ -521,8 +528,8 @@ namespace Betekk.RevitXmiExporter.Builder
             string nativeId,
             bool isColumn,
             Curve curve,
-            XmiPoint3D startPoint,
-            XmiPoint3D endPoint,
+            XmiPoint3d startPoint,
+            XmiPoint3d endPoint,
             out XmiBasePhysicalEntity physicalEntity)
         {
             // Calculate curve length and axis values
@@ -575,16 +582,16 @@ namespace Betekk.RevitXmiExporter.Builder
             // Create relationships: Physical Element → Point3D
             // Note: Using description field to store pointType ("startNode"/"endNode")
             // until XmiHasPoint3D gets a dedicated pointType property
-            XmiHasPoint3D startPointRel = new XmiHasPoint3D(physicalEntity, startPoint);
+            XmiHasPoint3d startPointRel = new XmiHasPoint3d(physicalEntity, startPoint);
             startPointRel.Description = "startNode";
             _model.AddXmiHasPoint3D(startPointRel);
 
-            XmiHasPoint3D endPointRel = new XmiHasPoint3D(physicalEntity, endPoint);
+            XmiHasPoint3d endPointRel = new XmiHasPoint3d(physicalEntity, endPoint);
             endPointRel.Description = "endNode";
             _model.AddXmiHasPoint3D(endPointRel);
 
             // Create cross-section and link via XmiHasCrossSection relationship
-            XmiCrossSection? crossSection = GetOrCreateCrossSection(doc, familyInstance);
+            XmiCrossSection? crossSection = GetOrCreateXmiCrossSection(doc, familyInstance);
             if (crossSection != null)
             {
                 XmiHasCrossSection hasCrossSection = new XmiHasCrossSection(physicalEntity, crossSection);
@@ -652,7 +659,7 @@ namespace Betekk.RevitXmiExporter.Builder
         /// Gets or creates a deduplicated XmiMaterial from a Revit Material.
         /// Uses Revit Material ElementId as cache key.
         /// </summary>
-        private XmiMaterial? GetOrCreateMaterial(Document doc, ElementId materialId)
+        private XmiMaterial? GetOrCreateXmiMaterial(Document doc, ElementId materialId)
         {
             if (materialId == null || materialId == ElementId.InvalidElementId)
             {
@@ -761,7 +768,7 @@ namespace Betekk.RevitXmiExporter.Builder
             }
 
             // Create XmiMaterial
-            XmiMaterial xmiMaterial = _model.CreateMaterial(
+            XmiMaterial xmiMaterial = _model.CreateXmiMaterial(
                 id,
                 name,
                 string.Empty,  // ifcGuid (materials don't have IFC GUIDs from Revit)
@@ -779,6 +786,33 @@ namespace Betekk.RevitXmiExporter.Builder
             _materialCache[cacheKey] = xmiMaterial;
             _materialCount++;
             return xmiMaterial;
+        }
+
+        /// <summary>
+        /// Provides a shared placeholder material when Revit does not supply one.
+        /// </summary>
+        private XmiMaterial GetOrCreatePlaceholderMaterial()
+        {
+            if (_placeholderMaterial != null)
+            {
+                return _placeholderMaterial;
+            }
+
+            _placeholderMaterial = _model.CreateXmiMaterial(
+                "placeholder-material",
+                "[PLACEHOLDER] Unknown Material",
+                string.Empty,
+                "synthetic:placeholder:material",
+                "Synthetic placeholder material used when no Revit material is available.",
+                XmiMaterialTypeEnum.Unknown,
+                0,
+                0,
+                "0",
+                "0",
+                "0",
+                0);
+
+            return _placeholderMaterial;
         }
 
         /// <summary>
@@ -810,7 +844,7 @@ namespace Betekk.RevitXmiExporter.Builder
         /// Gets or creates a deduplicated XmiCrossSection from a Revit FamilySymbol (Type).
         /// Uses Revit FamilySymbol ElementId as cache key.
         /// </summary>
-        private XmiCrossSection? GetOrCreateCrossSection(Document doc, FamilyInstance familyInstance)
+        private XmiCrossSection? GetOrCreateXmiCrossSection(Document doc, FamilyInstance familyInstance)
         {
             if (familyInstance == null)
             {
@@ -845,7 +879,7 @@ namespace Betekk.RevitXmiExporter.Builder
                 materialId = familySymbol.get_Parameter(BuiltInParameter.STRUCTURAL_MATERIAL_PARAM)?.AsElementId();
             }
 
-            XmiMaterial? material = GetOrCreateMaterial(doc, materialId);
+            XmiMaterial? material = GetOrCreateXmiMaterial(doc, materialId);
 
             // Extract cross-section dimensions
             // For now, use a simplified approach - we'll try to detect common profile types
@@ -874,13 +908,15 @@ namespace Betekk.RevitXmiExporter.Builder
             }
 
             // Create XmiCrossSection
-            XmiCrossSection xmiCrossSection = _model.CreateCrossSection(
+            XmiMaterial materialToUse = material ?? GetOrCreatePlaceholderMaterial();
+
+            XmiCrossSection xmiCrossSection = _model.CreateXmiCrossSection(
                 id,
                 name,
                 string.Empty,  // ifcGuid (cross-sections don't have IFC GUIDs from Revit)
                 nativeId,
                 string.Empty,  // description
-                material,      // optional material reference
+                materialToUse,
                 shape,
                 parameters,
                 area,
@@ -1039,83 +1075,83 @@ namespace Betekk.RevitXmiExporter.Builder
                         ModelInfoBuilder.WriteErrorLogToFile(
                             $"[BetekkXmiBuilder] Processing analytical member {analyticalNativeId} - {analyticalMember.Name}");
 
-                    // Get the analytical curve
-                    Curve curve = analyticalMember.GetCurve();
-                    if (curve == null)
-                    {
-                        ModelInfoBuilder.WriteErrorLogToFile(
-                            $"[BetekkXmiBuilder] Skipping analytical member {analyticalNativeId} - no curve found");
-                        continue;
-                    }
-
-                    XYZ startPoint = curve.GetEndPoint(0);
-                    XYZ endPoint = curve.GetEndPoint(1);
-
-                    // Get element name - handle both null and empty strings
-                    string name = string.IsNullOrWhiteSpace(analyticalMember.Name)
-                        ? $"Analytical_{analyticalNativeId}"
-                        : analyticalMember.Name;
-
-                    // Get IFC GUID if exists
-                    string ifcGuid = GetIfcGuidFromElement(analyticalMember);
-
-                    // Try to determine if it's a column or beam based on orientation
-                    // Vertical elements (columns) have significant Z-component
-                    XYZ direction = (endPoint - startPoint).Normalize();
-                    bool isColumn = Math.Abs(direction.Z) > 0.7; // If >70% vertical, treat as column
-
-                    // Try to get storey/level
-                    XmiStorey? storey = null;
-                    try
-                    {
-                        Level level = doc.GetElement(analyticalMember.LevelId) as Level;
-                        if (level != null)
+                        // Get the analytical curve
+                        Curve curve = analyticalMember.GetCurve();
+                        if (curve == null)
                         {
-                            string levelId = level.Id.ToString();
-                            _storeyCache.TryGetValue(levelId, out storey);
+                            ModelInfoBuilder.WriteErrorLogToFile(
+                                $"[BetekkXmiBuilder] Skipping analytical member {analyticalNativeId} - no curve found");
+                            continue;
                         }
-                    }
-                    catch { }
 
-                    // Generate IDs for XMI entities
-                    string analyticalId = Guid.NewGuid().ToString();
+                        XYZ startPoint = curve.GetEndPoint(0);
+                        XYZ endPoint = curve.GetEndPoint(1);
 
-                    // Create deduplicated Point3D entities
-                    XmiPoint3D startXmiPoint = GetOrCreatePoint3D(startPoint, $"{analyticalId}_start_point");
-                    XmiPoint3D endXmiPoint = GetOrCreatePoint3D(endPoint, $"{analyticalId}_end_point");
+                        // Get element name - handle both null and empty strings
+                        string name = string.IsNullOrWhiteSpace(analyticalMember.Name)
+                            ? $"Analytical_{analyticalNativeId}"
+                            : analyticalMember.Name;
 
-                    // Create StructuralPointConnections for analytical domain
-                    XmiStructuralPointConnection startConnection = GetOrCreatePointConnection(
-                        startPoint,
-                        $"{analyticalId}_start_connection",
-                        $"{name}_start",
-                        $"{analyticalNativeId}_start",
-                        storey,
-                        startXmiPoint);
+                        // Get IFC GUID if exists
+                        string ifcGuid = GetIfcGuidFromElement(analyticalMember);
 
-                    XmiStructuralPointConnection endConnection = GetOrCreatePointConnection(
-                        endPoint,
-                        $"{analyticalId}_end_connection",
-                        $"{name}_end",
-                        $"{analyticalNativeId}_end",
-                        storey,
-                        endXmiPoint);
+                        // Try to determine if it's a column or beam based on orientation
+                        // Vertical elements (columns) have significant Z-component
+                        XYZ direction = (endPoint - startPoint).Normalize();
+                        bool isColumn = Math.Abs(direction.Z) > 0.7; // If >70% vertical, treat as column
 
-                    // Extract Section Type property from analytical member and create cross-section
-                    XmiCrossSection? crossSection = GetOrCreateCrossSectionFromAnalyticalMember(doc, analyticalMember);
+                        // Try to get storey/level
+                        XmiStorey? storey = null;
+                        try
+                        {
+                            Level level = doc.GetElement(analyticalMember.LevelId) as Level;
+                            if (level != null)
+                            {
+                                string levelId = level.Id.ToString();
+                                _storeyCache.TryGetValue(levelId, out storey);
+                            }
+                        }
+                        catch { }
 
-                    // Create analytical representation (XmiStructuralCurveMember)
-                    XmiStructuralCurveMember xmiAnalyticalMember = CreateStructuralCurveMember(
-                        analyticalId,
-                        name,
-                        ifcGuid,
-                        analyticalNativeId,  // Use analytical element's NativeId
-                        storey,
-                        isColumn,
-                        startConnection,
-                        endConnection,
-                        curve,
-                        crossSection);  // Pass cross-section (optional)
+                        // Generate IDs for XMI entities
+                        string analyticalId = Guid.NewGuid().ToString();
+
+                        // Create deduplicated Point3D entities
+                    XmiPoint3d startXmiPoint = GetOrCreatePoint3D(startPoint, $"{analyticalId}_start_point");
+                    XmiPoint3d endXmiPoint = GetOrCreatePoint3D(endPoint, $"{analyticalId}_end_point");
+
+                        // Create StructuralPointConnections for analytical domain
+                        XmiStructuralPointConnection startConnection = GetOrCreateXmiStructuralPointConnection(
+                            startPoint,
+                            $"{analyticalId}_start_connection",
+                            $"{name}_start",
+                            $"{analyticalNativeId}_start",
+                            storey,
+                            startXmiPoint);
+
+                        XmiStructuralPointConnection endConnection = GetOrCreateXmiStructuralPointConnection(
+                            endPoint,
+                            $"{analyticalId}_end_connection",
+                            $"{name}_end",
+                            $"{analyticalNativeId}_end",
+                            storey,
+                            endXmiPoint);
+
+                        // Extract Section Type property from analytical member and create cross-section
+                        XmiCrossSection? crossSection = GetOrCreateXmiCrossSectionFromAnalyticalMember(doc, analyticalMember);
+
+                        // Create analytical representation (XmiStructuralCurveMember)
+                        XmiStructuralCurveMember xmiAnalyticalMember = CreateXmiStructuralCurveMember(
+                            analyticalId,
+                            name,
+                            ifcGuid,
+                            analyticalNativeId,  // Use analytical element's NativeId
+                            storey,
+                            isColumn,
+                            startConnection,
+                            endConnection,
+                            curve,
+                            crossSection);  // Pass cross-section (optional)
 
                         // Store in cache for later lookup by physical elements
                         _analyticalMemberCache[analyticalNativeId] = xmiAnalyticalMember;
@@ -1145,7 +1181,7 @@ namespace Betekk.RevitXmiExporter.Builder
         /// an XmiCrossSection if a section type is assigned.
         /// Returns null if no section type is found.
         /// </summary>
-        private XmiCrossSection? GetOrCreateCrossSectionFromAnalyticalMember(Document doc, AnalyticalMember analyticalMember)
+        private XmiCrossSection? GetOrCreateXmiCrossSectionFromAnalyticalMember(Document doc, AnalyticalMember analyticalMember)
         {
             try
             {
@@ -1156,8 +1192,8 @@ namespace Betekk.RevitXmiExporter.Builder
                 if (sectionTypeParam == null || !sectionTypeParam.HasValue)
                 {
                     // No section type assigned - return placeholder cross-section
-                    // This is a temporary workaround until XmiSchema.Core supports nullable cross-sections
-                    return GetOrCreatePlaceholderCrossSection();
+                    // This is a temporary workaround until XmiSchema supports nullable cross-sections
+                    return GetOrCreatePlaceholderXmiCrossSection();
                 }
 
                 // Get the element ID of the section type
@@ -1165,7 +1201,7 @@ namespace Betekk.RevitXmiExporter.Builder
                 if (sectionTypeId == null || sectionTypeId == ElementId.InvalidElementId)
                 {
                     // Invalid section type - return placeholder cross-section
-                    return GetOrCreatePlaceholderCrossSection();
+                    return GetOrCreatePlaceholderXmiCrossSection();
                 }
 
                 string cacheKey = sectionTypeId.ToString();
@@ -1204,7 +1240,7 @@ namespace Betekk.RevitXmiExporter.Builder
 
                 if (materialId != ElementId.InvalidElementId)
                 {
-                    material = GetOrCreateMaterial(doc, materialId);
+                    material = GetOrCreateXmiMaterial(doc, materialId);
                 }
 
                 // Extract shape parameters from the section type
@@ -1221,13 +1257,15 @@ namespace Betekk.RevitXmiExporter.Builder
                 }
 
                 // Create XmiCrossSection
-                XmiCrossSection xmiCrossSection = _model.CreateCrossSection(
+                XmiMaterial materialToUse = material ?? GetOrCreatePlaceholderMaterial();
+
+                XmiCrossSection xmiCrossSection = _model.CreateXmiCrossSection(
                     id,
                     name,
                     string.Empty,  // ifcGuid (sections don't have IFC GUIDs)
                     nativeId,
                     string.Empty,  // description
-                    material,      // optional material reference
+                    materialToUse,
                     shape,
                     parameters,
                     area,
@@ -1301,10 +1339,10 @@ namespace Betekk.RevitXmiExporter.Builder
 
         /// <summary>
         /// Gets or creates a placeholder cross-section for analytical members without section types assigned.
-        /// This is a temporary workaround until XmiSchema.Core supports nullable cross-sections.
+        /// This is a temporary workaround until XmiSchema supports nullable cross-sections.
         /// Creates a single shared placeholder instance to avoid polluting the model with duplicates.
         /// </summary>
-        private XmiCrossSection GetOrCreatePlaceholderCrossSection()
+        private XmiCrossSection GetOrCreatePlaceholderXmiCrossSection()
         {
             // Return cached instance if it exists
             if (_placeholderCrossSection != null)
@@ -1317,20 +1355,21 @@ namespace Betekk.RevitXmiExporter.Builder
             string name = "[PLACEHOLDER] No Section Type Assigned";
             string nativeId = "synthetic:placeholder:no-section-type";
             string description = "TEMPORARY PLACEHOLDER: This analytical member does not have a section type assigned in Revit. " +
-                                 "This placeholder exists because XmiSchema.Core v0.9.1 requires non-nullable cross-sections. " +
-                                 "Once the library is upgraded to support nullable cross-sections, this placeholder will be removed.";
+                                 "This placeholder exists because XmiSchema requires non-nullable cross-sections. " +
+                                 "Once the library supports nullable cross-sections, this placeholder will be removed.";
 
             // Use Unknown shape with empty parameters
             var unknownParams = new UnknownShapeParameters(new Dictionary<string, double>());
+            XmiMaterial placeholderMaterial = GetOrCreatePlaceholderMaterial();
 
             // Create the placeholder cross-section
-            _placeholderCrossSection = _model.CreateCrossSection(
+            _placeholderCrossSection = _model.CreateXmiCrossSection(
                 id,
                 name,
                 string.Empty,  // ifcGuid
                 nativeId,
                 description,
-                null,          // material (no material for placeholder)
+                placeholderMaterial,
                 XmiShapeEnum.Unknown,
                 unknownParams,
                 0,  // area

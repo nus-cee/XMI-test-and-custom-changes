@@ -1,6 +1,6 @@
-# XmiSchema.Core Improvement Requests
+# XmiSchema Improvement Requests
 
-This document outlines recommended improvements to the XmiSchema.Core library based on implementation experience with the Revit to XMI exporter.
+This document outlines recommended improvements to the XmiSchema library based on implementation experience with the Revit to XMI exporter.
 
 ## Priority: HIGH
 
@@ -213,12 +213,12 @@ public XmiHasStructuralCurveMember CreateHasStructuralCurveMemberRelationship(
   - Placeholder NativeId: `"synthetic:placeholder:no-section-type"`
   - Single shared instance to avoid duplicate placeholders
   - Clearly documented in Description field with explanation
-  - **Will be removed** once XmiSchema.Core supports nullable cross-sections
+  - **Will be removed** once XmiSchema supports nullable cross-sections
 - **Priority #2:** Using `Description` field to store pointType ("startNode"/"endNode")
 - **Priority #3:** Using constructors + manual Add calls for beams/columns
 
 ### 📋 Recommended Testing
-Once improvements are implemented in XmiSchema.Core:
+Once improvements are implemented in XmiSchema:
 1. Test with analytical elements that have no section types assigned
 2. Validate that nullable cross-sections serialize/deserialize correctly
 3. Ensure backwards compatibility with existing XMI files
@@ -227,6 +227,6 @@ Once improvements are implemented in XmiSchema.Core:
 
 ## Summary
 
-**Most Critical:** Priority #1 (nullable cross-section) blocks complete analytical model export and should be addressed in the next XmiSchema.Core release.
+**Most Critical:** Priority #1 (nullable cross-section) blocks complete analytical model export and should be addressed in the next XmiSchema release.
 
 **Nice to Have:** Priorities #2-4 improve API ergonomics and data semantics but have acceptable workarounds.
