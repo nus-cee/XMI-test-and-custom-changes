@@ -20,7 +20,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="XmiSchema" Version="0.11.0" />
+    <PackageReference Include="XmiSchema" Version="0.12.0" />
   </ItemGroup>
 
   <!-- Link utility source files directly (no project reference needed) -->

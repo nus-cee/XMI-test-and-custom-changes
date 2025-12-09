@@ -152,7 +152,9 @@ namespace Betekk.RevitXmiExporter.Builder
             summaryBuilder.AppendLine($"  • XmiMaterial: {stats.MaterialCount}");
             summaryBuilder.AppendLine($"  • XmiCrossSection: {stats.CrossSectionCount}");
             summaryBuilder.AppendLine($"  • XmiPoint3d: {stats.PointCount}");
-            summaryBuilder.AppendLine($"  • XmiStructuralPointConnection: {stats.ConnectionCount}");
+            summaryBuilder.AppendLine($"  • XmiStructuralPointConnection: {stats.ConnectionCount}");            summaryBuilder.AppendLine($"  • XmiSegment: {stats.SegmentCount}");
+            summaryBuilder.AppendLine($"  • XmiLine3d: {stats.LineCount}");
+            summaryBuilder.AppendLine($"  • XmiArc3d: {stats.ArcCount}");
             summaryBuilder.AppendLine();
             summaryBuilder.AppendLine($"File saved to:");
             summaryBuilder.Append(exportPath);
