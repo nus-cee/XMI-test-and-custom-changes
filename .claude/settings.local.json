@@ -8,7 +8,8 @@
       "Bash(git push:*)",
       "mcp__github__get_me",
       "Bash(gh pr create:*)",
-      "Bash(where:*)"
+      "Bash(where:*)",
+      "mcp__atlassian__transitionJiraIssue"
     ],
     "deny": [],
     "ask": []

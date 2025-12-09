@@ -1,6 +1,6 @@
 using System.Reflection;
-using XmiSchema.Enums;
 using XmiSchema.Entities.Bases;
+using XmiSchema.Enums;
 
 namespace Betekk.RevitXmiExporter.Utils
 {

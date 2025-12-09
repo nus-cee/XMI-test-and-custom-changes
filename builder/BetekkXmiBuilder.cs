@@ -1,15 +1,15 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
 using Betekk.RevitXmiExporter.Utils;
-using XmiSchema.Managers;
-using XmiSchema.Entities.StructuralAnalytical;
-using XmiSchema.Entities.Physical;
-using XmiSchema.Entities.Relationships;
-using XmiSchema.Enums;
-using XmiSchema.Parameters;
+using XmiSchema.Entities.Bases;
 using XmiSchema.Entities.Commons;
 using XmiSchema.Entities.Geometries;
-using XmiSchema.Entities.Bases;
+using XmiSchema.Entities.Physical;
+using XmiSchema.Entities.Relationships;
+using XmiSchema.Entities.StructuralAnalytical;
+using XmiSchema.Enums;
+using XmiSchema.Managers;
+using XmiSchema.Parameters;
 
 namespace Betekk.RevitXmiExporter.Builder
 {
@@ -1083,8 +1083,8 @@ namespace Betekk.RevitXmiExporter.Builder
                         string analyticalId = Guid.NewGuid().ToString();
 
                         // Create deduplicated Point3D entities
-                    XmiPoint3d startXmiPoint = GetOrCreatePoint3D(startPoint, $"{analyticalId}_start_point");
-                    XmiPoint3d endXmiPoint = GetOrCreatePoint3D(endPoint, $"{analyticalId}_end_point");
+                        XmiPoint3d startXmiPoint = GetOrCreatePoint3D(startPoint, $"{analyticalId}_start_point");
+                        XmiPoint3d endXmiPoint = GetOrCreatePoint3D(endPoint, $"{analyticalId}_end_point");
 
                         // Create StructuralPointConnections for analytical domain
                         XmiStructuralPointConnection startConnection = GetOrCreateXmiStructuralPointConnection(
