@@ -9,7 +9,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  release-please:
+  release:
     runs-on: ubuntu-latest
 
     steps:
@@ -27,5 +27,6 @@ jobs:
       # Note: Build artifacts cannot be created in CI because the main project
       # requires Revit API DLLs which are only available on machines with Revit installed.
       # To create release artifacts:
-      # 1. Build locally with: dotnet publish -c Release
-      # 2. Manually attach the ZIP to the GitHub release
+      #   1. Build locally: dotnet publish -c Release -o ./publish
+      #   2. Create ZIP: Compress-Archive -Path ./publish/* -DestinationPath RevitXmiExporter.zip
+      #   3. Manually attach the ZIP to the GitHub release
