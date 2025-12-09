@@ -1,0 +1,56 @@
+# Changelog
+
+## [0.2.1](https://github.com/xmi-schema/revit-export-plugin/compare/v0.2.0...v0.2.1) (2025-12-09)
+
+
+### Features
+
+* add all analyticalmembers ([dd95ce4](https://github.com/xmi-schema/revit-export-plugin/commit/dd95ce43ac3f51d70ca50e90cd0de1d81055d164))
+* add authoring ([52d9af4](https://github.com/xmi-schema/revit-export-plugin/commit/52d9af48f9b6361857c32f5c4c54fbf352756625))
+* add contributing.md ([238152d](https://github.com/xmi-schema/revit-export-plugin/commit/238152d10d74565b0a893a914c53cbd4d9ca7786))
+* add GitHub Actions CI/CD with unit testing and semantic versioning ([cbe8723](https://github.com/xmi-schema/revit-export-plugin/commit/cbe8723ac5d62cfab5a77949b26adfde6d41834c))
+* added pre-push ([784c824](https://github.com/xmi-schema/revit-export-plugin/commit/784c8249b9682b73ec7b274b0cb386edfe707239))
+* added RevitXmiExporter.addin ([3a35a19](https://github.com/xmi-schema/revit-export-plugin/commit/3a35a194f8a47d5e0cbd165cd2c71ecdc3eb2832))
+* added XmiBeam and XmiColumn ([34dcace](https://github.com/xmi-schema/revit-export-plugin/commit/34dcace199eaabe37e243a85d28403791b8a5737))
+* added XmiMaterial and XmiCrossSection ([a07f267](https://github.com/xmi-schema/revit-export-plugin/commit/a07f2675caaacc9062c8a2c687a00e6cbc4022c0))
+* code working for StructuralMaterialMapper ([a37adf2](https://github.com/xmi-schema/revit-export-plugin/commit/a37adf2baa5c6b4e9d78d70d38d5c1cce0ebeb9d))
+* complete phase 2 step 3. ([4f86ff8](https://github.com/xmi-schema/revit-export-plugin/commit/4f86ff8108db9dfa5ad31acdac1a03fa914e90ad))
+* update csproj ([5ed9769](https://github.com/xmi-schema/revit-export-plugin/commit/5ed97692a90a79e075024d1d98b3cc2a9db37d37))
+* update for Optional XmiCrossSection ([f756dcf](https://github.com/xmi-schema/revit-export-plugin/commit/f756dcf3a0c2abb424583f69eb2d1e29d0bdab64))
+* updated BaseMapper -&gt; StructuralbaseEntityMapper ([fc8b236](https://github.com/xmi-schema/revit-export-plugin/commit/fc8b23637d436300f68d235fbd0b5b0d3d82b9fd))
+* updated namespace ([fb09329](https://github.com/xmi-schema/revit-export-plugin/commit/fb0932936adc38e826b70c4bcf12dd22fa0bdff2))
+* upgrade to XmiSchema v0.11.0 ([a6446b5](https://github.com/xmi-schema/revit-export-plugin/commit/a6446b53153011437109d8348124fbd39007cec4))
+
+
+### Bug Fixes
+
+* : removed BetekkExport command ([9e8c7e6](https://github.com/xmi-schema/revit-export-plugin/commit/9e8c7e64d19882fce3f8ef17f3bfe7f2a57f3c5d))
+* added claude settings ([5a3e728](https://github.com/xmi-schema/revit-export-plugin/commit/5a3e728d9925288c483750c181e83ea9310eb30b))
+* added git ignore ([1f07ca6](https://github.com/xmi-schema/revit-export-plugin/commit/1f07ca6cbde4aaa1cee6bbc1313c7dd7f059ddba))
+* added unit tests ([ef4c6ee](https://github.com/xmi-schema/revit-export-plugin/commit/ef4c6eead277c265fe2f72582124343fe3ac45e3))
+* clean up references ([7eab47b](https://github.com/xmi-schema/revit-export-plugin/commit/7eab47bcc8ffc2aa1970f2da4bf432df7da44c9e))
+* correct code formatting in test files ([#10](https://github.com/xmi-schema/revit-export-plugin/issues/10)) ([3a56648](https://github.com/xmi-schema/revit-export-plugin/commit/3a566489a700d4a9452bb5de2c47903ef0949936))
+* error resolved ([7ffe4f4](https://github.com/xmi-schema/revit-export-plugin/commit/7ffe4f4264952e4d195fe811aeda23681f9957d1))
+* error resolved ([709696e](https://github.com/xmi-schema/revit-export-plugin/commit/709696eaef2892a6aac05fc850413db7c0b2125d))
+* exported analytical members ([5001fd9](https://github.com/xmi-schema/revit-export-plugin/commit/5001fd97b8ff06368fb3b94f90ea535bcc9c4e6c))
+* point3D and pointConnection ([0a2c6d7](https://github.com/xmi-schema/revit-export-plugin/commit/0a2c6d7ae49c4a810056e0aca1ba07c555fc076f))
+* refactor names ([00509e7](https://github.com/xmi-schema/revit-export-plugin/commit/00509e70eb0a93edb24e1c5bf6c8bec1bef94f72))
+* removed AGENTS.md ([57adb5f](https://github.com/xmi-schema/revit-export-plugin/commit/57adb5f714ea1c3b5bd7fb2f594425e322148d02))
+* removed unused classes ([2a652f0](https://github.com/xmi-schema/revit-export-plugin/commit/2a652f0b6bfbbf70ea422d084825c31eca1ce342))
+* removed unused msbuild runtime error ([4f8c5ee](https://github.com/xmi-schema/revit-export-plugin/commit/4f8c5ee7948d19f86adf51f0c009568714f5d54b))
+* renamed classes ([48ba311](https://github.com/xmi-schema/revit-export-plugin/commit/48ba31142820a0aad6e725d84efb44e5519a2f7a))
+* renamed default file ([76f79ae](https://github.com/xmi-schema/revit-export-plugin/commit/76f79ae51e813e4374a9b7dff5eafb72b9608db7))
+* renamed files ([680c296](https://github.com/xmi-schema/revit-export-plugin/commit/680c296b5eacbf32b1fc455a730faaf6c9874ca3))
+* renamed functions ([e8c5c5e](https://github.com/xmi-schema/revit-export-plugin/commit/e8c5c5e025cce760bbfd3b0131f03fd65f13e9d6))
+* resolved all errors ([61ef9cc](https://github.com/xmi-schema/revit-export-plugin/commit/61ef9ccaa3b7a459c7141d51383e23c892b5ef91))
+* resolved build Solution ([147084d](https://github.com/xmi-schema/revit-export-plugin/commit/147084d594d76f1ef5aee7d969db12fab6028086))
+* resolved export command logic ([8053495](https://github.com/xmi-schema/revit-export-plugin/commit/805349507b1f26bab22c4a5f3649c7ec10a3e7a4))
+* resolved nullable errors found in vs ([50ac975](https://github.com/xmi-schema/revit-export-plugin/commit/50ac9753f97b81d6cb707aeca7384a36427b565c))
+* solved XmiPoint3d mapping logic ([471f8fa](https://github.com/xmi-schema/revit-export-plugin/commit/471f8fa096d71659d9e7085956a0fddf36d6984f))
+* update CI to build only test project (Revit API not available in CI) ([ef7c05c](https://github.com/xmi-schema/revit-export-plugin/commit/ef7c05cf55cec28333c81a774b43769969440130))
+* update csproj ([c493e04](https://github.com/xmi-schema/revit-export-plugin/commit/c493e0407d33a1ab13ef7c1cccb3484be30f7f59))
+* update to settings.local.json ([8169c67](https://github.com/xmi-schema/revit-export-plugin/commit/8169c673ed1cba2b201ed99cb97d1cfa5d4294fa))
+* updated mapper ([910aa92](https://github.com/xmi-schema/revit-export-plugin/commit/910aa92a17e8b87bcfe669da0b61ec796cb536b8))
+* updated mappers ([283ba8d](https://github.com/xmi-schema/revit-export-plugin/commit/283ba8dc02aadd610d635b6fe16ab61c1d96deab))
+* use default token for release-please ([#13](https://github.com/xmi-schema/revit-export-plugin/issues/13)) ([02f6f4e](https://github.com/xmi-schema/revit-export-plugin/commit/02f6f4e1d4a82118c9c4a03bb832c88614c35502))
+* XmiStructuralCurveMember should map to XmiBeam / XmiColumn ([fe4c786](https://github.com/xmi-schema/revit-export-plugin/commit/fe4c7866984754801d873e4a7e8378dc16634517))
