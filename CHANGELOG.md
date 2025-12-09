@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.2](https://github.com/xmi-schema/revit-export-plugin/compare/v0.2.1...v0.2.2) (2025-12-09)
+
+
+### Features
+
+* **XMI-219:** Add segment geometry relationships for physical beams ([#17](https://github.com/xmi-schema/revit-export-plugin/issues/17)) ([e340cf4](https://github.com/xmi-schema/revit-export-plugin/commit/e340cf4a98f43fe38724957e81500afc4228c8fe))
+
+
+### Bug Fixes
+
+* **XMI-218:** Fix missing segment/geometry output and refactor BetekkXmiBuilder ([#16](https://github.com/xmi-schema/revit-export-plugin/issues/16)) ([d433dea](https://github.com/xmi-schema/revit-export-plugin/commit/d433dea5981dad903f4f9a947f9ef18f3c8eafc7))
+
 ## [0.2.1](https://github.com/xmi-schema/revit-export-plugin/compare/v0.2.0...v0.2.1) (2025-12-09)
 
 
