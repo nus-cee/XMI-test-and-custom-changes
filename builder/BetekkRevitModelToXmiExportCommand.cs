@@ -145,14 +145,14 @@ namespace Betekk.RevitXmiExporter.Builder
         {
             StringBuilder summaryBuilder = new StringBuilder();
             summaryBuilder.AppendLine("Export Summary:");
-            summaryBuilder.AppendLine($"  • Storeys: {stats.StoreyCount}");
-            summaryBuilder.AppendLine($"  • Beams: {stats.BeamCount}");
-            summaryBuilder.AppendLine($"  • Columns: {stats.ColumnCount}");
-            summaryBuilder.AppendLine($"  • Analytical Members: {stats.AnalyticalMemberCount}");
-            summaryBuilder.AppendLine($"  • Materials: {stats.MaterialCount}");
-            summaryBuilder.AppendLine($"  • Cross-Sections: {stats.CrossSectionCount}");
-            summaryBuilder.AppendLine($"  • 3D Points: {stats.PointCount}");
-            summaryBuilder.AppendLine($"  • Structural Connections: {stats.ConnectionCount}");
+            summaryBuilder.AppendLine($"  • XmiStorey (Revit Level): {stats.StoreyCount}");
+            summaryBuilder.AppendLine($"  • XmiBeam (Revit StructuralFraming/Beam): {stats.BeamCount}");
+            summaryBuilder.AppendLine($"  • XmiColumn (Revit StructuralColumns): {stats.ColumnCount}");
+            summaryBuilder.AppendLine($"  • XmiStructuralCurveMember (analytical beams/columns): {stats.AnalyticalMemberCount}");
+            summaryBuilder.AppendLine($"  • XmiMaterial: {stats.MaterialCount}");
+            summaryBuilder.AppendLine($"  • XmiCrossSection: {stats.CrossSectionCount}");
+            summaryBuilder.AppendLine($"  • XmiPoint3d: {stats.PointCount}");
+            summaryBuilder.AppendLine($"  • XmiStructuralPointConnection: {stats.ConnectionCount}");
             summaryBuilder.AppendLine();
             summaryBuilder.AppendLine($"File saved to:");
             summaryBuilder.Append(exportPath);

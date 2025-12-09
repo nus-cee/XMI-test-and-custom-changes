@@ -39,6 +39,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Autodesk.Revit.SDK" Version="2026.0.0.9999" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
 		<PackageReference Include="XmiSchema" Version="0.11.0" />
 	</ItemGroup>

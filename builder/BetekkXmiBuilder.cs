@@ -1,6 +1,7 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
 using Betekk.RevitXmiExporter.Utils;
+using System.Linq;
 using XmiSchema.Entities.Bases;
 using XmiSchema.Entities.Commons;
 using XmiSchema.Entities.Geometries;
@@ -39,13 +40,22 @@ namespace Betekk.RevitXmiExporter.Builder
         // CrossSection cache (keyed by Revit FamilySymbol/Type ElementId)
         private readonly Dictionary<string, XmiCrossSection> _crossSectionCache;
 
+        // Geometry caches
+        private readonly Dictionary<string, XmiLine3d> _lineCache;
+        private readonly Dictionary<string, XmiArc3d> _arcCache;
+        private readonly Dictionary<string, XmiSegment> _segmentCache;
+
+        // Physical element caches
+        private readonly Dictionary<string, XmiBeam> _beamCache;
+        private readonly Dictionary<string, XmiColumn> _columnCache;
+
+        // Deferred physical→analytical mappings
+        private readonly List<(XmiBeam beam, string analyticalNativeId)> _beamToAnalyticalLinks;
+        private readonly List<(XmiColumn column, string analyticalNativeId)> _columnToAnalyticalLinks;
+
         // Cache for analytical members (keyed by Revit ElementId as string)
         // Stores XmiStructuralCurveMember entities created from AnalyticalMember elements
         private readonly Dictionary<string, XmiStructuralCurveMember> _analyticalMemberCache;
-
-        // Placeholder cross-section for analytical members without section types assigned
-        // This is a temporary workaround until XmiSchema supports nullable cross-sections
-        private XmiCrossSection? _placeholderCrossSection;
 
         // Tolerance for point deduplication (1e-10 in mm)
         private const double PointTolerance = 1e-10;
@@ -54,11 +64,16 @@ namespace Betekk.RevitXmiExporter.Builder
         private int _storeyCount = 0;
         private int _beamCount = 0;
         private int _columnCount = 0;
+        private int _wallCount = 0;
+        private int _slabCount = 0;
         private int _analyticalMemberCount = 0;
         private int _materialCount = 0;
         private int _crossSectionCount = 0;
         private int _pointCount = 0;
         private int _connectionCount = 0;
+        private int _segmentCount = 0;
+        private int _lineCount = 0;
+        private int _arcCount = 0;
 
         public BetekkXmiBuilder()
         {
@@ -71,6 +86,13 @@ namespace Betekk.RevitXmiExporter.Builder
             _connectionCache = new Dictionary<string, XmiStructuralPointConnection>();
             _materialCache = new Dictionary<string, XmiMaterial>();
             _crossSectionCache = new Dictionary<string, XmiCrossSection>();
+            _lineCache = new Dictionary<string, XmiLine3d>();
+            _arcCache = new Dictionary<string, XmiArc3d>();
+            _segmentCache = new Dictionary<string, XmiSegment>();
+            _beamCache = new Dictionary<string, XmiBeam>();
+            _columnCache = new Dictionary<string, XmiColumn>();
+            _beamToAnalyticalLinks = new List<(XmiBeam, string)>();
+            _columnToAnalyticalLinks = new List<(XmiColumn, string)>();
             _analyticalMemberCache = new Dictionary<string, XmiStructuralCurveMember>();
         }
 
@@ -88,6 +110,14 @@ namespace Betekk.RevitXmiExporter.Builder
 
             // Phase 3: Process physical elements (beams and columns) and link to analytical members
             ProcessStructuralFramingElements(doc);
+            ProcessStructuralColumnsElements(doc);
+
+            // Phase 4: Gather materials from other structural elements to ensure they appear in the material list
+            ProcessFloorMaterials(doc);
+            ProcessWallMaterials(doc);
+
+            // Phase 5: Create physical→analytical relationships after all physical elements are processed
+            ProcessingPhysicalToAnalytical();
         }
 
         /// <summary>
@@ -105,6 +135,18 @@ namespace Betekk.RevitXmiExporter.Builder
         /// <returns>Export statistics object.</returns>
         public ExportStatistics GetExportStatistics()
         {
+            _storeyCount = _model.Entities.OfType<XmiStorey>().Count();
+            _beamCount = _model.Entities.OfType<XmiBeam>().Count();
+            _columnCount = _model.Entities.OfType<XmiColumn>().Count();
+            _analyticalMemberCount = _model.Entities.OfType<XmiStructuralCurveMember>().Count();
+            _materialCount = _model.Entities.OfType<XmiMaterial>().Count();
+            _crossSectionCount = _model.Entities.OfType<XmiCrossSection>().Count();
+            _pointCount = _model.Entities.OfType<XmiPoint3d>().Count();
+            _connectionCount = _model.Entities.OfType<XmiStructuralPointConnection>().Count();
+            _segmentCount = _model.Entities.OfType<XmiSegment>().Count();
+            _lineCount = _model.Entities.OfType<XmiLine3d>().Count();
+            _arcCount = _model.Entities.OfType<XmiArc3d>().Count();
+
             return new ExportStatistics
             {
                 StoreyCount = _storeyCount,
@@ -114,7 +156,10 @@ namespace Betekk.RevitXmiExporter.Builder
                 MaterialCount = _materialCount,
                 CrossSectionCount = _crossSectionCount,
                 PointCount = _pointCount,
-                ConnectionCount = _connectionCount
+                ConnectionCount = _connectionCount,
+                SegmentCount = _segmentCount,
+                LineCount = _lineCount,
+                ArcCount = _arcCount
             };
         }
 
@@ -189,7 +234,7 @@ namespace Betekk.RevitXmiExporter.Builder
                 {
                     try
                     {
-                        ProcessSingleFramingElement(doc, familyInstance, isColumn: false);
+                        ProcessSingleBeamElement(doc, familyInstance);
                     }
                     catch (Exception ex)
                     {
@@ -199,8 +244,14 @@ namespace Betekk.RevitXmiExporter.Builder
                     }
                 }
             }
+        }
 
-            // Collect structural columns
+        /// <summary>
+        /// Processes structural columns separately using the OST_StructuralColumns category.
+        /// Keeps the column logic aligned with the Revit 2026 API expectations.
+        /// </summary>
+        private void ProcessStructuralColumnsElements(Document doc)
+        {
             FilteredElementCollector columnCollector = new FilteredElementCollector(doc)
                 .OfCategory(BuiltInCategory.OST_StructuralColumns)
                 .OfClass(typeof(FamilyInstance))
@@ -212,7 +263,7 @@ namespace Betekk.RevitXmiExporter.Builder
                 {
                     try
                     {
-                        ProcessSingleFramingElement(doc, familyInstance, isColumn: true);
+                        ProcessSingleColumnElement(doc, familyInstance);
                     }
                     catch (Exception ex)
                     {
@@ -224,15 +275,56 @@ namespace Betekk.RevitXmiExporter.Builder
             }
         }
 
+        private void ProcessFloorMaterials(Document doc)
+        {
+            FilteredElementCollector floorCollector = new FilteredElementCollector(doc)
+                .OfCategory(BuiltInCategory.OST_Floors)
+                .WhereElementIsNotElementType();
+
+            foreach (Element element in floorCollector)
+            {
+                try
+                {
+                    ExportMaterialsForElement(doc, element);
+                }
+                catch (Exception ex)
+                {
+                    string elementId = element?.Id?.ToString() ?? "unknown";
+                    ModelInfoBuilder.WriteErrorLogToFile(
+                        $"[BetekkXmiBuilder] Failed to process floor element {elementId} for materials: {ex.Message}");
+                }
+            }
+        }
+
+        private void ProcessWallMaterials(Document doc)
+        {
+            FilteredElementCollector wallCollector = new FilteredElementCollector(doc)
+                .OfCategory(BuiltInCategory.OST_Walls)
+                .WhereElementIsNotElementType();
+
+            foreach (Element element in wallCollector)
+            {
+                try
+                {
+                    ExportMaterialsForElement(doc, element);
+                }
+                catch (Exception ex)
+                {
+                    string elementId = element?.Id?.ToString() ?? "unknown";
+                    ModelInfoBuilder.WriteErrorLogToFile(
+                        $"[BetekkXmiBuilder] Failed to process wall element {elementId} for materials: {ex.Message}");
+                }
+            }
+        }
+
         /// <summary>
-        /// Process a single structural element (beam or column):
+        /// Process a single structural framing element (beam):
         /// - Extract geometry from LocationCurve
         /// - Create dual representation (physical + analytical)
         /// </summary>
         /// <param name="doc">Active Revit document</param>
-        /// <param name="familyInstance">Structural element to process</param>
-        /// <param name="isColumn">True if element is from OST_StructuralColumns, false if from OST_StructuralFraming</param>
-        private void ProcessSingleFramingElement(Document doc, FamilyInstance familyInstance, bool isColumn)
+        /// <param name="familyInstance">Structural beam element to process</param>
+        private void ProcessSingleBeamElement(Document doc, FamilyInstance familyInstance)
         {
             // Extract basic properties
             string id = Guid.NewGuid().ToString();
@@ -240,20 +332,59 @@ namespace Betekk.RevitXmiExporter.Builder
             string ifcGuid = GetIfcGuidFromElement(familyInstance);
             string nativeId = familyInstance.Id.ToString();
 
-            // Get geometry from LocationCurve
+            // Export material attached to this element to ensure it appears in the material list
+            ExportMaterialsForElement(doc, familyInstance);
+
+            // Get geometry from Location; columns can be point- or curve-based
             Location location = familyInstance.Location;
-            if (location == null || !(location is LocationCurve locationCurve))
+            Curve curve = null;
+            // Try robust geometry extraction first (works even without LocationCurve)
+            if (TryGetColumnEndPoints(familyInstance, out XYZ axisStart, out XYZ axisEnd))
+            {
+                curve = Line.CreateBound(axisStart, axisEnd);
+                ModelInfoBuilder.WriteErrorLogToFile(
+                    $"[BetekkXmiBuilder] Column {nativeId}: derived axis from solid vertices.");
+            }
+            else if (location is LocationCurve locationCurve)
+            {
+                curve = locationCurve.Curve;
+                ModelInfoBuilder.WriteErrorLogToFile(
+                    $"[BetekkXmiBuilder] Column {nativeId}: using LocationCurve for geometry.");
+            }
+            else if (TryGetColumnAxisFromGeometry(familyInstance, out Line axisFromGeom))
+            {
+                curve = axisFromGeom;
+                ModelInfoBuilder.WriteErrorLogToFile(
+                    $"[BetekkXmiBuilder] Column {nativeId}: derived axis from solid geometry.");
+            }
+            else if (location is LocationPoint locationPoint)
+            {
+                // Some columns store only a point; build a vertical line using the bounding box extents
+                BoundingBoxXYZ bbox = familyInstance.get_BoundingBox(null);
+                if (bbox == null)
+                {
+                    ModelInfoBuilder.WriteErrorLogToFile(
+                        $"[BetekkXmiBuilder] Element {nativeId} has LocationPoint but no bounding box");
+                    return;
+                }
+
+                XYZ basePoint = new XYZ(locationPoint.Point.X, locationPoint.Point.Y, bbox.Min.Z);
+                XYZ topPoint = new XYZ(locationPoint.Point.X, locationPoint.Point.Y, bbox.Max.Z);
+                curve = Line.CreateBound(basePoint, topPoint);
+                ModelInfoBuilder.WriteErrorLogToFile(
+                    $"[BetekkXmiBuilder] Column {nativeId}: fell back to bounding-box vertical line.");
+            }
+            else
             {
                 ModelInfoBuilder.WriteErrorLogToFile(
-                    $"[BetekkXmiBuilder] Element {nativeId} has no LocationCurve");
+                    $"[BetekkXmiBuilder] Element {nativeId} has unsupported Location type {location?.GetType().Name ?? "null"}");
                 return;
             }
 
-            Curve curve = locationCurve.Curve;
             if (curve == null)
             {
                 ModelInfoBuilder.WriteErrorLogToFile(
-                    $"[BetekkXmiBuilder] Element {nativeId} LocationCurve has no Curve");
+                    $"[BetekkXmiBuilder] Element {nativeId} Location has no Curve after all fallbacks");
                 return;
             }
 
@@ -268,12 +399,133 @@ namespace Betekk.RevitXmiExporter.Builder
                 return;
             }
 
-            // Get storey reference
-            XmiStorey storey = null;
-            if (familyInstance.LevelId != null && familyInstance.LevelId != ElementId.InvalidElementId)
+            // Get analytical element ID using the new Revit 2023+ API (returns null if no association exists)
+            string? analyticalNativeId = GetAnalyticalElementId(doc, familyInstance);
+
+            // Generate separate IDs for physical and analytical entities
+            string physicalId = Guid.NewGuid().ToString();
+
+            // Create deduplicated Point3D entities using schema equality
+            XmiPoint3d startXmiPoint = GetOrReusePoint3D(startPoint, $"{physicalId}_start_point");
+            XmiPoint3d endXmiPoint = GetOrReusePoint3D(endPoint, $"{physicalId}_end_point");
+
+            // Create physical entity (XmiBeam)
+            double lengthMm = Converters.ConvertValueToMillimeter(curve.Length);
+            XmiAxis localAxisX = new XmiAxis(1, 0, 0);
+            XmiAxis localAxisY = new XmiAxis(0, 1, 0);
+            XmiAxis localAxisZ = new XmiAxis(0, 0, 1);
+
+            // Material (optional) pulled from instance
+            XmiMaterial? physicalMaterial = GetOrCreateXmiMaterial(doc, GetMaterialIdFromFamilyInstance(familyInstance));
+
+            XmiBeam beam = _model.CreateXmiBeam(
+                physicalId,
+                name,
+                ifcGuid,
+                nativeId,
+                string.Empty,
+                physicalMaterial,
+                null, // segments not generated for physical beams
+                XmiSystemLineEnum.TopMiddle,
+                lengthMm,
+                localAxisX,
+                localAxisY,
+                localAxisZ,
+                0, 0, 0, 0, 0, 0);
+
+            _beamCount++;
+            _beamCache[nativeId] = beam;
+
+            // Point relationships
+            _model.AddXmiHasPoint3d(new XmiHasPoint3d(beam, startXmiPoint, XmiPoint3dTypeEnum.Start));
+            _model.AddXmiHasPoint3d(new XmiHasPoint3d(beam, endXmiPoint, XmiPoint3dTypeEnum.End));
+
+            // Cross-section relationship
+            XmiCrossSection? crossSection = GetOrCreateXmiCrossSection(doc, familyInstance);
+            if (crossSection != null)
             {
-                string levelNativeId = familyInstance.LevelId.ToString();
-                _storeyCache.TryGetValue(levelNativeId, out storey);
+                _model.AddXmiHasCrossSection(new XmiHasCrossSection(beam, crossSection));
+            }
+
+            // Defer physical→analytical linkage
+            if (!string.IsNullOrEmpty(analyticalNativeId))
+            {
+                _beamToAnalyticalLinks.Add((beam, analyticalNativeId));
+            }
+        }
+
+        /// <summary>
+        /// Process a single structural column element:
+        /// - Extract geometry from LocationCurve
+        /// - Create dual representation (physical + analytical)
+        /// </summary>
+        /// <param name="doc">Active Revit document</param>
+        /// <param name="familyInstance">Structural column element to process</param>
+        private void ProcessSingleColumnElement(Document doc, FamilyInstance familyInstance)
+        {
+            // Extract basic properties
+            string id = Guid.NewGuid().ToString();
+            string name = familyInstance.Name ?? id;
+            string ifcGuid = GetIfcGuidFromElement(familyInstance);
+            string nativeId = familyInstance.Id.ToString();
+
+            // Export material attached to this element to ensure it appears in the material list
+            ExportMaterialsForElement(doc, familyInstance);
+
+            // Get geometry from Location; columns are point-based so use level params or fallbacks
+            Location location = familyInstance.Location;
+            Curve curve = null;
+            if (TryGetColumnCurveFromParameters(doc, familyInstance, out Line levelBasedLine))
+            {
+                curve = levelBasedLine;
+                ModelInfoBuilder.WriteErrorLogToFile(
+                    $"[BetekkXmiBuilder] Column {nativeId}: built axis from base/top level parameters.");
+            }
+            else if (TryGetColumnEndPoints(familyInstance, out XYZ axisStart, out XYZ axisEnd))
+            {
+                curve = Line.CreateBound(axisStart, axisEnd);
+                ModelInfoBuilder.WriteErrorLogToFile(
+                    $"[BetekkXmiBuilder] Column {nativeId}: derived axis from solid vertices.");
+            }
+            else if (TryGetColumnAxisFromGeometry(familyInstance, out Line axisFromGeom))
+            {
+                curve = axisFromGeom;
+                ModelInfoBuilder.WriteErrorLogToFile(
+                    $"[BetekkXmiBuilder] Column {nativeId}: derived axis from solid geometry.");
+            }
+            else if (location is LocationPoint locationPoint)
+            {
+                // Build a vertical line using the bounding box extents around the location point
+                BoundingBoxXYZ bbox = familyInstance.get_BoundingBox(null);
+                if (bbox == null)
+                {
+                    ModelInfoBuilder.WriteErrorLogToFile(
+                        $"[BetekkXmiBuilder] Element {nativeId} has LocationPoint but no bounding box");
+                    return;
+                }
+
+                XYZ basePoint = new XYZ(locationPoint.Point.X, locationPoint.Point.Y, bbox.Min.Z);
+                XYZ topPoint = new XYZ(locationPoint.Point.X, locationPoint.Point.Y, bbox.Max.Z);
+                curve = Line.CreateBound(basePoint, topPoint);
+                ModelInfoBuilder.WriteErrorLogToFile(
+                    $"[BetekkXmiBuilder] Column {nativeId}: fell back to bounding-box vertical line.");
+            }
+            else
+            {
+                ModelInfoBuilder.WriteErrorLogToFile(
+                    $"[BetekkXmiBuilder] Element {nativeId} has unsupported Location type {location?.GetType().Name ?? "null"}");
+                return;
+            }
+
+            // Get start and end points
+            XYZ startPoint = curve.GetEndPoint(0);
+            XYZ endPoint = curve.GetEndPoint(1);
+
+            if (startPoint == null || endPoint == null)
+            {
+                ModelInfoBuilder.WriteErrorLogToFile(
+                    $"[BetekkXmiBuilder] Element {nativeId} has null endpoints");
+                return;
             }
 
             // Get analytical element ID using the new Revit 2023+ API (returns null if no association exists)
@@ -282,33 +534,50 @@ namespace Betekk.RevitXmiExporter.Builder
             // Generate separate IDs for physical and analytical entities
             string physicalId = Guid.NewGuid().ToString();
 
-            // Create deduplicated Point3D entities
-            XmiPoint3d startXmiPoint = GetOrCreatePoint3D(startPoint, $"{physicalId}_start_point");
-            XmiPoint3d endXmiPoint = GetOrCreatePoint3D(endPoint, $"{physicalId}_end_point");
+            // Create deduplicated Point3D entities using schema equality
+            XmiPoint3d startXmiPoint = GetOrReusePoint3D(startPoint, $"{physicalId}_start_point");
+            XmiPoint3d endXmiPoint = GetOrReusePoint3D(endPoint, $"{physicalId}_end_point");
 
-            // Create physical entity (XmiBeam or XmiColumn)
-            CreateXmiPhysicalElement(
-                doc,
-                familyInstance,
+            double lengthMm = Converters.ConvertValueToMillimeter(curve.Length);
+            XmiAxis localAxisX = new XmiAxis(1, 0, 0);
+            XmiAxis localAxisY = new XmiAxis(0, 1, 0);
+            XmiAxis localAxisZ = new XmiAxis(0, 0, 1);
+
+            XmiMaterial? physicalMaterial = GetOrCreateXmiMaterial(doc, GetMaterialIdFromFamilyInstance(familyInstance));
+
+            List<XmiSegment> segments = BuildSegmentsFromCurve(curve, startXmiPoint, endXmiPoint, nativeId, name);
+
+            XmiColumn column = _model.CreateXmiColumn(
                 physicalId,
                 name,
                 ifcGuid,
                 nativeId,
-                isColumn,
-                curve,
-                startXmiPoint,
-                endXmiPoint,
-                out XmiBasePhysicalEntity physicalEntity);
+                string.Empty,
+                physicalMaterial,
+                segments,
+                XmiSystemLineEnum.MiddleMiddle,
+                lengthMm,
+                localAxisX,
+                localAxisY,
+                localAxisZ,
+                0, 0, 0, 0, 0, 0);
 
-            // Link to existing analytical member if it was already processed in Phase 2
+            _columnCount++;
+            _columnCache[nativeId] = column;
+
+            _model.AddXmiHasPoint3d(new XmiHasPoint3d(column, startXmiPoint, XmiPoint3dTypeEnum.Start));
+            _model.AddXmiHasPoint3d(new XmiHasPoint3d(column, endXmiPoint, XmiPoint3dTypeEnum.End));
+
+            XmiCrossSection? crossSection = GetOrCreateXmiCrossSection(doc, familyInstance);
+            if (crossSection != null)
+            {
+                _model.AddXmiHasCrossSection(new XmiHasCrossSection(column, crossSection));
+            }
+
+            // Defer physical→analytical linkage
             if (!string.IsNullOrEmpty(analyticalNativeId))
             {
-                // Look up the analytical member from cache (created in Phase 2)
-                if (_analyticalMemberCache.TryGetValue(analyticalNativeId, out XmiStructuralCurveMember analyticalMember))
-                {
-                    // Create relationship: Physical Element → Analytical Member
-                    CreatePhysicalToAnalyticalRelationship(physicalEntity, analyticalMember);
-                }
+                _columnToAnalyticalLinks.Add((column, analyticalNativeId));
             }
         }
 
@@ -404,6 +673,26 @@ namespace Betekk.RevitXmiExporter.Builder
             return newPoint;
         }
 
+        private XmiPoint3d GetOrReusePoint3D(XYZ revitPoint, string fallbackId)
+        {
+            // Convert to millimeters
+            double x = Converters.ConvertValueToMillimeter(revitPoint.X);
+            double y = Converters.ConvertValueToMillimeter(revitPoint.Y);
+            double z = Converters.ConvertValueToMillimeter(revitPoint.Z);
+
+            // First try to reuse any existing point using schema equality
+            foreach (XmiPoint3d existing in _model.Entities.OfType<XmiPoint3d>())
+            {
+                if (existing.Equals(new XmiPoint3d(string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, x, y, z)))
+                {
+                    return existing;
+                }
+            }
+
+            // Fallback to cache/tolerance-based creation
+            return GetOrCreatePoint3D(revitPoint, fallbackId);
+        }
+
         /// <summary>
         /// Gets or creates a deduplicated XmiStructuralPointConnection.
         /// Reuses existing connection at same coordinate.
@@ -459,6 +748,8 @@ namespace Betekk.RevitXmiExporter.Builder
             bool isColumn,
             XmiStructuralPointConnection startConnection,
             XmiStructuralPointConnection endConnection,
+            XmiPoint3d startPoint,
+            XmiPoint3d endPoint,
             Curve curve,
             XmiCrossSection? crossSection = null)
         {
@@ -483,7 +774,7 @@ namespace Betekk.RevitXmiExporter.Builder
             XmiAxis localAxisZ = new XmiAxis(0, 0, 1);
 
             XmiMaterial? material = null;
-            XmiCrossSection? crossSectionToUse = crossSection ?? GetOrCreatePlaceholderXmiCrossSection();
+            List<XmiSegment> segments = BuildSegmentsFromCurve(curve, startPoint, endPoint, nativeId, name);
 
             XmiStructuralCurveMember member = _model.CreateXmiStructuralCurveMember(
                 id,
@@ -492,11 +783,11 @@ namespace Betekk.RevitXmiExporter.Builder
                 nativeId,
                 string.Empty,    // description
                 material,        // material (optional)
-                crossSectionToUse,
+                crossSection,
                 storey,          // storey (can be null)
                 memberType,
                 nodes,
-                null,            // segments (deferred)
+                segments,
                 XmiSystemLineEnum.TopMiddle,  // default system line
                 startConnection,
                 endConnection,
@@ -509,88 +800,328 @@ namespace Betekk.RevitXmiExporter.Builder
                 string.Empty       // endFixityEnd
             );
 
+            if (crossSection != null)
+            {
+                XmiHasCrossSection hasCrossSection = new XmiHasCrossSection(member, crossSection);
+                _model.AddXmiHasCrossSection(hasCrossSection);
+            }
+
             return member;
         }
 
-        /// <summary>
-        /// Creates physical element (XmiBeam or XmiColumn) and relationships to Point3D geometry and cross-section.
-        /// Uses description field to indicate "startNode" or "endNode" for point relationships.
-        /// </summary>
-        private void CreateXmiPhysicalElement(
-            Document doc,
-            FamilyInstance familyInstance,
-            string id,
-            string name,
-            string ifcGuid,
-            string nativeId,
-            bool isColumn,
+        private List<XmiSegment> BuildSegmentsFromCurve(
             Curve curve,
             XmiPoint3d startPoint,
             XmiPoint3d endPoint,
-            out XmiBasePhysicalEntity physicalEntity)
+            string nativeId,
+            string name)
         {
-            // Calculate curve length and axis values
-            double lengthMm = Converters.ConvertValueToMillimeter(curve.Length);
-            // Use XmiAxis (unit vectors) for local axis definition
-            XmiAxis localAxisX = new XmiAxis(1, 0, 0);
-            XmiAxis localAxisY = new XmiAxis(0, 1, 0);
-            XmiAxis localAxisZ = new XmiAxis(0, 0, 1);
+            List<XmiSegment> segments = new List<XmiSegment>();
 
-            if (isColumn)
+            if (curve is Line)
             {
-                XmiColumn column = new XmiColumn(
-                    id,
-                    name,
-                    ifcGuid,
-                    nativeId,
-                    string.Empty,  // description
-                    XmiSystemLineEnum.MiddleMiddle,
-                    lengthMm,
-                    localAxisX,
-                    localAxisY,
-                    localAxisZ,
-                    0, 0, 0, 0, 0, 0  // all offsets zero
-                );
-
-                _model.AddXmiColumn(column);
-                physicalEntity = column;
-                _columnCount++;
+                XmiLine3d line = GetOrCreateLine3d(startPoint, endPoint, nativeId, name);
+                XmiSegment segment = GetOrCreateSegment(nativeId, name, XmiSegmentTypeEnum.Line);
+                AddLineRelationshipIfMissing(segment, line);
+                segments.Add(segment);
             }
-            else
+            else if (curve is Arc arc)
             {
-                XmiBeam beam = new XmiBeam(
-                    id,
-                    name,
-                    ifcGuid,
-                    nativeId,
-                    string.Empty,  // description
-                    XmiSystemLineEnum.TopMiddle,
-                    lengthMm,
-                    localAxisX,
-                    localAxisY,
-                    localAxisZ,
-                    0, 0, 0, 0, 0, 0  // all offsets zero
-                );
+                XYZ center = arc.Center;
+                XmiPoint3d centerPoint = GetOrReusePoint3D(center, $"{nativeId}_center_point");
+                float radiusMm = (float)Converters.ConvertValueToMillimeter(arc.Radius);
 
-                _model.AddXmiBeam(beam);
-                physicalEntity = beam;
-                _beamCount++;
+                XmiArc3d arc3d = GetOrCreateArc3d(startPoint, endPoint, centerPoint, radiusMm, nativeId, name);
+                XmiSegment segment = GetOrCreateSegment(nativeId, name, XmiSegmentTypeEnum.CircularArc);
+                AddArcRelationshipIfMissing(segment, arc3d);
+                segments.Add(segment);
             }
 
-            // Create relationships: Physical Element → Point3D
-            // Using XmiPoint3dTypeEnum to indicate start/end nodes (v0.11.0+)
-            XmiHasPoint3d startPointRel = new XmiHasPoint3d(physicalEntity, startPoint, XmiPoint3dTypeEnum.Start);
-            _model.AddXmiHasPoint3d(startPointRel);
+            return segments;
+        }
 
-            XmiHasPoint3d endPointRel = new XmiHasPoint3d(physicalEntity, endPoint, XmiPoint3dTypeEnum.End);
-            _model.AddXmiHasPoint3d(endPointRel);
-
-            // Create cross-section and link via XmiHasCrossSection relationship
-            XmiCrossSection? crossSection = GetOrCreateXmiCrossSection(doc, familyInstance);
-            if (crossSection != null)
+        private XmiLine3d GetOrCreateLine3d(
+            XmiPoint3d startPoint,
+            XmiPoint3d endPoint,
+            string nativeId,
+            string name)
+        {
+            string key = $"line:{FormatPointKey(startPoint)}:{FormatPointKey(endPoint)}";
+            if (_lineCache.TryGetValue(key, out XmiLine3d existingLine))
             {
-                XmiHasCrossSection hasCrossSection = new XmiHasCrossSection(physicalEntity, crossSection);
-                _model.AddXmiHasCrossSection(hasCrossSection);
+                return existingLine;
+            }
+
+            XmiLine3d line = _model.CreateXmiLine3d(
+                Guid.NewGuid().ToString(),
+                $"{name}_line",
+                string.Empty,
+                $"{nativeId}_line",
+                string.Empty,
+                startPoint,
+                endPoint);
+
+            _lineCache[key] = line;
+            return line;
+        }
+
+        private XmiArc3d GetOrCreateArc3d(
+            XmiPoint3d startPoint,
+            XmiPoint3d endPoint,
+            XmiPoint3d centerPoint,
+            float radiusMm,
+            string nativeId,
+            string name)
+        {
+            string key = $"arc:{FormatPointKey(startPoint)}:{FormatPointKey(endPoint)}:{FormatPointKey(centerPoint)}:{radiusMm:F6}";
+            if (_arcCache.TryGetValue(key, out XmiArc3d existingArc))
+            {
+                return existingArc;
+            }
+
+            XmiArc3d arc = _model.CreateXmiArc3d(
+                Guid.NewGuid().ToString(),
+                $"{name}_arc",
+                string.Empty,
+                $"{nativeId}_arc",
+                string.Empty,
+                startPoint,
+                endPoint,
+                centerPoint,
+                radiusMm);
+
+            _arcCache[key] = arc;
+            return arc;
+        }
+
+        private XmiSegment GetOrCreateSegment(
+            string nativeId,
+            string name,
+            XmiSegmentTypeEnum segmentType)
+        {
+            string key = $"segment:{nativeId}:{segmentType}";
+            if (_segmentCache.TryGetValue(key, out XmiSegment existingSegment))
+            {
+                return existingSegment;
+            }
+
+            XmiSegment segment = new XmiSegment(
+                Guid.NewGuid().ToString(),
+                $"{name}_segment",
+                string.Empty,
+                key,
+                string.Empty,
+                0f,
+                segmentType);
+
+            _model.AddXmiSegment(segment);
+            _segmentCache[key] = segment;
+            return segment;
+        }
+
+        private void AddLineRelationshipIfMissing(XmiSegment segment, XmiLine3d line)
+        {
+            bool exists = _model.Relationships
+                .OfType<XmiHasLine3d>()
+                .Any(r => ReferenceEquals(r.Source, segment) && ReferenceEquals(r.Target, line));
+
+            if (!exists)
+            {
+                _model.AddXmiHasLine3d(new XmiHasLine3d(segment, line));
+            }
+        }
+
+        private void AddArcRelationshipIfMissing(XmiSegment segment, XmiArc3d arc)
+        {
+            bool exists = _model.Relationships
+                .OfType<XmiHasArc3d>()
+                .Any(r => ReferenceEquals(r.Source, segment) && ReferenceEquals(r.Target, arc));
+
+            if (!exists)
+            {
+                _model.AddXmiHasArc3d(new XmiHasArc3d(segment, arc));
+            }
+        }
+
+        private string FormatPointKey(XmiPoint3d point)
+        {
+            return $"{Math.Round(point.X, 10):F10}_{Math.Round(point.Y, 10):F10}_{Math.Round(point.Z, 10):F10}";
+        }
+
+        private bool TryGetColumnAxisFromGeometry(FamilyInstance column, out Line axis)
+        {
+            axis = null;
+            if (column == null)
+            {
+                return false;
+            }
+
+            Options opt = new Options
+            {
+                ComputeReferences = false,
+                IncludeNonVisibleObjects = false,
+                DetailLevel = ViewDetailLevel.Fine
+            };
+
+            GeometryElement geomElem = column.get_Geometry(opt);
+            if (geomElem == null)
+            {
+                ModelInfoBuilder.WriteErrorLogToFile(
+                    $"[BetekkXmiBuilder] Column {column?.Id} geometry element is null.");
+                return false;
+            }
+
+            Solid mainSolid = GetMainSolid(geomElem);
+            if (mainSolid == null)
+            {
+                ModelInfoBuilder.WriteErrorLogToFile(
+                    $"[BetekkXmiBuilder] Column {column?.Id} has no solid geometry.");
+                return false;
+            }
+
+            List<XYZ> verts = ExtractVertices(mainSolid);
+            if (verts.Count == 0)
+            {
+                ModelInfoBuilder.WriteErrorLogToFile(
+                    $"[BetekkXmiBuilder] Column {column?.Id} has zero vertices after triangulation.");
+                return false;
+            }
+
+            axis = ComputeLongestAxis(verts);
+            return axis != null;
+        }
+
+        private bool TryGetColumnEndPoints(FamilyInstance column, out XYZ start, out XYZ end)
+        {
+            start = null;
+            end = null;
+
+            if (column == null)
+            {
+                return false;
+            }
+
+            if (!TryGetColumnAxisFromGeometry(column, out Line axis) || axis == null)
+            {
+                return false;
+            }
+
+            start = axis.GetEndPoint(0);
+            end = axis.GetEndPoint(1);
+            return start != null && end != null;
+        }
+
+        private Solid GetMainSolid(GeometryElement geomElem)
+        {
+            foreach (GeometryObject obj in geomElem)
+            {
+                if (obj is Solid solid && solid.Volume > 1e-6)
+                {
+                    return solid;
+                }
+
+                if (obj is GeometryInstance inst)
+                {
+                    GeometryElement symbolGeom = inst.GetInstanceGeometry();
+                    foreach (GeometryObject instObj in symbolGeom)
+                    {
+                        if (instObj is Solid instSolid && instSolid.Volume > 1e-6)
+                        {
+                            return instSolid;
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private List<XYZ> ExtractVertices(Solid solid)
+        {
+            List<XYZ> verts = new List<XYZ>();
+            foreach (Face face in solid.Faces)
+            {
+                Mesh mesh = face.Triangulate();
+                foreach (XYZ v in mesh.Vertices)
+                {
+                    verts.Add(v);
+                }
+            }
+
+            return verts;
+        }
+
+        private Line ComputeLongestAxis(List<XYZ> pts)
+        {
+            double maxDist = 0.0;
+            XYZ p1 = null;
+            XYZ p2 = null;
+
+            for (int i = 0; i < pts.Count; i++)
+            {
+                for (int j = i + 1; j < pts.Count; j++)
+                {
+                    double d = pts[i].DistanceTo(pts[j]);
+                    if (d > maxDist)
+                    {
+                        maxDist = d;
+                        p1 = pts[i];
+                        p2 = pts[j];
+                    }
+                }
+            }
+
+            if (p1 == null || p2 == null)
+            {
+                return null;
+            }
+
+            return Line.CreateBound(p1, p2);
+        }
+
+        private bool TryGetColumnCurveFromParameters(Document doc, FamilyInstance column, out Line line)
+        {
+            line = null;
+            try
+            {
+                LocationPoint locPoint = column.Location as LocationPoint;
+                if (locPoint == null)
+                {
+                    return false;
+                }
+
+                ElementId baseLevelId = column.get_Parameter(BuiltInParameter.SCHEDULE_BASE_LEVEL_PARAM)?.AsElementId() ?? ElementId.InvalidElementId;
+                ElementId topLevelId = column.get_Parameter(BuiltInParameter.SCHEDULE_TOP_LEVEL_PARAM)?.AsElementId() ?? ElementId.InvalidElementId;
+
+                if (baseLevelId == ElementId.InvalidElementId || topLevelId == ElementId.InvalidElementId)
+                {
+                    return false;
+                }
+
+                Level baseLevel = doc.GetElement(baseLevelId) as Level;
+                Level topLevel = doc.GetElement(topLevelId) as Level;
+                if (baseLevel == null || topLevel == null)
+                {
+                    return false;
+                }
+
+                double baseOffset = column.get_Parameter(BuiltInParameter.SCHEDULE_BASE_LEVEL_OFFSET_PARAM)?.AsDouble() ?? 0.0;
+                double topOffset = column.get_Parameter(BuiltInParameter.SCHEDULE_TOP_LEVEL_OFFSET_PARAM)?.AsDouble() ?? 0.0;
+
+                double startZ = baseLevel.ProjectElevation + baseOffset;
+                double endZ = topLevel.ProjectElevation + topOffset;
+
+                XYZ start = new XYZ(locPoint.Point.X, locPoint.Point.Y, startZ);
+                XYZ end = new XYZ(locPoint.Point.X, locPoint.Point.Y, endZ);
+
+                line = Line.CreateBound(start, end);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ModelInfoBuilder.WriteErrorLogToFile(
+                    $"[BetekkXmiBuilder] Column {column?.Id}: failed to build curve from parameters - {ex.Message}");
+                return false;
             }
         }
 
@@ -614,6 +1145,74 @@ namespace Betekk.RevitXmiExporter.Builder
 
                 _model.AddXmiHasStructuralCurveMember(relationship);
             }
+        }
+
+        private void ProcessingPhysicalToAnalytical()
+        {
+            ProcessBeamPhysicalToAnalyticalMapping();
+            ProcessColumnPhysicalToAnalyticalMapping();
+            ProcessFloorPhysicalToAnalyticalMapping();
+            ProcessWallPhysicalToAnalyticalMapping();
+        }
+
+        private void ProcessBeamPhysicalToAnalyticalMapping()
+        {
+            foreach (var link in _beamToAnalyticalLinks)
+            {
+                if (string.IsNullOrEmpty(link.analyticalNativeId))
+                {
+                    continue;
+                }
+
+                if (!_analyticalMemberCache.TryGetValue(link.analyticalNativeId, out XmiStructuralCurveMember analyticalMember))
+                {
+                    continue;
+                }
+
+                bool exists = _model.Relationships
+                    .OfType<XmiHasStructuralCurveMember>()
+                    .Any(r => ReferenceEquals(r.Source, link.beam) && ReferenceEquals(r.Target, analyticalMember));
+
+                if (!exists)
+                {
+                    CreatePhysicalToAnalyticalRelationship(link.beam, analyticalMember);
+                }
+            }
+        }
+
+        private void ProcessColumnPhysicalToAnalyticalMapping()
+        {
+            foreach (var link in _columnToAnalyticalLinks)
+            {
+                if (string.IsNullOrEmpty(link.analyticalNativeId))
+                {
+                    continue;
+                }
+
+                if (!_analyticalMemberCache.TryGetValue(link.analyticalNativeId, out XmiStructuralCurveMember analyticalMember))
+                {
+                    continue;
+                }
+
+                bool exists = _model.Relationships
+                    .OfType<XmiHasStructuralCurveMember>()
+                    .Any(r => ReferenceEquals(r.Source, link.column) && ReferenceEquals(r.Target, analyticalMember));
+
+                if (!exists)
+                {
+                    CreatePhysicalToAnalyticalRelationship(link.column, analyticalMember);
+                }
+            }
+        }
+
+        private void ProcessFloorPhysicalToAnalyticalMapping()
+        {
+            // Floors currently export materials only; no physical-to-analytical links to create.
+        }
+
+        private void ProcessWallPhysicalToAnalyticalMapping()
+        {
+            // Walls currently export materials only; no physical-to-analytical links to create.
         }
 
         /// <summary>
@@ -809,6 +1408,83 @@ namespace Betekk.RevitXmiExporter.Builder
         }
 
         /// <summary>
+        /// Retrieves the structural material ElementId from a FamilyInstance, falling back to its type.
+        /// </summary>
+        private ElementId GetMaterialIdFromFamilyInstance(FamilyInstance familyInstance)
+        {
+            if (familyInstance == null)
+            {
+                return ElementId.InvalidElementId;
+            }
+
+            ElementId materialId = familyInstance.StructuralMaterialId;
+            if (materialId != null && materialId != ElementId.InvalidElementId)
+            {
+                return materialId;
+            }
+
+            FamilySymbol familySymbol = familyInstance.Symbol;
+            if (familySymbol == null)
+            {
+                return ElementId.InvalidElementId;
+            }
+
+            Parameter materialParam = familySymbol.get_Parameter(BuiltInParameter.STRUCTURAL_MATERIAL_PARAM);
+            if (materialParam != null && materialParam.HasValue)
+            {
+                return materialParam.AsElementId();
+            }
+
+            return ElementId.InvalidElementId;
+        }
+
+        /// <summary>
+        /// Ensures all materials associated with the given element are added to the XMI material list.
+        /// Handles both FamilyInstance structural material parameters and general material assignments.
+        /// </summary>
+        private void ExportMaterialsForElement(Document doc, Element element)
+        {
+            if (element == null)
+            {
+                return;
+            }
+
+            // Prefer the structural material on family instances (covers beams/columns)
+            if (element is FamilyInstance familyInstance)
+            {
+                ElementId structuralMaterialId = GetMaterialIdFromFamilyInstance(familyInstance);
+                if (structuralMaterialId != null && structuralMaterialId != ElementId.InvalidElementId)
+                {
+                    GetOrCreateXmiMaterial(doc, structuralMaterialId);
+                }
+            }
+
+            // Gather all other materials assigned to the element (e.g., layered floors/walls)
+            ICollection<ElementId> materialIds = null;
+            try
+            {
+                materialIds = element.GetMaterialIds(false);
+            }
+            catch
+            {
+                // If material extraction fails, do not block export; material list will just omit this element.
+            }
+
+            if (materialIds == null || materialIds.Count == 0)
+            {
+                return;
+            }
+
+            foreach (ElementId materialId in materialIds)
+            {
+                if (materialId != null && materialId != ElementId.InvalidElementId)
+                {
+                    GetOrCreateXmiMaterial(doc, materialId);
+                }
+            }
+        }
+
+        /// <summary>
         /// Gets or creates a deduplicated XmiCrossSection from a Revit FamilySymbol (Type).
         /// Uses Revit FamilySymbol ElementId as cache key.
         /// </summary>
@@ -840,13 +1516,7 @@ namespace Betekk.RevitXmiExporter.Builder
             string nativeId = typeId.ToString();
 
             // Extract material from family instance
-            ElementId materialId = familyInstance.StructuralMaterialId;
-            if (materialId == null || materialId == ElementId.InvalidElementId)
-            {
-                // Try to get material from type
-                materialId = familySymbol.get_Parameter(BuiltInParameter.STRUCTURAL_MATERIAL_PARAM)?.AsElementId();
-            }
-
+            ElementId materialId = GetMaterialIdFromFamilyInstance(familyInstance);
             XmiMaterial? material = GetOrCreateXmiMaterial(doc, materialId);
 
             // Extract cross-section dimensions
@@ -1083,8 +1753,8 @@ namespace Betekk.RevitXmiExporter.Builder
                         string analyticalId = Guid.NewGuid().ToString();
 
                         // Create deduplicated Point3D entities
-                        XmiPoint3d startXmiPoint = GetOrCreatePoint3D(startPoint, $"{analyticalId}_start_point");
-                        XmiPoint3d endXmiPoint = GetOrCreatePoint3D(endPoint, $"{analyticalId}_end_point");
+                        XmiPoint3d startXmiPoint = GetOrReusePoint3D(startPoint, $"{analyticalId}_start_point");
+                        XmiPoint3d endXmiPoint = GetOrReusePoint3D(endPoint, $"{analyticalId}_end_point");
 
                         // Create StructuralPointConnections for analytical domain
                         XmiStructuralPointConnection startConnection = GetOrCreateXmiStructuralPointConnection(
@@ -1116,6 +1786,8 @@ namespace Betekk.RevitXmiExporter.Builder
                             isColumn,
                             startConnection,
                             endConnection,
+                            startXmiPoint,
+                            endXmiPoint,
                             curve,
                             crossSection);  // Pass cross-section (optional)
 
@@ -1157,17 +1829,16 @@ namespace Betekk.RevitXmiExporter.Builder
 
                 if (sectionTypeParam == null || !sectionTypeParam.HasValue)
                 {
-                    // No section type assigned - return placeholder cross-section
-                    // This is a temporary workaround until XmiSchema supports nullable cross-sections
-                    return GetOrCreatePlaceholderXmiCrossSection();
+                    // No section type assigned - leave analytical member without cross-section
+                    return null;
                 }
 
                 // Get the element ID of the section type
                 ElementId sectionTypeId = sectionTypeParam.AsElementId();
                 if (sectionTypeId == null || sectionTypeId == ElementId.InvalidElementId)
                 {
-                    // Invalid section type - return placeholder cross-section
-                    return GetOrCreatePlaceholderXmiCrossSection();
+                    // Invalid section type - leave analytical member without cross-section
+                    return null;
                 }
 
                 string cacheKey = sectionTypeId.ToString();
@@ -1301,46 +1972,6 @@ namespace Betekk.RevitXmiExporter.Builder
             return (XmiShapeEnum.Unknown, unknownParams, 0);
         }
 
-        /// <summary>
-        /// Gets or creates a placeholder cross-section for analytical members without section types assigned.
-        /// This is a temporary workaround until XmiSchema supports nullable cross-sections.
-        /// Creates a single shared placeholder instance to avoid polluting the model with duplicates.
-        /// </summary>
-        private XmiCrossSection GetOrCreatePlaceholderXmiCrossSection()
-        {
-            // Return cached instance if it exists
-            if (_placeholderCrossSection != null)
-            {
-                return _placeholderCrossSection;
-            }
-
-            // Create placeholder cross-section with clearly identifiable properties
-            string id = "placeholder-no-section-type";
-            string name = "[PLACEHOLDER] No Section Type Assigned";
-            string nativeId = "synthetic:placeholder:no-section-type";
-            string description = "TEMPORARY PLACEHOLDER: This analytical member does not have a section type assigned in Revit. " +
-                                 "This placeholder exists because XmiSchema requires non-nullable cross-sections. " +
-                                 "Once the library supports nullable cross-sections, this placeholder will be removed.";
-
-            // Use Unknown shape with empty parameters
-            var unknownParams = new UnknownShapeParameters(new Dictionary<string, double>());
-
-            // Create the placeholder cross-section
-            _placeholderCrossSection = _model.CreateXmiCrossSection(
-                id,
-                name,
-                string.Empty,  // ifcGuid
-                nativeId,
-                description,
-                null,
-                XmiShapeEnum.Unknown,
-                unknownParams,
-                0,  // area
-                0, 0, 0, 0, 0, 0, 0, 0, 0  // all section properties zero
-            );
-
-            return _placeholderCrossSection;
-        }
     }
 
     /// <summary>
@@ -1356,5 +1987,8 @@ namespace Betekk.RevitXmiExporter.Builder
         public int CrossSectionCount { get; set; }
         public int PointCount { get; set; }
         public int ConnectionCount { get; set; }
+        public int SegmentCount { get; set; }
+        public int LineCount { get; set; }
+        public int ArcCount { get; set; }
     }
 }
