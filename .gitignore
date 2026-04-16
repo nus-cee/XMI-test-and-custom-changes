@@ -1,0 +1,48 @@
+## Ignore build output
+bin/
+obj/
+[Ll]og/
+*.log
+
+## Ignore user-specific Visual Studio settings
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Visual Studio cache
+.vs/
+
+## Rider / JetBrains artifacts
+.idea/
+*.sln.iml
+
+## NuGet packages
+*.nupkg
+packages/
+*.snupkg
+
+## Publish output and binaries
+publish/
+*.dll
+*.exe
+*.pdb
+
+## ReSharper
+_ReSharper*/
+*.DotSettings.user
+
+## System files
+*.DS_Store
+Thumbs.db
+
+## Autodesk/Revit binaries and payloads
+RevitAPI*.dll
+RevitAPIUI*.dll
+# *.addin
+*.rvt
+*.rfa
+
+## Local experimental artifacts
+/exp/
+/nul

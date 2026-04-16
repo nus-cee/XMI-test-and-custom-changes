@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run release job
+        uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          config-file: .github/release-please-config.json
+          manifest-file: .github/release-please-manifest.json
+
+      # Note: Build artifacts cannot be created in CI because the main project
+      # requires Revit API DLLs which are only available on machines with Revit installed.
+      # To create release artifacts:
+      #   1. Build locally: dotnet publish -c Release -o ./publish
+      #   2. Create ZIP: Compress-Archive -Path ./publish/* -DestinationPath RevitXmiExporter.zip
+      #   3. Manually attach the ZIP to the GitHub release

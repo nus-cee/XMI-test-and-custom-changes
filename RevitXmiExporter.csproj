@@ -1,0 +1,102 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<PlatformTarget>x64</PlatformTarget>
+		<AssemblyName>RevitXmiExporter</AssemblyName>
+		<RootNamespace>Betekk.RevitXmiExporter</RootNamespace>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<Authors>Betekk</Authors>
+		<Company>Betekk</Company>
+		<Product>Betekk RevitXmiExporter</Product>
+		<Description>Autodesk Revit add-in that exports structural data to XMI schema JSON.</Description>
+		<PackageId>Betekk.RevitXmiExporter</PackageId>
+		<PackageVersion>$(PackageVersion)</PackageVersion>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<EnableNETAnalyzers>true</EnableNETAnalyzers>
+		<AnalysisLevel>latest</AnalysisLevel>
+		<OutputType>Library</OutputType>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		<GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+		<AssemblyVersion>$(VersionPrefix)</AssemblyVersion>
+		<FileVersion>$(VersionPrefix)</FileVersion>
+		<SignAssembly>False</SignAssembly>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<NoWarn>1701;1702;MSB3277</NoWarn>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<NoWarn>1701;1702;MSB3277</NoWarn>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Autodesk.Revit.SDK" Version="2026.0.0.9999" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+		<PackageReference Include="XmiSchema" Version="0.12.0" />
+	</ItemGroup>
+
+
+
+	<ItemGroup>
+		<Reference Include="RevitAPI">
+			<HintPath>$(RevitInstallDir)\RevitAPI.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="RevitAPIUI">
+			<HintPath>$(RevitInstallDir)\RevitAPIUI.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+	</ItemGroup>
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.WindowsDesktop.App.WindowsForms" />
+		<FrameworkReference Include="Microsoft.WindowsDesktop.App.WPF" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Remove="Tests\**" />
+		<EmbeddedResource Remove="Tests\**" />
+		<None Remove="Tests\**" />
+	</ItemGroup>
+
+	<PropertyGroup>
+		<PostPublishDestination>C:\Program Files\Autodesk\Revit Xmi Exporter\</PostPublishDestination>
+	</PropertyGroup>
+
+	<Target Name="CopyAfterPublish" AfterTargets="Publish">
+		<ItemGroup>
+			<PublishedFiles Include="$(PublishDir)**\*.*" />
+		</ItemGroup>
+		<Copy SourceFiles="@(PublishedFiles)" DestinationFiles="@(PublishedFiles->'$(PostPublishDestination)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+	</Target>
+
+		<PropertyGroup>
+			<ProgramDataAddinDir>$(ProgramData)\Autodesk\Revit\Addins\2026</ProgramDataAddinDir>
+			<ProgramDataPluginDir>$(ProgramDataAddinDir)\BetekkRevitXmiExporter</ProgramDataPluginDir>
+		</PropertyGroup>
+
+		<ItemGroup>
+			<AddinFiles Include="$(ProjectDir)*.addin" />
+			<PluginOutput Include="$(TargetDir)**\*.*" />
+		</ItemGroup>
+
+		<ItemGroup>
+		  <None Remove="nul" />
+		</ItemGroup>
+
+		<Target Name="CopyToProgramData" AfterTargets="Build" Condition="'$(OS)' == 'Windows_NT' and Exists('$(TargetDir)')">
+			<MakeDir Directories="$(ProgramDataAddinDir)" />
+			<MakeDir Directories="$(ProgramDataPluginDir)" />
+			<Copy SourceFiles="@(AddinFiles)" DestinationFolder="$(ProgramDataAddinDir)" SkipUnchangedFiles="true" />
+			<Copy SourceFiles="@(PluginOutput)" DestinationFiles="@(PluginOutput->'$(ProgramDataPluginDir)\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+		</Target>
+
+	</Project>
