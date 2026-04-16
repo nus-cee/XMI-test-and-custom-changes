@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Media;
 using Autodesk.Revit.UI;
 
@@ -13,7 +13,7 @@ namespace Betekk.RevitXmiExporter
     public class App : IExternalApplication
     {
         private const string RibbonTab = "XMI Schema";
-        private const string RibbonPanel = "Export XMI";
+        private const string RibbonPanel = "XMI Tools";
 
         /// <summary>
         /// Creates the XMI-Schema ribbon tab/panel in Revit and wires the ExportXmi and
@@ -45,7 +45,24 @@ namespace Betekk.RevitXmiExporter
                 };
 
                 panel.AddItem(buttonData);
-                // panel.AddItem(harnessButtonData);
+
+                ImageSource importLargeIcon = CreateImportIcon(32);
+                ImageSource importSmallIcon = CreateImportIcon(16);
+
+                PushButtonData importButtonData = new PushButtonData(
+                    "ImportStructureBtn",
+                    "Import XMI",
+                    typeof(App).Assembly.Location,
+                    "Betekk.RevitXmiExporter.Builder.BetekkXmiImportCommand"
+                )
+                {
+                    ToolTip = "Import structural elements from an XMI JSON file",
+                    LargeImage = importLargeIcon,
+                    Image = importSmallIcon
+                };
+
+                panel.AddItem(importButtonData);
+
                 return Result.Succeeded;
             }
             catch
@@ -130,6 +147,75 @@ namespace Betekk.RevitXmiExporter
             double tipY = size * 0.45;
             double headY = size * 0.65;
             double bottomY = size * 0.9;
+            double halfShaft = size * 0.08;
+            double headHalfWidth = size * 0.18;
+
+            StreamGeometry geometry = new StreamGeometry();
+            using (StreamGeometryContext ctx = geometry.Open())
+            {
+                ctx.BeginFigure(new Point(centerX, tipY), true, true);
+                ctx.LineTo(new Point(centerX + headHalfWidth, headY), true, false);
+                ctx.LineTo(new Point(centerX + halfShaft, headY), true, false);
+                ctx.LineTo(new Point(centerX + halfShaft, bottomY), true, false);
+                ctx.LineTo(new Point(centerX - halfShaft, bottomY), true, false);
+                ctx.LineTo(new Point(centerX - halfShaft, headY), true, false);
+                ctx.LineTo(new Point(centerX - headHalfWidth, headY), true, false);
+            }
+
+            geometry.Freeze();
+            return geometry;
+        }
+
+        /// <summary>
+        /// Builds a square vector icon with an import (upward) arrow motif.
+        /// </summary>
+        private static ImageSource CreateImportIcon(double size)
+        {
+            SolidColorBrush backgroundBrush = new SolidColorBrush(Color.FromRgb(21, 101, 52));
+            backgroundBrush.Freeze();
+
+            SolidColorBrush panelBrush = new SolidColorBrush(Color.FromRgb(134, 239, 172));
+            panelBrush.Freeze();
+
+            SolidColorBrush accentBrush = new SolidColorBrush(Color.FromRgb(255, 255, 255));
+            accentBrush.Freeze();
+
+            DrawingGroup drawingGroup = new DrawingGroup();
+            drawingGroup.Children.Add(new GeometryDrawing(
+                backgroundBrush,
+                null,
+                new RectangleGeometry(new Rect(0, 0, size, size))));
+
+            double panelWidth = size * 0.65;
+            double panelHeight = size * 0.35;
+            double panelLeft = (size - panelWidth) / 2d;
+            double panelTop = size * 0.15;
+
+            drawingGroup.Children.Add(new GeometryDrawing(
+                panelBrush,
+                null,
+                new RectangleGeometry(new Rect(panelLeft, panelTop, panelWidth, panelHeight))));
+
+            // Upward arrow (import direction)
+            drawingGroup.Children.Add(new GeometryDrawing(
+                accentBrush,
+                null,
+                BuildUpArrowGeometry(size)));
+
+            DrawingImage image = new DrawingImage(drawingGroup);
+            image.Freeze();
+            return image;
+        }
+
+        /// <summary>
+        /// Creates an upward-pointing arrow geometry for the import icon.
+        /// </summary>
+        private static Geometry BuildUpArrowGeometry(double size)
+        {
+            double centerX = size / 2d;
+            double tipY = size * 0.9;
+            double headY = size * 0.7;
+            double bottomY = size * 0.45;
             double halfShaft = size * 0.08;
             double headHalfWidth = size * 0.18;
 
