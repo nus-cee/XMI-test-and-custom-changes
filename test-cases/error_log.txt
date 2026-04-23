@@ -1,0 +1,26 @@
+[2026-04-16 18:04:44] [BetekkXmiBuilder] Collection strategies - ByClass: 0, ByCategory: 0
+[2026-04-16 18:04:44] [BetekkXmiBuilder] No analytical members found. Running diagnostic scan...
+[2026-04-16 18:04:44] [BetekkXmiBuilder] Error processing analytical members: The collector does not have a filter applied.  Extraction or iteration of elements is not permitted without a filter.
+[2026-04-16 18:04:44] [BetekkXmiBuilder] Column 1663901: fell back to bounding-box vertical line.
+[2026-04-16 18:04:44] [GetOrCreateLine3d] Called for element: nativeId='1663901', name='300 x 450mm'
+[2026-04-16 18:04:44] [GetOrCreateLine3d]   Candidate StartPoint: (0.000000, 0.000000, 0.000000) ID=b08431ad-29fb-401e-8064-5e59d6a9eb01
+[2026-04-16 18:04:44] [GetOrCreateLine3d]   Candidate EndPoint:   (0.000000, 0.000000, 10200.000000) ID=ca26022f-b08d-4b7c-9a55-aef5b55ab66f
+[2026-04-16 18:04:44] [GetOrCreateLine3d]   Found 1 existing XmiLine3d entities in model
+[2026-04-16 18:04:44] [GetOrCreateLine3d]   Comparing with existing line [0]: ID=e394db4e-746b-4d66-a3fa-f458d628c81e, NativeId=1663901_line, Name=300 x 450mm_line
+[2026-04-16 18:04:44] [GetOrCreateLine3d]     Existing StartPoint: (0.000000, 0.000000, 0.000000) ID=b08431ad-29fb-401e-8064-5e59d6a9eb01
+[2026-04-16 18:04:44] [GetOrCreateLine3d]     Existing EndPoint:   (0.000000, 0.000000, 10200.000000) ID=ca26022f-b08d-4b7c-9a55-aef5b55ab66f
+[2026-04-16 18:04:44] [GetOrCreateLine3d]     IsCoincident result: True
+[2026-04-16 18:04:44] [GetOrCreateLine3d]   ✓ MATCH FOUND! Reusing existing line ID=e394db4e-746b-4d66-a3fa-f458d628c81e, NativeId=1663901_line
+[2026-04-16 18:04:44] [GetOrCreateLine3d] RESULT: Reused existing XmiLine3d (ID=e394db4e-746b-4d66-a3fa-f458d628c81e, NativeId=1663901_line)
+[2026-04-16 18:04:44] 
+[2026-04-16 18:04:44] ========================================
+[2026-04-16 18:04:44] [XmiLine3d Summary] Total count: 1
+[2026-04-16 18:04:44] ========================================
+[2026-04-16 18:04:44] [1] ID=e394db4e-746b-4d66-a3fa-f458d628c81e, NativeId=1663901_line, Name=300 x 450mm_line
+[2026-04-16 18:04:44]     StartPoint: (0.000000, 0.000000, 0.000000) PointID=b08431ad-29fb-401e-8064-5e59d6a9eb01
+[2026-04-16 18:04:44]     EndPoint:   (0.000000, 0.000000, 10200.000000) PointID=ca26022f-b08d-4b7c-9a55-aef5b55ab66f
+[2026-04-16 18:04:44] 
+[2026-04-16 18:04:44] [XmiLine3d Summary] Checking for coincident lines...
+[2026-04-16 18:04:44] [XmiLine3d Summary] ✓ No duplicate lines found!
+[2026-04-16 18:04:44] ========================================
+[2026-04-16 18:04:44] 

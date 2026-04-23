@@ -1,0 +1,22 @@
+{
+  "xmiVersion": "1.0",
+  "columns": [
+    {
+      "name": "Test Column 1",
+      "startPoint": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "endPoint": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 3000.0
+      },
+      "crossSection": {
+        "width": 300.0,
+        "height": 300.0
+      }
+    }
+  ]
+}

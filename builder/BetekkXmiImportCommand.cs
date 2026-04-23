@@ -92,7 +92,7 @@ namespace Betekk.RevitXmiExporter.Builder
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("Import Summary:");
-            sb.AppendLine($"  • Columns created: {columnCount}");
+            sb.AppendLine($"  • Elements created: {columnCount}");
             sb.AppendLine();
             sb.AppendLine($"Source file:");
             sb.Append(importPath);
