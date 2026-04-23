@@ -15,6 +15,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
       <PrivateAssets>all</PrivateAssets>
@@ -28,6 +29,12 @@
     <Compile Include="..\..\Utils\Converters.cs" Link="Utils\Converters.cs" />
     <Compile Include="..\..\Utils\EnumHelper.cs" Link="Utils\EnumHelper.cs" />
     <Compile Include="..\..\Utils\NativeIdBuilder.cs" Link="Utils\NativeIdBuilder.cs" />
+    <Compile Include="..\..\Utils\XmiImportDiagnostics.cs" Link="Utils\XmiImportDiagnostics.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\test-cases\test_json\column-and-walls.json" Link="Fixtures\column-and-walls.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\test-cases\test_json\column-and-walls-2.json" Link="Fixtures\column-and-walls-2.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

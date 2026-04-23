@@ -148,6 +148,7 @@ namespace Betekk.RevitXmiExporter.Builder
             summaryBuilder.AppendLine($"  • XmiStorey (Revit Level): {stats.StoreyCount}");
             summaryBuilder.AppendLine($"  • XmiBeam (Revit StructuralFraming/Beam): {stats.BeamCount}");
             summaryBuilder.AppendLine($"  • XmiColumn (Revit StructuralColumns): {stats.ColumnCount}");
+            summaryBuilder.AppendLine($"  • XmiWall (Revit Walls): {stats.WallCount}");
             summaryBuilder.AppendLine($"  • XmiStructuralCurveMember (analytical beams/columns): {stats.AnalyticalMemberCount}");
             summaryBuilder.AppendLine($"  • XmiMaterial: {stats.MaterialCount}");
             summaryBuilder.AppendLine($"  • XmiCrossSection: {stats.CrossSectionCount}");

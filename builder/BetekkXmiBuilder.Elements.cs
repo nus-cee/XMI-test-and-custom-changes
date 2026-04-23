@@ -170,6 +170,97 @@ namespace Betekk.RevitXmiExporter.Builder
             }
         }
 
+        private void ProcessWallElements(Document doc)
+        {
+            FilteredElementCollector wallCollector = new FilteredElementCollector(doc)
+                .OfCategory(BuiltInCategory.OST_Walls)
+                .OfClass(typeof(Wall))
+                .WhereElementIsNotElementType();
+
+            foreach (Element element in wallCollector)
+            {
+                if (element is Wall wall)
+                {
+                    try
+                    {
+                        ProcessSingleWallElement(doc, wall);
+                    }
+                    catch (Exception ex)
+                    {
+                        string elementId = wall.Id?.ToString() ?? "unknown";
+                        ModelInfoBuilder.WriteErrorLogToFile(
+                            $"[BetekkXmiBuilder] Failed to process wall element {elementId}: {ex.Message}");
+                    }
+                }
+            }
+        }
+
+        private void ProcessSingleWallElement(Document doc, Wall wall)
+        {
+            string id = Guid.NewGuid().ToString();
+            string name = wall.Name ?? id;
+            string ifcGuid = GetIfcGuidFromElement(wall);
+            string nativeId = wall.Id.ToString();
+
+            ExportMaterialsForElement(doc, wall);
+
+            if (wall.Location is not LocationCurve locationCurve || locationCurve.Curve == null)
+            {
+                ModelInfoBuilder.WriteErrorLogToFile(
+                    $"[BetekkXmiBuilder] Wall {nativeId} has unsupported location type {wall.Location?.GetType().Name ?? "null"}");
+                return;
+            }
+
+            Curve curve = locationCurve.Curve;
+            XYZ startPoint = curve.GetEndPoint(0);
+            XYZ endPoint = curve.GetEndPoint(1);
+
+            XmiPoint3d startXmiPoint = GetOrReusePoint3D(startPoint, $"{id}_start_point");
+            XmiPoint3d endXmiPoint = GetOrReusePoint3D(endPoint, $"{id}_end_point");
+
+            List<XmiSegment> segments = BuildSegmentsFromCurve(curve, startXmiPoint, endXmiPoint, nativeId, name);
+
+            XmiMaterial? physicalMaterial = GetOrCreateXmiMaterial(doc, GetMaterialIdFromWall(wall));
+
+            double baseOffsetFeet = wall.get_Parameter(BuiltInParameter.WALL_BASE_OFFSET)?.AsDouble() ?? 0.0;
+            double zOffsetMm = Converters.ConvertValueToMillimeter(baseOffsetFeet);
+
+            double heightFeet = wall.get_Parameter(BuiltInParameter.WALL_USER_HEIGHT_PARAM)?.AsDouble() ?? 0.0;
+            if (heightFeet <= 0)
+            {
+                BoundingBoxXYZ? bbox = wall.get_BoundingBox(null);
+                if (bbox != null)
+                {
+                    heightFeet = Math.Max(0.0, bbox.Max.Z - bbox.Min.Z);
+                }
+            }
+
+            double heightMm = Converters.ConvertValueToMillimeter(heightFeet);
+            XmiAxis localAxisX = new XmiAxis(1, 0, 0);
+            XmiAxis localAxisY = new XmiAxis(0, 1, 0);
+            XmiAxis localAxisZ = new XmiAxis(0, 0, 1);
+
+            XmiWall xmiWall = _model.CreateXmiWall(
+                id,
+                name,
+                ifcGuid,
+                nativeId,
+                string.Empty,
+                physicalMaterial,
+                segments,
+                zOffsetMm,
+                localAxisX,
+                localAxisY,
+                localAxisZ,
+                heightMm);
+
+            _wallCache[nativeId] = xmiWall;
+            _wallCount++;
+
+            _model.AddXmiHasPoint3d(new XmiHasPoint3d(xmiWall, startXmiPoint, XmiPoint3dTypeEnum.Start));
+            _model.AddXmiHasPoint3d(new XmiHasPoint3d(xmiWall, endXmiPoint, XmiPoint3dTypeEnum.End));
+        }
+
         /// <summary>
         /// Process a single structural framing element (beam):
         /// - Extract geometry from LocationCurve

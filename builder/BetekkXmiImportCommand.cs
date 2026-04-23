@@ -43,9 +43,9 @@ namespace Betekk.RevitXmiExporter.Builder
                 string json = File.ReadAllText(importPath, Encoding.UTF8);
 
                 BetekkXmiImporter importer = new BetekkXmiImporter();
-                int count = importer.Import(doc, json);
+                XmiImportResult result = importer.ImportWithDiagnostics(doc, json);
 
-                ShowSuccessDialog(importPath, count);
+                ShowSuccessDialog(importPath, result);
                 return Result.Succeeded;
             }
             catch (Exception ex)
@@ -88,18 +88,41 @@ namespace Betekk.RevitXmiExporter.Builder
             return true;
         }
 
-        private static void ShowSuccessDialog(string importPath, int columnCount)
+        private static void ShowSuccessDialog(string importPath, XmiImportResult result)
         {
+            XmiImportDiagnostics diagnostics = result.Diagnostics;
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("Import Summary:");
-            sb.AppendLine($"  • Elements created: {columnCount}");
+            sb.AppendLine($"  - Total found: {diagnostics.TotalFound}");
+            sb.AppendLine($"  - Total created: {diagnostics.TotalCreated}");
+            sb.AppendLine($"  - Total skipped: {diagnostics.TotalSkipped}");
+            sb.AppendLine($"  - Total failed: {diagnostics.TotalFailed}");
+            sb.AppendLine($"  - Unsupported skipped: {diagnostics.UnsupportedSkippedCount}");
+            sb.AppendLine();
+            sb.AppendLine("By entity type:");
+
+            foreach (KeyValuePair<string, XmiImportEntityStats> kvp in diagnostics.GetOrderedEntityStats())
+            {
+                XmiImportEntityStats stats = kvp.Value;
+                sb.AppendLine(
+                    $"  - {kvp.Key}: found={stats.Found}, created={stats.Created}, skipped={stats.Skipped}, failed={stats.Failed}");
+            }
+
+            if (diagnostics.TotalSkipped > 0 || diagnostics.TotalFailed > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine($"See {ModelInfoBuilder.GetErrorLogPath()} for skip/failure details.");
+            }
+
             sb.AppendLine();
             sb.AppendLine($"Source file:");
             sb.Append(importPath);
 
             RevitTaskDialog dialog = new RevitTaskDialog("Import complete")
             {
-                MainInstruction = "Structural elements were imported successfully.",
+                MainInstruction = diagnostics.TotalFailed > 0
+                    ? "Import completed with errors."
+                    : "Import completed.",
                 MainContent = sb.ToString(),
                 CommonButtons = TaskDialogCommonButtons.Close
             };

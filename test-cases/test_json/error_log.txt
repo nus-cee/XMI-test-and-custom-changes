@@ -67,3 +67,232 @@
 [2026-04-23 10:39:52] [XmiLine3d Summary] ⚠ Found 1 duplicate line(s)!
 [2026-04-23 10:39:52] ========================================
 [2026-04-23 10:39:52] 
+[2026-04-23 13:14:07] [BetekkXmiBuilder] Collection strategies - ByClass: 0, ByCategory: 0
+[2026-04-23 13:14:07] [BetekkXmiBuilder] No analytical members found. Running diagnostic scan...
+[2026-04-23 13:14:07] [BetekkXmiBuilder] Error processing analytical members: The collector does not have a filter applied.  Extraction or iteration of elements is not permitted without a filter.
+[2026-04-23 13:14:07] [BetekkXmiBuilder] Column 1663901: fell back to bounding-box vertical line.
+[2026-04-23 13:14:07] [GetOrCreateLine3d] Called for element: nativeId='1663901', name='300 x 450mm'
+[2026-04-23 13:14:07] [GetOrCreateLine3d]   Candidate StartPoint: (0.000000, 0.000000, 0.000000) ID=5c46f334-3e5a-4feb-94d3-3668a72fc38a
+[2026-04-23 13:14:07] [GetOrCreateLine3d]   Candidate EndPoint:   (0.000000, 0.000000, 6600.000000) ID=cd336db8-2835-42f5-8995-6a02791d843c
+[2026-04-23 13:14:07] [GetOrCreateLine3d]   Found 1 existing XmiLine3d entities in model
+[2026-04-23 13:14:07] [GetOrCreateLine3d]   Comparing with existing line [0]: ID=c1d101b5-3505-490e-bfa5-f2c745b855e9, NativeId=1663901_line, Name=300 x 450mm_line
+[2026-04-23 13:14:07] [GetOrCreateLine3d]     Existing StartPoint: (0.000000, 0.000000, 0.000000) ID=5c46f334-3e5a-4feb-94d3-3668a72fc38a
+[2026-04-23 13:14:07] [GetOrCreateLine3d]     Existing EndPoint:   (0.000000, 0.000000, 6600.000000) ID=cd336db8-2835-42f5-8995-6a02791d843c
+[2026-04-23 13:14:07] [GetOrCreateLine3d]     IsCoincident result: True
+[2026-04-23 13:14:07] [GetOrCreateLine3d]   ✓ MATCH FOUND! Reusing existing line ID=c1d101b5-3505-490e-bfa5-f2c745b855e9, NativeId=1663901_line
+[2026-04-23 13:14:07] [GetOrCreateLine3d] RESULT: Reused existing XmiLine3d (ID=c1d101b5-3505-490e-bfa5-f2c745b855e9, NativeId=1663901_line)
+[2026-04-23 13:14:07] 
+[2026-04-23 13:14:07] ========================================
+[2026-04-23 13:14:07] [XmiLine3d Summary] Total count: 1
+[2026-04-23 13:14:07] ========================================
+[2026-04-23 13:14:07] [1] ID=c1d101b5-3505-490e-bfa5-f2c745b855e9, NativeId=1663901_line, Name=300 x 450mm_line
+[2026-04-23 13:14:07]     StartPoint: (0.000000, 0.000000, 0.000000) PointID=5c46f334-3e5a-4feb-94d3-3668a72fc38a
+[2026-04-23 13:14:07]     EndPoint:   (0.000000, 0.000000, 6600.000000) PointID=cd336db8-2835-42f5-8995-6a02791d843c
+[2026-04-23 13:14:07] 
+[2026-04-23 13:14:07] [XmiLine3d Summary] Checking for coincident lines...
+[2026-04-23 13:14:07] [XmiLine3d Summary] ✓ No duplicate lines found!
+[2026-04-23 13:14:07] ========================================
+[2026-04-23 13:14:07] 
+[2026-04-23 13:14:37] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiStorey' (node Id='1c976f4c-90c6-4c18-adb2-1b559610cf01', Name='L1').
+[2026-04-23 13:14:37] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiStorey' (node Id='6cc9f338-f8cc-4399-8873-d3954be9f6d7', Name='L2').
+[2026-04-23 13:14:37] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiMaterial' (node Id='43983c46-f239-421c-ae94-927d1aa9d6a5', Name='Concrete, Cast-in-Place gray').
+[2026-04-23 13:14:37] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiPoint3d' (node Id='5c46f334-3e5a-4feb-94d3-3668a72fc38a', Name='d513ee0f-2cec-4b02-afee-adbfe784b798_start_point').
+[2026-04-23 13:14:37] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiPoint3d' (node Id='cd336db8-2835-42f5-8995-6a02791d843c', Name='d513ee0f-2cec-4b02-afee-adbfe784b798_end_point').
+[2026-04-23 13:14:37] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiLine3d' (node Id='c1d101b5-3505-490e-bfa5-f2c745b855e9', Name='300 x 450mm_line').
+[2026-04-23 13:14:37] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiSegment' (node Id='3993b437-12e5-4409-a5ac-dc1ab746d051', Name='300 x 450mm_segment').
+[2026-04-23 13:14:37] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiCrossSection' (node Id='abb095a4-baa9-4cc4-a1cc-8168a66fe0c0', Name='300 x 450mm').
+[2026-04-23 13:14:37] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiMaterial' (node Id='b4f6a04a-3c88-4dc4-8811-101465ada1d8', Name='Default Wall').
+[2026-04-23 13:16:08] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiStorey' (node Id='1c976f4c-90c6-4c18-adb2-1b559610cf01', Name='L1').
+[2026-04-23 13:16:08] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiStorey' (node Id='6cc9f338-f8cc-4399-8873-d3954be9f6d7', Name='L2').
+[2026-04-23 13:16:08] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiMaterial' (node Id='43983c46-f239-421c-ae94-927d1aa9d6a5', Name='Concrete, Cast-in-Place gray').
+[2026-04-23 13:16:08] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiPoint3d' (node Id='5c46f334-3e5a-4feb-94d3-3668a72fc38a', Name='d513ee0f-2cec-4b02-afee-adbfe784b798_start_point').
+[2026-04-23 13:16:08] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiPoint3d' (node Id='cd336db8-2835-42f5-8995-6a02791d843c', Name='d513ee0f-2cec-4b02-afee-adbfe784b798_end_point').
+[2026-04-23 13:16:08] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiLine3d' (node Id='c1d101b5-3505-490e-bfa5-f2c745b855e9', Name='300 x 450mm_line').
+[2026-04-23 13:16:08] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiSegment' (node Id='3993b437-12e5-4409-a5ac-dc1ab746d051', Name='300 x 450mm_segment').
+[2026-04-23 13:16:08] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiCrossSection' (node Id='abb095a4-baa9-4cc4-a1cc-8168a66fe0c0', Name='300 x 450mm').
+[2026-04-23 13:16:08] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiMaterial' (node Id='b4f6a04a-3c88-4dc4-8811-101465ada1d8', Name='Default Wall').
+[2026-04-23 13:36:21] [BetekkXmiBuilder] Collection strategies - ByClass: 0, ByCategory: 0
+[2026-04-23 13:36:21] [BetekkXmiBuilder] No analytical members found. Running diagnostic scan...
+[2026-04-23 13:36:21] [BetekkXmiBuilder] Error processing analytical members: The collector does not have a filter applied.  Extraction or iteration of elements is not permitted without a filter.
+[2026-04-23 13:36:21] [BetekkXmiBuilder] Column 1663901: fell back to bounding-box vertical line.
+[2026-04-23 13:36:21] [GetOrCreateLine3d] Called for element: nativeId='1663901', name='300 x 450mm'
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Candidate StartPoint: (0.000000, 0.000000, 0.000000) ID=91e5f344-69d8-4af9-8ee0-72dc8c7889ac
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Candidate EndPoint:   (0.000000, 0.000000, 6600.000000) ID=9e5170ac-173e-4ce0-86a5-2d2b109e74e6
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Found 1 existing XmiLine3d entities in model
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Comparing with existing line [0]: ID=91d3722e-b42c-4d82-bca4-0d71cd2ba7c8, NativeId=1663901_line, Name=300 x 450mm_line
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing StartPoint: (0.000000, 0.000000, 0.000000) ID=91e5f344-69d8-4af9-8ee0-72dc8c7889ac
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing EndPoint:   (0.000000, 0.000000, 6600.000000) ID=9e5170ac-173e-4ce0-86a5-2d2b109e74e6
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     IsCoincident result: True
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   ✓ MATCH FOUND! Reusing existing line ID=91d3722e-b42c-4d82-bca4-0d71cd2ba7c8, NativeId=1663901_line
+[2026-04-23 13:36:21] [GetOrCreateLine3d] RESULT: Reused existing XmiLine3d (ID=91d3722e-b42c-4d82-bca4-0d71cd2ba7c8, NativeId=1663901_line)
+[2026-04-23 13:36:21] [GetOrCreateLine3d] Called for element: nativeId='1663935', name='Generic - 200mm'
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Candidate StartPoint: (-15960.400000, 12792.300000, 0.000000) ID=25ea3bf6-4112-40cc-9ee8-af0c95e00855
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Candidate EndPoint:   (12039.600000, 12792.300000, 0.000000) ID=aa69f587-06a2-4aa2-b499-6b171c6b48aa
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Found 2 existing XmiLine3d entities in model
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Comparing with existing line [0]: ID=91d3722e-b42c-4d82-bca4-0d71cd2ba7c8, NativeId=1663901_line, Name=300 x 450mm_line
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing StartPoint: (0.000000, 0.000000, 0.000000) ID=91e5f344-69d8-4af9-8ee0-72dc8c7889ac
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing EndPoint:   (0.000000, 0.000000, 6600.000000) ID=9e5170ac-173e-4ce0-86a5-2d2b109e74e6
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     IsCoincident result: False
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Comparing with existing line [1]: ID=a42ca37f-9cdc-4645-b962-d0ac6e88bd87, NativeId=1663935_line, Name=Generic - 200mm_line
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing StartPoint: (-15960.400000, 12792.300000, 0.000000) ID=25ea3bf6-4112-40cc-9ee8-af0c95e00855
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing EndPoint:   (12039.600000, 12792.300000, 0.000000) ID=aa69f587-06a2-4aa2-b499-6b171c6b48aa
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     IsCoincident result: True
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   ✓ MATCH FOUND! Reusing existing line ID=a42ca37f-9cdc-4645-b962-d0ac6e88bd87, NativeId=1663935_line
+[2026-04-23 13:36:21] [GetOrCreateLine3d] RESULT: Reused existing XmiLine3d (ID=a42ca37f-9cdc-4645-b962-d0ac6e88bd87, NativeId=1663935_line)
+[2026-04-23 13:36:21] [GetOrCreateLine3d] Called for element: nativeId='1664090', name='Generic - 200mm'
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Candidate StartPoint: (12039.600000, 12792.300000, 0.000000) ID=aa69f587-06a2-4aa2-b499-6b171c6b48aa
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Candidate EndPoint:   (12039.600000, -7983.400000, 0.000000) ID=eb0fb68b-eca7-4305-ac08-76f1c20c1a8b
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Found 3 existing XmiLine3d entities in model
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Comparing with existing line [0]: ID=91d3722e-b42c-4d82-bca4-0d71cd2ba7c8, NativeId=1663901_line, Name=300 x 450mm_line
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing StartPoint: (0.000000, 0.000000, 0.000000) ID=91e5f344-69d8-4af9-8ee0-72dc8c7889ac
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing EndPoint:   (0.000000, 0.000000, 6600.000000) ID=9e5170ac-173e-4ce0-86a5-2d2b109e74e6
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     IsCoincident result: False
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Comparing with existing line [1]: ID=a42ca37f-9cdc-4645-b962-d0ac6e88bd87, NativeId=1663935_line, Name=Generic - 200mm_line
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing StartPoint: (-15960.400000, 12792.300000, 0.000000) ID=25ea3bf6-4112-40cc-9ee8-af0c95e00855
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing EndPoint:   (12039.600000, 12792.300000, 0.000000) ID=aa69f587-06a2-4aa2-b499-6b171c6b48aa
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     IsCoincident result: False
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Comparing with existing line [2]: ID=fde4c2c6-7c74-452b-97de-5589c298222b, NativeId=1664090_line, Name=Generic - 200mm_line
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing StartPoint: (12039.600000, 12792.300000, 0.000000) ID=aa69f587-06a2-4aa2-b499-6b171c6b48aa
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing EndPoint:   (12039.600000, -7983.400000, 0.000000) ID=eb0fb68b-eca7-4305-ac08-76f1c20c1a8b
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     IsCoincident result: True
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   ✓ MATCH FOUND! Reusing existing line ID=fde4c2c6-7c74-452b-97de-5589c298222b, NativeId=1664090_line
+[2026-04-23 13:36:21] [GetOrCreateLine3d] RESULT: Reused existing XmiLine3d (ID=fde4c2c6-7c74-452b-97de-5589c298222b, NativeId=1664090_line)
+[2026-04-23 13:36:21] [GetOrCreateLine3d] Called for element: nativeId='1664158', name='Generic - 200mm'
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Candidate StartPoint: (12039.600000, -7983.400000, 0.000000) ID=eb0fb68b-eca7-4305-ac08-76f1c20c1a8b
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Candidate EndPoint:   (-15960.400000, -7983.400000, 0.000000) ID=635091f0-b994-4afe-a866-ee7d0aa0338a
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Found 4 existing XmiLine3d entities in model
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Comparing with existing line [0]: ID=91d3722e-b42c-4d82-bca4-0d71cd2ba7c8, NativeId=1663901_line, Name=300 x 450mm_line
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing StartPoint: (0.000000, 0.000000, 0.000000) ID=91e5f344-69d8-4af9-8ee0-72dc8c7889ac
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing EndPoint:   (0.000000, 0.000000, 6600.000000) ID=9e5170ac-173e-4ce0-86a5-2d2b109e74e6
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     IsCoincident result: False
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Comparing with existing line [1]: ID=a42ca37f-9cdc-4645-b962-d0ac6e88bd87, NativeId=1663935_line, Name=Generic - 200mm_line
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing StartPoint: (-15960.400000, 12792.300000, 0.000000) ID=25ea3bf6-4112-40cc-9ee8-af0c95e00855
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing EndPoint:   (12039.600000, 12792.300000, 0.000000) ID=aa69f587-06a2-4aa2-b499-6b171c6b48aa
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     IsCoincident result: False
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Comparing with existing line [2]: ID=fde4c2c6-7c74-452b-97de-5589c298222b, NativeId=1664090_line, Name=Generic - 200mm_line
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing StartPoint: (12039.600000, 12792.300000, 0.000000) ID=aa69f587-06a2-4aa2-b499-6b171c6b48aa
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing EndPoint:   (12039.600000, -7983.400000, 0.000000) ID=eb0fb68b-eca7-4305-ac08-76f1c20c1a8b
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     IsCoincident result: False
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Comparing with existing line [3]: ID=02933eff-a312-466a-b191-6bf799508757, NativeId=1664158_line, Name=Generic - 200mm_line
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing StartPoint: (12039.600000, -7983.400000, 0.000000) ID=eb0fb68b-eca7-4305-ac08-76f1c20c1a8b
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing EndPoint:   (-15960.400000, -7983.400000, 0.000000) ID=635091f0-b994-4afe-a866-ee7d0aa0338a
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     IsCoincident result: True
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   ✓ MATCH FOUND! Reusing existing line ID=02933eff-a312-466a-b191-6bf799508757, NativeId=1664158_line
+[2026-04-23 13:36:21] [GetOrCreateLine3d] RESULT: Reused existing XmiLine3d (ID=02933eff-a312-466a-b191-6bf799508757, NativeId=1664158_line)
+[2026-04-23 13:36:21] [GetOrCreateLine3d] Called for element: nativeId='1664219', name='Generic - 200mm'
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Candidate StartPoint: (-15960.400000, -7983.400000, 0.000000) ID=635091f0-b994-4afe-a866-ee7d0aa0338a
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Candidate EndPoint:   (-15960.400000, 12792.300000, 0.000000) ID=25ea3bf6-4112-40cc-9ee8-af0c95e00855
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Found 5 existing XmiLine3d entities in model
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Comparing with existing line [0]: ID=91d3722e-b42c-4d82-bca4-0d71cd2ba7c8, NativeId=1663901_line, Name=300 x 450mm_line
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing StartPoint: (0.000000, 0.000000, 0.000000) ID=91e5f344-69d8-4af9-8ee0-72dc8c7889ac
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing EndPoint:   (0.000000, 0.000000, 6600.000000) ID=9e5170ac-173e-4ce0-86a5-2d2b109e74e6
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     IsCoincident result: False
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Comparing with existing line [1]: ID=a42ca37f-9cdc-4645-b962-d0ac6e88bd87, NativeId=1663935_line, Name=Generic - 200mm_line
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing StartPoint: (-15960.400000, 12792.300000, 0.000000) ID=25ea3bf6-4112-40cc-9ee8-af0c95e00855
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing EndPoint:   (12039.600000, 12792.300000, 0.000000) ID=aa69f587-06a2-4aa2-b499-6b171c6b48aa
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     IsCoincident result: False
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Comparing with existing line [2]: ID=fde4c2c6-7c74-452b-97de-5589c298222b, NativeId=1664090_line, Name=Generic - 200mm_line
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing StartPoint: (12039.600000, 12792.300000, 0.000000) ID=aa69f587-06a2-4aa2-b499-6b171c6b48aa
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing EndPoint:   (12039.600000, -7983.400000, 0.000000) ID=eb0fb68b-eca7-4305-ac08-76f1c20c1a8b
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     IsCoincident result: False
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Comparing with existing line [3]: ID=02933eff-a312-466a-b191-6bf799508757, NativeId=1664158_line, Name=Generic - 200mm_line
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing StartPoint: (12039.600000, -7983.400000, 0.000000) ID=eb0fb68b-eca7-4305-ac08-76f1c20c1a8b
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing EndPoint:   (-15960.400000, -7983.400000, 0.000000) ID=635091f0-b994-4afe-a866-ee7d0aa0338a
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     IsCoincident result: False
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   Comparing with existing line [4]: ID=92ad9992-e49a-4441-8651-9b0df8e0c0c5, NativeId=1664219_line, Name=Generic - 200mm_line
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing StartPoint: (-15960.400000, -7983.400000, 0.000000) ID=635091f0-b994-4afe-a866-ee7d0aa0338a
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     Existing EndPoint:   (-15960.400000, 12792.300000, 0.000000) ID=25ea3bf6-4112-40cc-9ee8-af0c95e00855
+[2026-04-23 13:36:21] [GetOrCreateLine3d]     IsCoincident result: True
+[2026-04-23 13:36:21] [GetOrCreateLine3d]   ✓ MATCH FOUND! Reusing existing line ID=92ad9992-e49a-4441-8651-9b0df8e0c0c5, NativeId=1664219_line
+[2026-04-23 13:36:21] [GetOrCreateLine3d] RESULT: Reused existing XmiLine3d (ID=92ad9992-e49a-4441-8651-9b0df8e0c0c5, NativeId=1664219_line)
+[2026-04-23 13:36:21] 
+[2026-04-23 13:36:21] ========================================
+[2026-04-23 13:36:21] [XmiLine3d Summary] Total count: 5
+[2026-04-23 13:36:21] ========================================
+[2026-04-23 13:36:21] [1] ID=91d3722e-b42c-4d82-bca4-0d71cd2ba7c8, NativeId=1663901_line, Name=300 x 450mm_line
+[2026-04-23 13:36:21]     StartPoint: (0.000000, 0.000000, 0.000000) PointID=91e5f344-69d8-4af9-8ee0-72dc8c7889ac
+[2026-04-23 13:36:21]     EndPoint:   (0.000000, 0.000000, 6600.000000) PointID=9e5170ac-173e-4ce0-86a5-2d2b109e74e6
+[2026-04-23 13:36:21] [2] ID=a42ca37f-9cdc-4645-b962-d0ac6e88bd87, NativeId=1663935_line, Name=Generic - 200mm_line
+[2026-04-23 13:36:21]     StartPoint: (-15960.400000, 12792.300000, 0.000000) PointID=25ea3bf6-4112-40cc-9ee8-af0c95e00855
+[2026-04-23 13:36:21]     EndPoint:   (12039.600000, 12792.300000, 0.000000) PointID=aa69f587-06a2-4aa2-b499-6b171c6b48aa
+[2026-04-23 13:36:21] [3] ID=fde4c2c6-7c74-452b-97de-5589c298222b, NativeId=1664090_line, Name=Generic - 200mm_line
+[2026-04-23 13:36:21]     StartPoint: (12039.600000, 12792.300000, 0.000000) PointID=aa69f587-06a2-4aa2-b499-6b171c6b48aa
+[2026-04-23 13:36:21]     EndPoint:   (12039.600000, -7983.400000, 0.000000) PointID=eb0fb68b-eca7-4305-ac08-76f1c20c1a8b
+[2026-04-23 13:36:21] [4] ID=02933eff-a312-466a-b191-6bf799508757, NativeId=1664158_line, Name=Generic - 200mm_line
+[2026-04-23 13:36:21]     StartPoint: (12039.600000, -7983.400000, 0.000000) PointID=eb0fb68b-eca7-4305-ac08-76f1c20c1a8b
+[2026-04-23 13:36:21]     EndPoint:   (-15960.400000, -7983.400000, 0.000000) PointID=635091f0-b994-4afe-a866-ee7d0aa0338a
+[2026-04-23 13:36:21] [5] ID=92ad9992-e49a-4441-8651-9b0df8e0c0c5, NativeId=1664219_line, Name=Generic - 200mm_line
+[2026-04-23 13:36:21]     StartPoint: (-15960.400000, -7983.400000, 0.000000) PointID=635091f0-b994-4afe-a866-ee7d0aa0338a
+[2026-04-23 13:36:21]     EndPoint:   (-15960.400000, 12792.300000, 0.000000) PointID=25ea3bf6-4112-40cc-9ee8-af0c95e00855
+[2026-04-23 13:36:21] 
+[2026-04-23 13:36:21] [XmiLine3d Summary] Checking for coincident lines...
+[2026-04-23 13:36:21] [XmiLine3d Summary] ✓ No duplicate lines found!
+[2026-04-23 13:36:21] ========================================
+[2026-04-23 13:36:21] 
+[2026-04-23 13:36:44] [BetekkXmiImporter][SUMMARY] found=26, created=1, skipped=25, failed=0, unsupportedSkipped=25
+[2026-04-23 13:36:44] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiStorey' (node Id='65deaa55-a5ac-41ac-810b-0ae3ff43fd47', Name='L1').
+[2026-04-23 13:36:44] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiStorey' (node Id='d5ef2828-a4df-44f2-9c7a-5e43e9467a54', Name='L2').
+[2026-04-23 13:36:44] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiMaterial' (node Id='5d7e3cf5-4f71-4ea3-bee3-3435bf4289a5', Name='Concrete, Cast-in-Place gray').
+[2026-04-23 13:36:44] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiPoint3d' (node Id='91e5f344-69d8-4af9-8ee0-72dc8c7889ac', Name='80efe7bb-cb0d-4dd7-963c-8e26d08bbaa6_start_point').
+[2026-04-23 13:36:44] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiPoint3d' (node Id='9e5170ac-173e-4ce0-86a5-2d2b109e74e6', Name='80efe7bb-cb0d-4dd7-963c-8e26d08bbaa6_end_point').
+[2026-04-23 13:36:44] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiLine3d' (node Id='91d3722e-b42c-4d82-bca4-0d71cd2ba7c8', Name='300 x 450mm_line').
+[2026-04-23 13:36:44] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiSegment' (node Id='f2e9b3c0-7694-44b8-b2ca-3808869ce0ef', Name='300 x 450mm_segment').
+[2026-04-23 13:36:44] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiCrossSection' (node Id='5f67289c-bbd1-4946-8d5b-2763690f9fba', Name='300 x 450mm').
+[2026-04-23 13:36:44] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiMaterial' (node Id='6df7225a-3970-4873-8aad-c455fb83b136', Name='Default Wall').
+[2026-04-23 13:36:44] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiPoint3d' (node Id='25ea3bf6-4112-40cc-9ee8-af0c95e00855', Name='9dd1a6a1-a3af-4fd1-acd8-2e98bb14d574_start_point').
+[2026-04-23 13:36:44] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiPoint3d' (node Id='aa69f587-06a2-4aa2-b499-6b171c6b48aa', Name='9dd1a6a1-a3af-4fd1-acd8-2e98bb14d574_end_point').
+[2026-04-23 13:36:44] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiLine3d' (node Id='a42ca37f-9cdc-4645-b962-d0ac6e88bd87', Name='Generic - 200mm_line').
+[2026-04-23 13:36:44] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiSegment' (node Id='200dd134-81a8-4628-ac24-5f189029fce5', Name='Generic - 200mm_segment').
+[2026-04-23 13:36:44] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiWall' (node Id='9dd1a6a1-a3af-4fd1-acd8-2e98bb14d574', Name='Generic - 200mm').
+[2026-04-23 13:36:44] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiPoint3d' (node Id='eb0fb68b-eca7-4305-ac08-76f1c20c1a8b', Name='c79ad6ed-417f-4c39-a80f-68f1f64c578d_end_point').
+[2026-04-23 13:36:44] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiLine3d' (node Id='fde4c2c6-7c74-452b-97de-5589c298222b', Name='Generic - 200mm_line').
+[2026-04-23 13:36:44] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiSegment' (node Id='d0720d77-a7b5-48ba-9dd0-a89e069dcf27', Name='Generic - 200mm_segment').
+[2026-04-23 13:36:44] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiWall' (node Id='c79ad6ed-417f-4c39-a80f-68f1f64c578d', Name='Generic - 200mm').
+[2026-04-23 13:36:44] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiPoint3d' (node Id='635091f0-b994-4afe-a866-ee7d0aa0338a', Name='d9314af2-0b24-4225-b601-00b918b61712_end_point').
+[2026-04-23 13:36:44] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiLine3d' (node Id='02933eff-a312-466a-b191-6bf799508757', Name='Generic - 200mm_line').
+[2026-04-23 13:36:44] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiSegment' (node Id='38741a77-2dc9-4dbd-949e-b1ddc76a4d57', Name='Generic - 200mm_segment').
+[2026-04-23 13:36:44] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiWall' (node Id='d9314af2-0b24-4225-b601-00b918b61712', Name='Generic - 200mm').
+[2026-04-23 13:36:44] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiLine3d' (node Id='92ad9992-e49a-4441-8651-9b0df8e0c0c5', Name='Generic - 200mm_line').
+[2026-04-23 13:36:44] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiSegment' (node Id='a463024e-9a88-4997-a549-9a14ca41b208', Name='Generic - 200mm_segment').
+[2026-04-23 13:36:44] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiWall' (node Id='46c02907-c8c7-4aa5-83f2-230e3a8b4b88', Name='Generic - 200mm').
+[2026-04-23 13:41:51] [BetekkXmiBuilder] Collection strategies - ByClass: 0, ByCategory: 0
+[2026-04-23 13:41:51] [BetekkXmiBuilder] No analytical members found. Running diagnostic scan...
+[2026-04-23 13:41:51] [BetekkXmiBuilder] Error processing analytical members: The collector does not have a filter applied.  Extraction or iteration of elements is not permitted without a filter.
+[2026-04-23 13:41:51] [BetekkXmiBuilder] Column 1663927: derived axis from solid vertices.
+[2026-04-23 13:41:51] [BetekkXmiBuilder] Column 1663902: fell back to bounding-box vertical line.
+[2026-04-23 13:41:51] [GetOrCreateLine3d] Called for element: nativeId='1663902', name='300 x 450mm'
+[2026-04-23 13:41:51] [GetOrCreateLine3d]   Candidate StartPoint: (0.000000, 0.000000, 0.000000) ID=edc24125-a7cd-4699-bc46-578148164561
+[2026-04-23 13:41:51] [GetOrCreateLine3d]   Candidate EndPoint:   (0.000000, 0.000000, 6600.000000) ID=b59ce041-9118-4522-93d0-d696db5d358f
+[2026-04-23 13:41:51] [GetOrCreateLine3d]   Found 1 existing XmiLine3d entities in model
+[2026-04-23 13:41:51] [GetOrCreateLine3d]   Comparing with existing line [0]: ID=e20ba547-0de3-46d2-b8c0-ed85feb200ab, NativeId=1663902_line, Name=300 x 450mm_line
+[2026-04-23 13:41:51] [GetOrCreateLine3d]     Existing StartPoint: (0.000000, 0.000000, 0.000000) ID=edc24125-a7cd-4699-bc46-578148164561
+[2026-04-23 13:41:51] [GetOrCreateLine3d]     Existing EndPoint:   (0.000000, 0.000000, 6600.000000) ID=b59ce041-9118-4522-93d0-d696db5d358f
+[2026-04-23 13:41:51] [GetOrCreateLine3d]     IsCoincident result: True
+[2026-04-23 13:41:51] [GetOrCreateLine3d]   ✓ MATCH FOUND! Reusing existing line ID=e20ba547-0de3-46d2-b8c0-ed85feb200ab, NativeId=1663902_line
+[2026-04-23 13:41:51] [GetOrCreateLine3d] RESULT: Reused existing XmiLine3d (ID=e20ba547-0de3-46d2-b8c0-ed85feb200ab, NativeId=1663902_line)
+[2026-04-23 13:41:51] 
+[2026-04-23 13:41:51] ========================================
+[2026-04-23 13:41:51] [XmiLine3d Summary] Total count: 1
+[2026-04-23 13:41:51] ========================================
+[2026-04-23 13:41:51] [1] ID=e20ba547-0de3-46d2-b8c0-ed85feb200ab, NativeId=1663902_line, Name=300 x 450mm_line
+[2026-04-23 13:41:51]     StartPoint: (0.000000, 0.000000, 0.000000) PointID=edc24125-a7cd-4699-bc46-578148164561
+[2026-04-23 13:41:51]     EndPoint:   (0.000000, 0.000000, 6600.000000) PointID=b59ce041-9118-4522-93d0-d696db5d358f
+[2026-04-23 13:41:51] 
+[2026-04-23 13:41:51] [XmiLine3d Summary] Checking for coincident lines...
+[2026-04-23 13:41:51] [XmiLine3d Summary] ✓ No duplicate lines found!
+[2026-04-23 13:41:51] ========================================
+[2026-04-23 13:41:51] 
+[2026-04-23 13:42:14] [BetekkXmiImporter][SUMMARY] found=14, created=1, skipped=13, failed=0, unsupportedSkipped=13
+[2026-04-23 13:42:14] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiStorey' (node Id='bcc0e96b-3148-4d87-8c38-a975c2bd9e49', Name='L1').
+[2026-04-23 13:42:14] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiStorey' (node Id='d1e68a01-9dae-48e0-82d8-769f00c561ed', Name='L2').
+[2026-04-23 13:42:14] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiMaterial' (node Id='87639c34-5b19-4a62-805c-73d5b10e0b88', Name='Steel ASTM A992').
+[2026-04-23 13:42:14] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiPoint3d' (node Id='0b0fd740-ce7f-4ee2-9288-066ce4148e7e', Name='ae3ee481-b9ec-4007-9ae8-2e73bdbecd9c_start_point').
+[2026-04-23 13:42:14] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiPoint3d' (node Id='34e2fe1a-52bd-43c0-91c6-65f8cf10d575', Name='ae3ee481-b9ec-4007-9ae8-2e73bdbecd9c_end_point').
+[2026-04-23 13:42:14] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiBeam' (node Id='ae3ee481-b9ec-4007-9ae8-2e73bdbecd9c', Name='C150X15.6').
+[2026-04-23 13:42:14] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiCrossSection' (node Id='3a4a398e-31fd-4a7d-8532-23c8ddaf1eca', Name='C150X15.6').
+[2026-04-23 13:42:14] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiMaterial' (node Id='d2900212-21a9-438d-8ec2-22dba8be2f74', Name='Concrete, Cast-in-Place gray').
+[2026-04-23 13:42:14] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiPoint3d' (node Id='edc24125-a7cd-4699-bc46-578148164561', Name='f5133813-90d8-4f1f-9117-6782c38a13ed_start_point').
+[2026-04-23 13:42:14] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiPoint3d' (node Id='b59ce041-9118-4522-93d0-d696db5d358f', Name='f5133813-90d8-4f1f-9117-6782c38a13ed_end_point').
+[2026-04-23 13:42:14] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiLine3d' (node Id='e20ba547-0de3-46d2-b8c0-ed85feb200ab', Name='300 x 450mm_line').
+[2026-04-23 13:42:14] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiSegment' (node Id='11f2c84e-bac0-46f5-935c-425363882817', Name='300 x 450mm_segment').
+[2026-04-23 13:42:14] [BetekkXmiImporter][SKIP] Unsupported entity 'XmiCrossSection' (node Id='1722ff4f-d281-44d3-9a23-10fdb7e88f19', Name='300 x 450mm').

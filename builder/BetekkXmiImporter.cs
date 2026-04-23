@@ -13,6 +13,13 @@ namespace Betekk.RevitXmiExporter.Builder
     {
         private const double MillimetersPerFoot = 304.8;
 
+        private static readonly HashSet<string> SupportedEntities =
+            new HashSet<string>(StringComparer.Ordinal)
+            {
+                "XmiColumn",
+                "XmiWall"
+            };
+
         /// <summary>
         /// Imports structural elements from an XMI graph JSON string into the Revit document.
         /// The JSON must contain top-level "nodes" and "edges" arrays.
@@ -22,95 +29,74 @@ namespace Betekk.RevitXmiExporter.Builder
         /// <returns>Number of elements successfully created.</returns>
         public int Import(Document doc, string json)
         {
-            JObject root = JObject.Parse(json);
+            return ImportWithDiagnostics(doc, json).CreatedCount;
+        }
 
-            JArray? nodesArray = root["nodes"] as JArray;
-            JArray? edgesArray = root["edges"] as JArray;
+        public XmiImportResult ImportWithDiagnostics(Document doc, string json)
+        {
+            XmiImportPlan plan = XmiImportPlanner.BuildPlan(json, SupportedEntities);
 
-            if (nodesArray == null || nodesArray.Count == 0)
+            Dictionary<string, Func<JToken, XmiNodeImportResult>> handlers =
+                new Dictionary<string, Func<JToken, XmiNodeImportResult>>(StringComparer.Ordinal)
             {
-                throw new InvalidOperationException("No nodes found in the JSON file.");
-            }
-
-            // Index nodes by Id for fast lookup
-            Dictionary<string, JToken> nodeIndex = new Dictionary<string, JToken>();
-            foreach (JToken node in nodesArray)
-            {
-                string? id = node["Id"]?.Value<string>();
-                if (!string.IsNullOrEmpty(id))
+                ["XmiColumn"] = node =>
                 {
-                    nodeIndex[id] = node;
-                }
-            }
-
-            // Build edge lookup: Source -> list of (EntityName, TargetId)
-            List<(string Source, string Target, string EntityName)> edges =
-                new List<(string, string, string)>();
-
-            if (edgesArray != null)
-            {
-                foreach (JToken edge in edgesArray)
+                    CreateColumnFromGraph(doc, node, plan.NodeIndex, plan.Edges, _columnType!, _baseLevel!);
+                    return XmiNodeImportResult.Created();
+                },
+                ["XmiWall"] = node =>
                 {
-                    string? source = edge["Source"]?.Value<string>();
-                    string? target = edge["Target"]?.Value<string>();
-                    string? entityName = edge["EntityName"]?.Value<string>();
-
-                    if (!string.IsNullOrEmpty(source) &&
-                        !string.IsNullOrEmpty(target) &&
-                        !string.IsNullOrEmpty(entityName))
-                    {
-                        edges.Add((source, target, entityName));
-                    }
+                    CreateWallFromGraph(doc, node, plan.NodeIndex, plan.Edges, _wallType!, _baseLevel!);
+                    return XmiNodeImportResult.Created();
                 }
-            }
+            };
 
-            // Find all XmiColumn nodes
-            List<JToken> columnNodes = nodesArray
-                .Where(n => n["EntityName"]?.Value<string>() == "XmiColumn")
-                .ToList();
-
-            if (columnNodes.Count == 0)
+            Func<JToken, XmiNodeImportResult> unsupportedHandler = node =>
             {
-                throw new InvalidOperationException(
-                    "No XmiColumn entities found in the nodes array.");
+                string entityName = node["EntityName"]?.Value<string>() ?? "<missing>";
+                string nodeId = node["Id"]?.Value<string>() ?? "<missing-id>";
+                string nodeName = node["Name"]?.Value<string>() ?? "<unnamed>";
+
+                return XmiNodeImportResult.Skipped(
+                    $"Unsupported entity '{entityName}' (node Id='{nodeId}', Name='{nodeName}').");
+            };
+
+            int supportedNodeCount = plan.Nodes.Count(node =>
+                handlers.ContainsKey(node["EntityName"]?.Value<string>() ?? string.Empty));
+
+            if (supportedNodeCount == 0)
+            {
+                XmiImportNodeRouter.RouteNodes(plan.Nodes, plan.Diagnostics, handlers, unsupportedHandler);
+                WriteDiagnosticsToErrorLog(plan.Diagnostics);
+                return new XmiImportResult(plan.Diagnostics);
             }
 
-            FamilySymbol columnType = FindStructuralColumnType(doc);
-            int createdCount = 0;
+            _columnType = FindStructuralColumnType(doc);
+            _wallType = FindWallType(doc);
+            _baseLevel = FindOrCreateBaseLevel(doc);
 
             using (Transaction tx = new Transaction(doc, "Import XMI Graph"))
             {
                 tx.Start();
 
-                if (!columnType.IsActive)
+                if (!_columnType.IsActive)
                 {
-                    columnType.Activate();
+                    _columnType.Activate();
                     doc.Regenerate();
                 }
 
-                Level baseLevel = FindOrCreateBaseLevel(doc);
-
-                foreach (JToken columnNode in columnNodes)
-                {
-                    try
-                    {
-                        CreateColumnFromGraph(doc, columnNode, nodeIndex, edges,
-                            columnType, baseLevel);
-                        createdCount++;
-                    }
-                    catch (Exception ex)
-                    {
-                        string colName = columnNode["Name"]?.Value<string>() ?? "unknown";
-                        ModelInfoBuilder.WriteErrorLogToFile(
-                            $"[BetekkXmiImporter] Failed to create column '{colName}': {ex.Message}");
-                    }
-                }
+                XmiImportNodeRouter.RouteNodes(plan.Nodes, plan.Diagnostics, handlers, unsupportedHandler);
 
                 tx.Commit();
             }
 
-            return createdCount;
+            WriteDiagnosticsToErrorLog(plan.Diagnostics);
+            return new XmiImportResult(plan.Diagnostics);
         }
+
+        private FamilySymbol? _columnType;
+        private WallType? _wallType;
+        private Level? _baseLevel;
 
         /// <summary>
         /// Creates a single structural column by resolving its geometry and cross-section
@@ -119,8 +105,8 @@ namespace Betekk.RevitXmiExporter.Builder
         private static void CreateColumnFromGraph(
             Document doc,
             JToken columnNode,
-            Dictionary<string, JToken> nodeIndex,
-            List<(string Source, string Target, string EntityName)> edges,
+            IReadOnlyDictionary<string, JToken> nodeIndex,
+            IReadOnlyList<XmiGraphEdge> edges,
             FamilySymbol columnType,
             Level baseLevel)
         {
@@ -155,6 +141,11 @@ namespace Betekk.RevitXmiExporter.Builder
                 startZ / MillimetersPerFoot);
 
             double heightFeet = (endZ - startZ) / MillimetersPerFoot;
+            if (heightFeet <= 0)
+            {
+                throw new InvalidOperationException(
+                    $"Column '{columnId}' has non-positive height ({heightFeet}).");
+            }
 
             FamilyInstance column = doc.Create.NewFamilyInstance(
                 location,
@@ -162,12 +153,34 @@ namespace Betekk.RevitXmiExporter.Builder
                 baseLevel,
                 StructuralType.Column);
 
-            // Set column height
-            Parameter topOffsetParam =
-                column.get_Parameter(BuiltInParameter.FAMILY_TOP_LEVEL_OFFSET_PARAM);
-            if (topOffsetParam != null && !topOffsetParam.IsReadOnly)
+            // Set robust offsets/height (do not misuse top offset as full height).
+            double startOffsetFeet = (startZ / MillimetersPerFoot) - baseLevel.Elevation;
+            double topOffsetFeet = startOffsetFeet + heightFeet;
+
+            Parameter? baseOffsetParam =
+                column.get_Parameter(BuiltInParameter.FAMILY_BASE_LEVEL_OFFSET_PARAM);
+            if (baseOffsetParam != null && !baseOffsetParam.IsReadOnly)
             {
-                topOffsetParam.Set(heightFeet);
+                baseOffsetParam.Set(startOffsetFeet);
+            }
+
+            bool heightSet = SetParameterIfExists(column, BuiltInParameter.INSTANCE_LENGTH_PARAM, heightFeet);
+
+            if (!heightSet)
+            {
+                Parameter? topLevelParam =
+                    column.get_Parameter(BuiltInParameter.FAMILY_TOP_LEVEL_PARAM);
+                if (topLevelParam != null && !topLevelParam.IsReadOnly)
+                {
+                    topLevelParam.Set(baseLevel.Id);
+                }
+
+                Parameter? topOffsetParam =
+                    column.get_Parameter(BuiltInParameter.FAMILY_TOP_LEVEL_OFFSET_PARAM);
+                if (topOffsetParam != null && !topOffsetParam.IsReadOnly)
+                {
+                    topOffsetParam.Set(topOffsetFeet);
+                }
             }
 
             // Resolve cross-section via XmiHasCrossSection edge
@@ -196,19 +209,96 @@ namespace Betekk.RevitXmiExporter.Builder
         }
 
         /// <summary>
+        /// Creates a wall by resolving baseline points from XmiHasPoint3d graph relationships.
+        /// </summary>
+        private static void CreateWallFromGraph(
+            Document doc,
+            JToken wallNode,
+            IReadOnlyDictionary<string, JToken> nodeIndex,
+            IReadOnlyList<XmiGraphEdge> edges,
+            WallType wallType,
+            Level baseLevel)
+        {
+            string wallId = wallNode["Id"]!.Value<string>()!;
+
+            List<JToken> pointNodes = ResolveTargets(wallId, "XmiHasPoint3d",
+                edges, nodeIndex, "XmiPoint3d");
+
+            if (pointNodes.Count < 2)
+            {
+                throw new InvalidOperationException(
+                    $"Wall '{wallId}' needs at least 2 XmiPoint3d nodes, found {pointNodes.Count}.");
+            }
+
+            JToken startPt = pointNodes[0];
+            JToken endPt = pointNodes[1];
+
+            double startX = startPt["X"]?.Value<double>() ?? 0;
+            double startY = startPt["Y"]?.Value<double>() ?? 0;
+            double startZ = startPt["Z"]?.Value<double>() ?? 0;
+            double endX = endPt["X"]?.Value<double>() ?? 0;
+            double endY = endPt["Y"]?.Value<double>() ?? 0;
+            double endZ = endPt["Z"]?.Value<double>() ?? 0;
+
+            double baseOffsetFeet;
+            if (wallNode["ZOffset"]?.Value<double>() is double zOffsetMm)
+            {
+                baseOffsetFeet = zOffsetMm / MillimetersPerFoot;
+            }
+            else
+            {
+                double baseZFeet = Math.Min(startZ, endZ) / MillimetersPerFoot;
+                baseOffsetFeet = baseZFeet - baseLevel.Elevation;
+            }
+
+            XYZ start = new XYZ(
+                startX / MillimetersPerFoot,
+                startY / MillimetersPerFoot,
+                baseLevel.Elevation + baseOffsetFeet);
+
+            XYZ end = new XYZ(
+                endX / MillimetersPerFoot,
+                endY / MillimetersPerFoot,
+                baseLevel.Elevation + baseOffsetFeet);
+
+            if (start.DistanceTo(end) <= 1e-9)
+            {
+                throw new InvalidOperationException($"Wall '{wallId}' has zero-length baseline.");
+            }
+
+            Line baseline = Line.CreateBound(start, end);
+
+            double heightFeet = (wallNode["Height"]?.Value<double>() ?? 0) / MillimetersPerFoot;
+            if (heightFeet <= 0)
+            {
+                heightFeet = 3000.0 / MillimetersPerFoot;
+            }
+
+            Wall.Create(
+                doc,
+                baseline,
+                wallType.Id,
+                baseLevel.Id,
+                heightFeet,
+                baseOffsetFeet,
+                false,
+                false);
+        }
+
+        /// <summary>
         /// Follows edges of a given type from a source node and returns the resolved
         /// target nodes filtered by entity name.
         /// </summary>
         private static List<JToken> ResolveTargets(
             string sourceId,
             string edgeEntityName,
-            List<(string Source, string Target, string EntityName)> edges,
-            Dictionary<string, JToken> nodeIndex,
+            IReadOnlyList<XmiGraphEdge> edges,
+            IReadOnlyDictionary<string, JToken> nodeIndex,
             string targetEntityName)
         {
             List<JToken> results = new List<JToken>();
 
-            foreach (var edge in edges)
+            foreach (XmiGraphEdge edge in edges)
             {
                 if (edge.Source == sourceId && edge.EntityName == edgeEntityName)
                 {
@@ -228,13 +318,32 @@ namespace Betekk.RevitXmiExporter.Builder
         /// <summary>
         /// Sets a built-in parameter value if the parameter exists and is writable.
         /// </summary>
-        private static void SetParameterIfExists(
+        private static bool SetParameterIfExists(
             FamilyInstance instance, BuiltInParameter bip, double value)
         {
             Parameter? param = instance.get_Parameter(bip);
             if (param != null && !param.IsReadOnly)
             {
                 param.Set(value);
+                return true;
+            }
+
+            return false;
+        }
+
+        private static void WriteDiagnosticsToErrorLog(XmiImportDiagnostics diagnostics)
+        {
+            ModelInfoBuilder.WriteErrorLogToFile(
+                $"[BetekkXmiImporter][SUMMARY] {diagnostics.BuildSummaryLine()}");
+
+            foreach (string reason in diagnostics.SkipReasons)
+            {
+                ModelInfoBuilder.WriteErrorLogToFile($"[BetekkXmiImporter][SKIP] {reason}");
+            }
+
+            foreach (string reason in diagnostics.FailureReasons)
+            {
+                ModelInfoBuilder.WriteErrorLogToFile($"[BetekkXmiImporter][FAIL] {reason}");
             }
         }
 
@@ -262,6 +371,29 @@ namespace Betekk.RevitXmiExporter.Builder
             throw new InvalidOperationException(
                 "No structural column family types found in the project. " +
                 "Please load a structural column family before importing.");
+        }
+
+        /// <summary>
+        /// Finds a basic wall type suitable for creating imported wall instances.
+        /// </summary>
+        private static WallType FindWallType(Document doc)
+        {
+            WallType? preferred = new FilteredElementCollector(doc)
+                .OfClass(typeof(WallType))
+                .Cast<WallType>()
+                .FirstOrDefault(wt => wt.Kind == WallKind.Basic);
+
+            if (preferred != null) return preferred;
+
+            WallType? fallback = new FilteredElementCollector(doc)
+                .OfClass(typeof(WallType))
+                .Cast<WallType>()
+                .FirstOrDefault();
+
+            if (fallback != null) return fallback;
+
+            throw new InvalidOperationException(
+                "No wall types found in the project. Please load a wall type before importing.");
         }
 
         /// <summary>
