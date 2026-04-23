@@ -24,3 +24,46 @@
 [2026-04-23 10:09:14] [XmiLine3d Summary] ✓ No duplicate lines found!
 [2026-04-23 10:09:14] ========================================
 [2026-04-23 10:09:14] 
+[2026-04-23 10:39:52] [BetekkXmiBuilder] Collection strategies - ByClass: 0, ByCategory: 0
+[2026-04-23 10:39:52] [BetekkXmiBuilder] No analytical members found. Running diagnostic scan...
+[2026-04-23 10:39:52] [BetekkXmiBuilder] Error processing analytical members: The collector does not have a filter applied.  Extraction or iteration of elements is not permitted without a filter.
+[2026-04-23 10:39:52] [BetekkXmiBuilder] Column 1663901: fell back to bounding-box vertical line.
+[2026-04-23 10:39:52] [GetOrCreateLine3d] Called for element: nativeId='1663901', name='300 x 450mm'
+[2026-04-23 10:39:52] [GetOrCreateLine3d]   Candidate StartPoint: (0.000000, 0.000000, 0.000000) ID=fea067d7-262e-498e-90fe-4e1c3bb6174c
+[2026-04-23 10:39:52] [GetOrCreateLine3d]   Candidate EndPoint:   (0.000000, 0.000000, 10200.000000) ID=0aacf3d7-1979-4b49-8e66-9359d7afe0ea
+[2026-04-23 10:39:52] [GetOrCreateLine3d]   Found 1 existing XmiLine3d entities in model
+[2026-04-23 10:39:52] [GetOrCreateLine3d]   Comparing with existing line [0]: ID=cd6ebf24-b5e6-4bf2-8bbe-2351bb6fce87, NativeId=1663901_line, Name=300 x 450mm_line
+[2026-04-23 10:39:52] [GetOrCreateLine3d]     Existing StartPoint: (0.000000, 0.000000, 0.000000) ID=fea067d7-262e-498e-90fe-4e1c3bb6174c
+[2026-04-23 10:39:52] [GetOrCreateLine3d]     Existing EndPoint:   (0.000000, 0.000000, 10200.000000) ID=0aacf3d7-1979-4b49-8e66-9359d7afe0ea
+[2026-04-23 10:39:52] [GetOrCreateLine3d]     IsCoincident result: True
+[2026-04-23 10:39:52] [GetOrCreateLine3d]   ✓ MATCH FOUND! Reusing existing line ID=cd6ebf24-b5e6-4bf2-8bbe-2351bb6fce87, NativeId=1663901_line
+[2026-04-23 10:39:52] [GetOrCreateLine3d] RESULT: Reused existing XmiLine3d (ID=cd6ebf24-b5e6-4bf2-8bbe-2351bb6fce87, NativeId=1663901_line)
+[2026-04-23 10:39:52] [BetekkXmiBuilder] Column 1663903: fell back to bounding-box vertical line.
+[2026-04-23 10:39:52] [GetOrCreateLine3d] Called for element: nativeId='1663903', name='300 x 450mm'
+[2026-04-23 10:39:52] [GetOrCreateLine3d]   Candidate StartPoint: (0.000000, 0.000000, 0.000000) ID=fea067d7-262e-498e-90fe-4e1c3bb6174c
+[2026-04-23 10:39:52] [GetOrCreateLine3d]   Candidate EndPoint:   (0.000000, 0.000000, 10200.000000) ID=0aacf3d7-1979-4b49-8e66-9359d7afe0ea
+[2026-04-23 10:39:52] [GetOrCreateLine3d]   Found 2 existing XmiLine3d entities in model
+[2026-04-23 10:39:52] [GetOrCreateLine3d]   Comparing with existing line [0]: ID=cd6ebf24-b5e6-4bf2-8bbe-2351bb6fce87, NativeId=1663901_line, Name=300 x 450mm_line
+[2026-04-23 10:39:52] [GetOrCreateLine3d]     Existing StartPoint: (0.000000, 0.000000, 0.000000) ID=fea067d7-262e-498e-90fe-4e1c3bb6174c
+[2026-04-23 10:39:52] [GetOrCreateLine3d]     Existing EndPoint:   (0.000000, 0.000000, 10200.000000) ID=0aacf3d7-1979-4b49-8e66-9359d7afe0ea
+[2026-04-23 10:39:52] [GetOrCreateLine3d]     IsCoincident result: True
+[2026-04-23 10:39:52] [GetOrCreateLine3d]   ✓ MATCH FOUND! Reusing existing line ID=cd6ebf24-b5e6-4bf2-8bbe-2351bb6fce87, NativeId=1663901_line
+[2026-04-23 10:39:52] [GetOrCreateLine3d] RESULT: Reused existing XmiLine3d (ID=cd6ebf24-b5e6-4bf2-8bbe-2351bb6fce87, NativeId=1663901_line)
+[2026-04-23 10:39:52] 
+[2026-04-23 10:39:52] ========================================
+[2026-04-23 10:39:52] [XmiLine3d Summary] Total count: 2
+[2026-04-23 10:39:52] ========================================
+[2026-04-23 10:39:52] [1] ID=cd6ebf24-b5e6-4bf2-8bbe-2351bb6fce87, NativeId=1663901_line, Name=300 x 450mm_line
+[2026-04-23 10:39:52]     StartPoint: (0.000000, 0.000000, 0.000000) PointID=fea067d7-262e-498e-90fe-4e1c3bb6174c
+[2026-04-23 10:39:52]     EndPoint:   (0.000000, 0.000000, 10200.000000) PointID=0aacf3d7-1979-4b49-8e66-9359d7afe0ea
+[2026-04-23 10:39:52] [2] ID=8f4b7b7d-c81d-4de2-9a22-751d6173012f, NativeId=1663903_line, Name=300 x 450mm_line
+[2026-04-23 10:39:52]     StartPoint: (0.000000, 0.000000, 0.000000) PointID=fea067d7-262e-498e-90fe-4e1c3bb6174c
+[2026-04-23 10:39:52]     EndPoint:   (0.000000, 0.000000, 10200.000000) PointID=0aacf3d7-1979-4b49-8e66-9359d7afe0ea
+[2026-04-23 10:39:52] 
+[2026-04-23 10:39:52] [XmiLine3d Summary] Checking for coincident lines...
+[2026-04-23 10:39:52] ⚠ DUPLICATE FOUND: Line[0] (ID=cd6ebf24-b5e6-4bf2-8bbe-2351bb6fce87) is coincident with Line[1] (ID=8f4b7b7d-c81d-4de2-9a22-751d6173012f)
+[2026-04-23 10:39:52]   Line[0]: NativeId=1663901_line, Name=300 x 450mm_line
+[2026-04-23 10:39:52]   Line[1]: NativeId=1663903_line, Name=300 x 450mm_line
+[2026-04-23 10:39:52] [XmiLine3d Summary] ⚠ Found 1 duplicate line(s)!
+[2026-04-23 10:39:52] ========================================
+[2026-04-23 10:39:52] 

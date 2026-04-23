@@ -1,0 +1,325 @@
+﻿{
+  "nodes": [
+    {
+      "StoreyElevation": 0.0,
+      "StoreyMass": 0.0,
+      "Id": "ed0b3ee9-c5b1-4472-8f22-3259c398af60",
+      "Name": "L1",
+      "IfcGuid": "2JF4e6axWHqu3u0C1FZlmi",
+      "NativeId": "30",
+      "Description": "",
+      "EntityName": "XmiStorey",
+      "Domain": "Shared"
+    },
+    {
+      "StoreyElevation": 3600.0,
+      "StoreyMass": 0.0,
+      "Id": "3701c6c4-0650-4bfa-8059-231164366a39",
+      "Name": "L2",
+      "IfcGuid": "1ZGO8hrFCHqw0v0026FpFv",
+      "NativeId": "9946",
+      "Description": "",
+      "EntityName": "XmiStorey",
+      "Domain": "Shared"
+    },
+    {
+      "MaterialType": "Concrete",
+      "Grade": 50715.92061738265,
+      "UnitWeight": 1091.9407251082944,
+      "ElasticModulus": "48860406.22",
+      "ShearModulus": "20939573.66",
+      "PoissonRatio": "0.1670",
+      "ThermalCoefficient": 1.8E-05,
+      "Id": "d90db69c-95b0-47f8-b0f7-0e5eb4fd71ec",
+      "Name": "Concrete, Cast-in-Place gray",
+      "IfcGuid": "",
+      "NativeId": "18939",
+      "Description": "",
+      "EntityName": "XmiMaterial",
+      "Domain": "Shared"
+    },
+    {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0,
+      "Id": "fea067d7-262e-498e-90fe-4e1c3bb6174c",
+      "Name": "fe05a038-1439-465f-8565-efd9644e43e2_start_point",
+      "IfcGuid": "",
+      "NativeId": "synthetic:point:0.0000000000_0.0000000000_0.0000000000",
+      "Description": "",
+      "EntityName": "XmiPoint3d",
+      "Domain": "Geometry"
+    },
+    {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 10200.0,
+      "Id": "0aacf3d7-1979-4b49-8e66-9359d7afe0ea",
+      "Name": "fe05a038-1439-465f-8565-efd9644e43e2_end_point",
+      "IfcGuid": "",
+      "NativeId": "synthetic:point:0.0000000000_0.0000000000_10200.0000000000",
+      "Description": "",
+      "EntityName": "XmiPoint3d",
+      "Domain": "Geometry"
+    },
+    {
+      "StartPoint": "fea067d7-262e-498e-90fe-4e1c3bb6174c",
+      "EndPoint": "0aacf3d7-1979-4b49-8e66-9359d7afe0ea",
+      "Id": "cd6ebf24-b5e6-4bf2-8bbe-2351bb6fce87",
+      "Name": "300 x 450mm_line",
+      "IfcGuid": "",
+      "NativeId": "1663901_line",
+      "Description": "",
+      "EntityName": "XmiLine3d",
+      "Domain": "Geometry"
+    },
+    {
+      "Position": 0.0,
+      "SegmentType": "Line",
+      "Id": "e96041cf-a010-4a03-81ab-ae1e9ca00efe",
+      "Name": "300 x 450mm_segment",
+      "IfcGuid": "",
+      "NativeId": "segment:1663901:Line",
+      "Description": "",
+      "EntityName": "XmiSegment",
+      "Domain": "Shared"
+    },
+    {
+      "SystemLine": "MiddleMiddle",
+      "Length": 10200.0,
+      "BeginNodeXOffset": 0.0,
+      "EndNodeXOffset": 0.0,
+      "BeginNodeYOffset": 0.0,
+      "EndNodeYOffset": 0.0,
+      "BeginNodeZOffset": 0.0,
+      "EndNodeZOffset": 0.0,
+      "Id": "fe05a038-1439-465f-8565-efd9644e43e2",
+      "Name": "300 x 450mm",
+      "IfcGuid": "3EG9Cg_dj02RWQw4kwbBRz",
+      "NativeId": "1663901",
+      "Description": "",
+      "EntityName": "XmiColumn",
+      "Domain": "Physical"
+    },
+    {
+      "Shape": "Rectangular",
+      "Parameters": {
+        "H": 450.0,
+        "B": 300.0
+      },
+      "Area": 135000.0,
+      "SecondMomentOfAreaXAxis": 0.0,
+      "SecondMomentOfAreaYAxis": 0.0,
+      "RadiusOfGyrationXAxis": 0.0,
+      "RadiusOfGyrationYAxis": 0.0,
+      "ElasticModulusXAxis": 0.0,
+      "ElasticModulusYAxis": 0.0,
+      "PlasticModulusXAxis": 0.0,
+      "PlasticModulusYAxis": 0.0,
+      "TorsionalConstant": 0.0,
+      "Id": "269ad4ab-e6ef-4c4c-b60a-f1b5ae84754d",
+      "Name": "300 x 450mm",
+      "IfcGuid": "",
+      "NativeId": "1537404",
+      "Description": "",
+      "EntityName": "XmiCrossSection",
+      "Domain": "Geometry"
+    },
+    {
+      "StartPoint": "fea067d7-262e-498e-90fe-4e1c3bb6174c",
+      "EndPoint": "0aacf3d7-1979-4b49-8e66-9359d7afe0ea",
+      "Id": "8f4b7b7d-c81d-4de2-9a22-751d6173012f",
+      "Name": "300 x 450mm_line",
+      "IfcGuid": "",
+      "NativeId": "1663903_line",
+      "Description": "",
+      "EntityName": "XmiLine3d",
+      "Domain": "Geometry"
+    },
+    {
+      "Position": 0.0,
+      "SegmentType": "Line",
+      "Id": "e59de5fe-16a0-4662-b4eb-a901ddb86525",
+      "Name": "300 x 450mm_segment",
+      "IfcGuid": "",
+      "NativeId": "segment:1663903:Line",
+      "Description": "",
+      "EntityName": "XmiSegment",
+      "Domain": "Shared"
+    },
+    {
+      "SystemLine": "MiddleMiddle",
+      "Length": 10200.0,
+      "BeginNodeXOffset": 0.0,
+      "EndNodeXOffset": 0.0,
+      "BeginNodeYOffset": 0.0,
+      "EndNodeYOffset": 0.0,
+      "BeginNodeZOffset": 0.0,
+      "EndNodeZOffset": 0.0,
+      "Id": "092c21a9-55b0-4d34-afeb-8deb537a5860",
+      "Name": "300 x 450mm",
+      "IfcGuid": "3EG9Cg_dj02RWQw4kwbBR$",
+      "NativeId": "1663903",
+      "Description": "",
+      "EntityName": "XmiColumn",
+      "Domain": "Physical"
+    }
+  ],
+  "edges": [
+    {
+      "Id": "50f97c41-f827-4bbe-a802-400a42d1f922",
+      "Source": "cd6ebf24-b5e6-4bf2-8bbe-2351bb6fce87",
+      "Target": "fea067d7-262e-498e-90fe-4e1c3bb6174c",
+      "Name": "XmiHasPoint3d",
+      "Description": "",
+      "EntityName": "XmiHasPoint3d",
+      "Properties": {}
+    },
+    {
+      "Id": "35960938-dba4-4b9b-8b82-1587513d8748",
+      "Source": "cd6ebf24-b5e6-4bf2-8bbe-2351bb6fce87",
+      "Target": "0aacf3d7-1979-4b49-8e66-9359d7afe0ea",
+      "Name": "XmiHasPoint3d",
+      "Description": "",
+      "EntityName": "XmiHasPoint3d",
+      "Properties": {}
+    },
+    {
+      "TargetLine3d": "cd6ebf24-b5e6-4bf2-8bbe-2351bb6fce87",
+      "Id": "d5794dfb-d2c5-44d3-8680-0996aaedc44c",
+      "Source": "e96041cf-a010-4a03-81ab-ae1e9ca00efe",
+      "Target": "cd6ebf24-b5e6-4bf2-8bbe-2351bb6fce87",
+      "Name": "XmiHasLine3d",
+      "Description": "",
+      "EntityName": "XmiHasLine3d",
+      "Properties": {}
+    },
+    {
+      "Id": "eab7fdc0-625b-45fd-a4eb-ed07b229e0f6",
+      "Source": "fe05a038-1439-465f-8565-efd9644e43e2",
+      "Target": "d90db69c-95b0-47f8-b0f7-0e5eb4fd71ec",
+      "Name": "XmiHasMaterial",
+      "Description": "",
+      "EntityName": "XmiHasMaterial",
+      "Properties": {}
+    },
+    {
+      "Id": "0315eb05-6cc8-4a0d-972e-00e9f50e0a9b",
+      "Source": "fe05a038-1439-465f-8565-efd9644e43e2",
+      "Target": "e96041cf-a010-4a03-81ab-ae1e9ca00efe",
+      "Name": "XmiHasSegment",
+      "Description": "",
+      "EntityName": "XmiHasSegment",
+      "Properties": {}
+    },
+    {
+      "Id": "c3a97212-fb3a-4648-bad5-3821fd6f5f2f",
+      "Source": "fe05a038-1439-465f-8565-efd9644e43e2",
+      "Target": "fea067d7-262e-498e-90fe-4e1c3bb6174c",
+      "Name": "XmiHasPoint3d",
+      "Description": "",
+      "EntityName": "XmiHasPoint3d",
+      "Properties": {}
+    },
+    {
+      "Id": "57f5a067-5029-4b65-b09a-1191cdeef524",
+      "Source": "fe05a038-1439-465f-8565-efd9644e43e2",
+      "Target": "0aacf3d7-1979-4b49-8e66-9359d7afe0ea",
+      "Name": "XmiHasPoint3d",
+      "Description": "",
+      "EntityName": "XmiHasPoint3d",
+      "Properties": {}
+    },
+    {
+      "Id": "bf0f6f02-f45b-4b46-a8c7-339fc2648650",
+      "Source": "269ad4ab-e6ef-4c4c-b60a-f1b5ae84754d",
+      "Target": "d90db69c-95b0-47f8-b0f7-0e5eb4fd71ec",
+      "Name": "XmiHasMaterial",
+      "Description": "",
+      "EntityName": "XmiHasMaterial",
+      "Properties": {}
+    },
+    {
+      "Id": "998a4893-2d71-49a7-918f-269a53602c30",
+      "Source": "fe05a038-1439-465f-8565-efd9644e43e2",
+      "Target": "269ad4ab-e6ef-4c4c-b60a-f1b5ae84754d",
+      "Name": "XmiHasCrossSection",
+      "Description": "",
+      "EntityName": "XmiHasCrossSection",
+      "Properties": {}
+    },
+    {
+      "Id": "8bf704ad-81be-499d-a697-d984fd52da9d",
+      "Source": "8f4b7b7d-c81d-4de2-9a22-751d6173012f",
+      "Target": "fea067d7-262e-498e-90fe-4e1c3bb6174c",
+      "Name": "XmiHasPoint3d",
+      "Description": "",
+      "EntityName": "XmiHasPoint3d",
+      "Properties": {}
+    },
+    {
+      "Id": "51ba36e0-203f-43f8-a5de-0778714bb323",
+      "Source": "8f4b7b7d-c81d-4de2-9a22-751d6173012f",
+      "Target": "0aacf3d7-1979-4b49-8e66-9359d7afe0ea",
+      "Name": "XmiHasPoint3d",
+      "Description": "",
+      "EntityName": "XmiHasPoint3d",
+      "Properties": {}
+    },
+    {
+      "TargetLine3d": "cd6ebf24-b5e6-4bf2-8bbe-2351bb6fce87",
+      "Id": "88a456ea-d444-4c26-b50d-d9cfd8963014",
+      "Source": "e59de5fe-16a0-4662-b4eb-a901ddb86525",
+      "Target": "cd6ebf24-b5e6-4bf2-8bbe-2351bb6fce87",
+      "Name": "XmiHasLine3d",
+      "Description": "",
+      "EntityName": "XmiHasLine3d",
+      "Properties": {}
+    },
+    {
+      "Id": "dc01f9b9-c1a7-4095-8de7-bd8ac147be80",
+      "Source": "092c21a9-55b0-4d34-afeb-8deb537a5860",
+      "Target": "d90db69c-95b0-47f8-b0f7-0e5eb4fd71ec",
+      "Name": "XmiHasMaterial",
+      "Description": "",
+      "EntityName": "XmiHasMaterial",
+      "Properties": {}
+    },
+    {
+      "Id": "3ca3e475-12cc-4704-82ee-c546984a3bd0",
+      "Source": "092c21a9-55b0-4d34-afeb-8deb537a5860",
+      "Target": "e59de5fe-16a0-4662-b4eb-a901ddb86525",
+      "Name": "XmiHasSegment",
+      "Description": "",
+      "EntityName": "XmiHasSegment",
+      "Properties": {}
+    },
+    {
+      "Id": "941d2739-f277-4535-9c95-6c8fa49a9583",
+      "Source": "092c21a9-55b0-4d34-afeb-8deb537a5860",
+      "Target": "fea067d7-262e-498e-90fe-4e1c3bb6174c",
+      "Name": "XmiHasPoint3d",
+      "Description": "",
+      "EntityName": "XmiHasPoint3d",
+      "Properties": {}
+    },
+    {
+      "Id": "2f05753f-1cd4-4ddf-a7e8-03d6d8e34339",
+      "Source": "092c21a9-55b0-4d34-afeb-8deb537a5860",
+      "Target": "0aacf3d7-1979-4b49-8e66-9359d7afe0ea",
+      "Name": "XmiHasPoint3d",
+      "Description": "",
+      "EntityName": "XmiHasPoint3d",
+      "Properties": {}
+    },
+    {
+      "Id": "ce002cdb-8b28-4671-a0c0-2fba40cd34d5",
+      "Source": "092c21a9-55b0-4d34-afeb-8deb537a5860",
+      "Target": "269ad4ab-e6ef-4c4c-b60a-f1b5ae84754d",
+      "Name": "XmiHasCrossSection",
+      "Description": "",
+      "EntityName": "XmiHasCrossSection",
+      "Properties": {}
+    }
+  ]
+}
