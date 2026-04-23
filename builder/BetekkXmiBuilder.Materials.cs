@@ -206,6 +206,43 @@ namespace Betekk.RevitXmiExporter.Builder
         }
 
         /// <summary>
+        /// Retrieves the first material ElementId assigned to a wall.
+        /// Returns InvalidElementId when no material assignment is available.
+        /// </summary>
+        private ElementId GetMaterialIdFromWall(Wall wall)
+        {
+            if (wall == null)
+            {
+                return ElementId.InvalidElementId;
+            }
+
+            ICollection<ElementId> materialIds;
+            try
+            {
+                materialIds = wall.GetMaterialIds(false);
+            }
+            catch
+            {
+                return ElementId.InvalidElementId;
+            }
+
+            if (materialIds == null)
+            {
+                return ElementId.InvalidElementId;
+            }
+
+            foreach (ElementId materialId in materialIds)
+            {
+                if (materialId != null && materialId != ElementId.InvalidElementId)
+                {
+                    return materialId;
+                }
+            }
+
+            return ElementId.InvalidElementId;
+        }
+
+        /// <summary>
         /// Ensures all materials associated with the given element are added to the XMI material list.
         /// Handles both FamilyInstance structural material parameters and general material assignments.
         /// </summary>

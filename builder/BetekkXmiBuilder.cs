@@ -47,6 +47,7 @@ namespace Betekk.RevitXmiExporter.Builder
         // Physical element caches
         private readonly Dictionary<string, XmiBeam> _beamCache;
         private readonly Dictionary<string, XmiColumn> _columnCache;
+        private readonly Dictionary<string, XmiWall> _wallCache;
 
         // Deferred physical→analytical mappings
         private readonly List<(XmiBeam beam, string analyticalNativeId)> _beamToAnalyticalLinks;
@@ -88,6 +89,7 @@ namespace Betekk.RevitXmiExporter.Builder
             _segmentCache = new Dictionary<string, XmiSegment>();
             _beamCache = new Dictionary<string, XmiBeam>();
             _columnCache = new Dictionary<string, XmiColumn>();
+            _wallCache = new Dictionary<string, XmiWall>();
             _beamToAnalyticalLinks = new List<(XmiBeam, string)>();
             _columnToAnalyticalLinks = new List<(XmiColumn, string)>();
             _analyticalMemberCache = new Dictionary<string, XmiStructuralCurveMember>();
@@ -108,6 +110,7 @@ namespace Betekk.RevitXmiExporter.Builder
             // Phase 3: Process physical elements (beams and columns) and link to analytical members
             ProcessStructuralFramingElements(doc);
             ProcessStructuralColumnsElements(doc);
+            ProcessWallElements(doc);
 
             // Phase 4: Gather materials from other structural elements to ensure they appear in the material list
             ProcessFloorMaterials(doc);
@@ -193,6 +196,7 @@ namespace Betekk.RevitXmiExporter.Builder
             _storeyCount = _model.Entities.OfType<XmiStorey>().Count();
             _beamCount = _model.Entities.OfType<XmiBeam>().Count();
             _columnCount = _model.Entities.OfType<XmiColumn>().Count();
+            _wallCount = _model.Entities.OfType<XmiWall>().Count();
             _analyticalMemberCount = _model.Entities.OfType<XmiStructuralCurveMember>().Count();
             _materialCount = _model.Entities.OfType<XmiMaterial>().Count();
             _crossSectionCount = _model.Entities.OfType<XmiCrossSection>().Count();
@@ -207,6 +211,7 @@ namespace Betekk.RevitXmiExporter.Builder
                 StoreyCount = _storeyCount,
                 BeamCount = _beamCount,
                 ColumnCount = _columnCount,
+                WallCount = _wallCount,
                 AnalyticalMemberCount = _analyticalMemberCount,
                 MaterialCount = _materialCount,
                 CrossSectionCount = _crossSectionCount,
@@ -227,6 +232,7 @@ namespace Betekk.RevitXmiExporter.Builder
         public int StoreyCount { get; set; }
         public int BeamCount { get; set; }
         public int ColumnCount { get; set; }
+        public int WallCount { get; set; }
         public int AnalyticalMemberCount { get; set; }
         public int MaterialCount { get; set; }
         public int CrossSectionCount { get; set; }
